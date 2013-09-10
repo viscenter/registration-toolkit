@@ -41,6 +41,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		open.addActionListener(this);
 		open2.addActionListener(this);
 		makeLandmarks.addActionListener(this);
+		counter=0;
 		FixedPicture = new PicturePanel();
 		MovingPicture = new PicturePanel();
 		scroll1 = new JScrollPane(FixedPicture);//declares it
@@ -200,6 +201,14 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 			this.repaint();
 		}
 		if(e.getSource()==makeLandmarks){
+			//String input = JOptionPane.showInputDialog(this  ,"Landmark number to edit:");
+			//int Input = Integer.parseInt(input);
+			//if(Input%2==0){Selector(scroll2,Input);}
+			//else
+			
+			Selector(scroll1);	
+			Selector(scroll2);
+			
 			
 		}
 	}
