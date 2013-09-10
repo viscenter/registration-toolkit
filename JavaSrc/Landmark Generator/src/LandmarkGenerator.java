@@ -88,6 +88,9 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 	public static void main(String[] args) throws IOException {
 		//JFrame JP = new JFrame();
 		//JP.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		System.out.println(java.lang.Runtime.getRuntime().maxMemory()); 
+		
+		
 		new LandmarkGenerator(1,2);
 		
 			scroll1.addMouseListener(new MouseListener(){
