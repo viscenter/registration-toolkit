@@ -18,8 +18,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 	static PicturePanel MovingPicture;
 	static JButton open,open2,makeLandmarks;
 	static JScrollPane scroll1,scroll2;
-	static Boolean Scroll1Listen,Scroll2Listen;
-	
 	int counter;
 	static int cposition,rposition;		
 	static int [][] PointsforLandmarks= new int [15][4];
@@ -96,7 +94,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		//JP.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		new LandmarkGenerator(1,2);
 		
-		if(Scroll1Listen){
 			scroll1.addMouseListener(new MouseListener(){
 
 				@Override
@@ -169,7 +166,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 			this.repaint();
 		}
 		if(e.getSource()==makeLandmarks){
-			Scroll1Listen = true;
 			
 		}
 	}
