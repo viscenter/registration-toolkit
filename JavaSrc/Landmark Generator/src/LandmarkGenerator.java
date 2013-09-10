@@ -35,8 +35,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		holdall.setLayout(layout);
 		JPanel Landmarks = new JPanel();
 		Landmarks.setLayout(new GridLayout(2,1));
-		JEditorPane DisplayedLandmarks = new JEditorPane();
-		int [][] PointsforLandmarks= new int [100][100];
 		makeLandmarks = new JButton("Create Landmarks");
 		open = new JButton("Open 1st Image");
 		open2 = new JButton("Open 2nd Image");
