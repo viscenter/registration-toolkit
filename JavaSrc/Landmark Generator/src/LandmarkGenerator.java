@@ -93,41 +93,11 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		
 		new LandmarkGenerator(1,2);
 		
-			scroll1.addMouseListener(new MouseListener(){
-
-				@Override
-				public void mouseClicked(MouseEvent arg0) {
-					System.out.println(SwingUtilities.convertPoint(scroll1, arg0.getPoint(), FixedPicture));
-				}
-
-				@Override
-				public void mouseEntered(MouseEvent arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-
-				@Override
-				public void mouseExited(MouseEvent arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-
-				@Override
-				public void mousePressed(MouseEvent arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-
-				@Override
-				public void mouseReleased(MouseEvent arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-			});
+		
+			
 		}
 		
-}
+
 
 	/*private void makeMenu(){
 		JMenuBar bar = new JMenuBar();
@@ -144,8 +114,73 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 
 	}
 */
+	public void Selector (final JScrollPane s){
+		System.out.println("COUNTER IS :"+counter);
+		
+		
+		
+		
+		
+				s.addMouseListener(new MouseListener(){
+
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				cposition=counter%2;
+				if(counter%2!=0){
+					cposition=2;
+				}
+				
+				rposition=counter/2;
+				Point P1=new Point();
+				if (s==scroll1){P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), FixedPicture);}
+				if (s==scroll2){P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), MovingPicture);}
+				System.out.println("storing into "+rposition+", "+cposition);
+				PointsforLandmarks[rposition][cposition] = P1.x;
+				PointsforLandmarks[rposition][++cposition] = P1.y;
+				s.removeMouseListener(this);
+				DisplayedLandmarks.setText(null);
+				for(int i=0;i<PointsforLandmarks.length;i++){
+					for(int j=0;j<PointsforLandmarks[i].length;j++){
+						DisplayedLandmarks.setText(DisplayedLandmarks.getText() + PointsforLandmarks[i][j] +" ");
+					}
+					DisplayedLandmarks.setText(DisplayedLandmarks.getText()+"\n");
+				}
+				System.out.println("changing counter");
+				counter++;
+				return;
+				
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+		
+	}
+	
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("HELLO");
 		if(e.getSource()==open){
 			JFileChooser jfc = new JFileChooser();
 			int result = jfc.showOpenDialog(this);
