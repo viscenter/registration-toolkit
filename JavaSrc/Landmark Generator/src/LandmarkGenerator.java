@@ -43,21 +43,21 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		makeLandmarks.addActionListener(this);
 		FixedPicture = new PicturePanel();
 		MovingPicture = new PicturePanel();
-		final JScrollPane scroll1 = new JScrollPane(FixedPicture);//declares it
-		final JScrollPane scroll2 = new JScrollPane(MovingPicture);//declares it
+		scroll1 = new JScrollPane(FixedPicture);//declares it
+		scroll2 = new JScrollPane(MovingPicture);//declares it
 		
 		//Landmarks.add(makeLandmarks);
 		//Landmarks.add(DisplayedLandmarks);
 		
 		layout.setHorizontalGroup(
 				   layout.createSequentialGroup()
-				      .addComponent(scroll1)
-				      .addComponent(scroll2)
+				      .addComponent(scroll1,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+				      .addComponent(scroll2,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
 				      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				           .addComponent(makeLandmarks)
 				           .addComponent(open)
 				           .addComponent(open2)
-				           .addComponent(DisplayedLandmarks))
+				           .addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
 				);
 				layout.setVerticalGroup(
 				   layout.createSequentialGroup()
