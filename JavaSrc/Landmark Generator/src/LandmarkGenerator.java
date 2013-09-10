@@ -41,8 +41,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		open.addActionListener(this);
 		open2.addActionListener(this);
 		makeLandmarks.addActionListener(this);
-		Scroll1Listen=false;
-		Scroll2Listen=false;
 		FixedPicture = new PicturePanel();
 		MovingPicture = new PicturePanel();
 		final JScrollPane scroll1 = new JScrollPane(FixedPicture);//declares it
