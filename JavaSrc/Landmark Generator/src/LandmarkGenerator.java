@@ -18,6 +18,12 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 	static JScrollPane scroll1,scroll2;
 	static Boolean Scroll1Listen,Scroll2Listen;
 	
+	int counter;
+	static int cposition,rposition;		
+	static int [][] PointsforLandmarks= new int [15][4];
+	static JEditorPane DisplayedLandmarks = new JEditorPane();
+
+
 	//static LandmarkGenerator JP = 
 	
 	
