@@ -50,8 +50,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		scroll1 = new JScrollPane(FixedPicture);//declares it
 		scroll2 = new JScrollPane(MovingPicture);//declares it
 		
-		//Landmarks.add(makeLandmarks);
-		//Landmarks.add(DisplayedLandmarks);
+		
 		
 		layout.setHorizontalGroup(
 				   layout.createSequentialGroup()
@@ -76,14 +75,11 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 				           .addComponent(CreateFile)
 				);
 
-		//holdall.add(scroll1);
-		//holdall.add(scroll2);
-		//holdall.add(Landmarks);
+		
 		this.add(holdall);
 		
 		
 		
-		//makeMenu();
 		
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setVisible(true);
@@ -92,9 +88,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 	}
 
 	public static void main(String[] args) throws IOException {
-		//JFrame JP = new JFrame();
-		//JP.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		System.out.println(java.lang.Runtime.getRuntime().maxMemory()); 
+		 
 		
 		
 		new LandmarkGenerator(1,2);
@@ -104,22 +98,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		}
 		
 
-
-	/*private void makeMenu(){
-		JMenuBar bar = new JMenuBar();
-		JMenu file = new JMenu("File");
-		//open = new JMenuItem("Open 1st Image");
-		//open2 = new JMenuItem("Open 2nd Image");
-		
-		file.add(open);
-		file.add(open2);
-		bar.add(file);
-		this.setJMenuBar(bar);
-	//this.add(bar);
-
-
-	}
-*/
 	public void Selector (final JScrollPane s){
 		System.out.println("COUNTER IS :"+counter);
 		
