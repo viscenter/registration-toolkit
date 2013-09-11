@@ -4,7 +4,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
@@ -16,7 +19,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 
 	static PicturePanel FixedPicture;
 	static PicturePanel MovingPicture;
-	static JButton open,open2,makeLandmarks;
+	static JButton open,open2,makeLandmarks,CreateFile;
 	static JScrollPane scroll1,scroll2;
 	int counter;
 	static int cposition,rposition;		
@@ -38,6 +41,8 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 		makeLandmarks = new JButton("Create Landmarks");
 		open = new JButton("Open 1st Image");
 		open2 = new JButton("Open 2nd Image");
+		CreateFile = new JButton("Write to File");
+		CreateFile.addActionListener(this);
 		open.addActionListener(this);
 		open2.addActionListener(this);
 		makeLandmarks.addActionListener(this);
@@ -58,6 +63,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 				           .addComponent(makeLandmarks)
 				           .addComponent(open)
 				           .addComponent(open2)
+				           .addComponent(CreateFile)
 				           .addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
 				);
 				layout.setVerticalGroup(
@@ -69,6 +75,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 				           .addComponent(open)
 				           .addComponent(open2)
 				           .addComponent(makeLandmarks)
+				           .addComponent(CreateFile)
 				);
 
 		//holdall.add(scroll1);
@@ -199,6 +206,22 @@ public class LandmarkGenerator extends JFrame implements ActionListener{
 			File f = jfc.getSelectedFile();
 			MovingPicture.setImage(f);
 			this.repaint();
+		}
+		if(e.getSource()==CreateFile){
+			String newfile = JOptionPane.showInputDialog(this  ,"File Name")+".txt";
+			PrintWriter writer = null;
+			try {
+				writer = new PrintWriter(newfile, "UTF-8");
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			writer.print(DisplayedLandmarks.getText());
+			writer.close();
+		
 		}
 		if(e.getSource()==makeLandmarks){
 			//String input = JOptionPane.showInputDialog(this  ,"Landmark number to edit:");
