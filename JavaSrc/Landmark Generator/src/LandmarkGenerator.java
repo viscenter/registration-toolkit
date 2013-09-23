@@ -49,121 +49,10 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		MovingPicture = new PicturePanel();
 		scroll1 = new JScrollPane(FixedPicture);//declares it
 		scroll2 = new JScrollPane(MovingPicture);//declares it
-		
-		
-		
-		layout.setHorizontalGroup(
-				   layout.createSequentialGroup()
-				      .addComponent(scroll1,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-				      .addComponent(scroll2,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-				      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-				           .addComponent(makeLandmarks)
-				           .addComponent(open)
-				           .addComponent(open2)
-				           .addComponent(CreateFile)
-				           .addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-				);
-				layout.setVerticalGroup(
-				   layout.createSequentialGroup()
-				      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-				           .addComponent(scroll1)
-				           .addComponent(scroll2)
-				           .addComponent(DisplayedLandmarks, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 800, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-				           .addComponent(open)
-				           .addComponent(open2)
-				           .addComponent(makeLandmarks)
-				           .addComponent(CreateFile)
-				);
-
-		
-		this.add(holdall);
-		
-		
-		
-		
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setVisible(true);
-		this.setSize(1600,1000);
-
 	}
 
-	public static void main(String[] args) throws IOException {
-		 
-		
-		
-		new LandmarkGenerator(1,2);
-		
-		
-			
-		}
-		
-
-	public void Selector (final JScrollPane s){
-		System.out.println("COUNTER IS :"+counter);
-		
-		
-		
-		
-		
-				s.addMouseListener(new MouseListener(){
-
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				cposition=counter%2;
-				if(counter%2!=0){
-					cposition=2;
-				}
-				
-				rposition=counter/2;
-				Point P1=new Point();
-				if (s==scroll1){P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), FixedPicture);}
-				if (s==scroll2){P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), MovingPicture);}
-				System.out.println("storing into "+rposition+", "+cposition);
-				PointsforLandmarks[rposition][cposition] = P1.x;
-				PointsforLandmarks[rposition][++cposition] = P1.y;
-				s.removeMouseListener(this);
-				DisplayedLandmarks.setText(null);
-				for(int i=0;i<PointsforLandmarks.length;i++){
-					for(int j=0;j<PointsforLandmarks[i].length;j++){
-						DisplayedLandmarks.setText(DisplayedLandmarks.getText() + PointsforLandmarks[i][j] +" ");
-					}
-					DisplayedLandmarks.setText(DisplayedLandmarks.getText()+"\n");
-				}
-				System.out.println("changing counter");
-				counter++;
-				return;
-				
-				
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
-		
-	}
 	
+
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
 			JFileChooser jfc = new JFileChooser();
@@ -205,10 +94,84 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 			//if(Input%2==0){Selector(scroll2,Input);}
 			//else
 			
-			Selector(scroll1);	
-			Selector(scroll2);
-			
-			
+			scroll1.addMouseListener(this);
+			scroll2.addMouseListener(this);
+
 		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		JScrollPane s = (JScrollPane)(arg0.getSource());
+
+		
+		cposition=counter%2;
+		if(counter%2!=0){
+			cposition=2;
+		}
+		rposition=counter/2;
+		Point P1=new Point();
+		
+		
+		if(counter%2==0&&arg0.getSource()==scroll1){
+			P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), FixedPicture);
+			counter++;
+
+		}
+		else
+			if(counter%2==0&&s==scroll2){			
+				JOptionPane.showMessageDialog(Generator, "Please choose a point from the first picture before choosing one from the second picture.", "Selection Error", JOptionPane.PLAIN_MESSAGE);
+				return;
+			}
+			else
+				if(counter%2!=0&&arg0.getSource()==scroll2){
+					P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), MovingPicture);
+					counter++;
+					scroll1.removeMouseListener(this);
+					scroll2.removeMouseListener(this);
+				}
+				else
+					if(counter%2!=0&&s==scroll1){
+						JOptionPane.showMessageDialog(Generator, "Please choose a point from the Second picture now instead of choosing one from the first picture.", "Selection Error", JOptionPane.PLAIN_MESSAGE);
+						return;
+					}
+
+		PointsforLandmarks[rposition][cposition] = P1.x;
+		PointsforLandmarks[rposition][++cposition] = P1.y;
+		DisplayedLandmarks.setText(null);
+		for(int i=0;i<PointsforLandmarks.length;i++){
+			for(int j=0;j<PointsforLandmarks[i].length;j++){
+				DisplayedLandmarks.setText(DisplayedLandmarks.getText() + PointsforLandmarks[i][j] +" ");
+			}
+			DisplayedLandmarks.setText(DisplayedLandmarks.getText()+"\n");
+		}
+		return;
+
+
+			
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 }
