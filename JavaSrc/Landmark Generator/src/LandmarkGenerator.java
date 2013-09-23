@@ -25,17 +25,59 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 	static int cposition,rposition;		
 	static int [][] PointsforLandmarks=new int[5][4];
 	static JEditorPane DisplayedLandmarks = new JEditorPane();
+	JPanel holdall=new JPanel();//make panel
+	static LandmarkGenerator Generator = new LandmarkGenerator();
 
-	
-	
-	public LandmarkGenerator(int r, int c){
+
+
+
+	public LandmarkGenerator(){
 		super("Landmark Generator");
-		
-		JPanel holdall=new JPanel();//make panel
+		this.add(holdall);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setVisible(true);
+		this.setSize(1600,1000);
+
+	}
+
+	public static void main(String[] args) throws IOException {
+
+
+
+		Generator.Initializer();
+		Generator.CreateLayout();
+
+
+	}
+
+	public void CreateLayout(){
 		GroupLayout layout = new GroupLayout(holdall);
 		holdall.setLayout(layout);
-		JPanel Landmarks = new JPanel();
-		Landmarks.setLayout(new GridLayout(2,1));
+		layout.setHorizontalGroup(
+				layout.createSequentialGroup()
+				.addComponent(scroll1,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+				.addComponent(scroll2,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+						.addComponent(makeLandmarks)
+						.addComponent(open)
+						.addComponent(open2)
+						.addComponent(CreateFile)
+						.addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+				);
+		layout.setVerticalGroup(
+				layout.createSequentialGroup()
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(scroll1)
+						.addComponent(scroll2)
+						.addComponent(DisplayedLandmarks, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 800, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+						.addComponent(open)
+						.addComponent(open2)
+						.addComponent(makeLandmarks)
+						.addComponent(CreateFile)
+				);
+	}
+
+	public void Initializer(){
 		makeLandmarks = new JButton("Create Landmarks");
 		open = new JButton("Open 1st Image");
 		open2 = new JButton("Open 2nd Image");
