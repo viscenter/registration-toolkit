@@ -15,7 +15,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 
-public class LandmarkGenerator extends JFrame implements ActionListener{
+public class LandmarkGenerator extends JFrame implements ActionListener, MouseListener{
 
 	static PicturePanel FixedPicture;
 	static PicturePanel MovingPicture;
