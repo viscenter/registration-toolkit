@@ -3,6 +3,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,10 +20,11 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 
 	static PicturePanel FixedPicture;
 	static PicturePanel MovingPicture;
-	static JButton open,open2,makeLandmarks,CreateFile;
+	static JButton open,open2,makeLandmarks,CreateFile, Bigger1, Bigger2, Smaller1, Smaller2;
 	static JScrollPane scroll1,scroll2;
 	int counter;
 	static int cposition,rposition;		
+	static double fscale, mscale;
 	static int [][] PointsforLandmarks=new int[5][4];
 	static JEditorPane DisplayedLandmarks = new JEditorPane();
 	JPanel holdall=new JPanel();//make panel
@@ -62,6 +64,10 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 						.addComponent(open)
 						.addComponent(open2)
 						.addComponent(CreateFile)
+						.addComponent(Bigger1)
+						.addComponent(Bigger2)
+						.addComponent(Smaller1)
+						.addComponent(Smaller2)
 						.addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
 				);
 		layout.setVerticalGroup(
@@ -69,12 +75,24 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
 						.addComponent(scroll1)
 						.addComponent(scroll2)
-						.addComponent(DisplayedLandmarks, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 800, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+						.addComponent(DisplayedLandmarks, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 600, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
 						.addComponent(open)
 						.addComponent(open2)
+						.addComponent(Bigger1)
+						.addComponent(Bigger2)
+						.addComponent(Smaller1)
+						.addComponent(Smaller2)
 						.addComponent(makeLandmarks)
 						.addComponent(CreateFile)
 				);
+		CreateFile.addActionListener(this);
+		open.addActionListener(this);
+		open2.addActionListener(this);
+		makeLandmarks.addActionListener(this);
+		Bigger1.addActionListener(this);
+		Bigger2.addActionListener(this);
+		Smaller1.addActionListener(this);
+		Smaller2.addActionListener(this);
 	}
 
 	public void Initializer(){
@@ -82,11 +100,13 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		open = new JButton("Open 1st Image");
 		open2 = new JButton("Open 2nd Image");
 		CreateFile = new JButton("Write to File");
-		CreateFile.addActionListener(this);
-		open.addActionListener(this);
-		open2.addActionListener(this);
-		makeLandmarks.addActionListener(this);
+		Bigger1 = new JButton("Zoom in 1st picture");
+		Bigger2 = new JButton("Zoom in 2nd picture");
+		Smaller1 = new JButton("Zoom out 1st picture");
+		Smaller2 = new JButton("Zoom out 2nd picture");
 		counter=0;
+		fscale = 1;
+		mscale = 1;
 		FixedPicture = new PicturePanel();
 		MovingPicture = new PicturePanel();
 		scroll1 = new JScrollPane(FixedPicture);//declares it
@@ -140,7 +160,24 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 			scroll2.addMouseListener(this);
 
 		}
-	}
+		if(e.getSource()==Bigger1){
+			fscale*=1.1;
+			FixedPicture.resize(fscale);
+		}
+			
+		if(e.getSource()==Bigger2){
+			mscale*=1.1;
+			MovingPicture.resize(mscale);}
+		if(e.getSource()==Smaller1){
+			fscale/=1.1;
+			FixedPicture.resize(fscale);
+		}
+			
+		if(e.getSource()==Smaller2){
+			mscale/=1.1;
+			MovingPicture.resize(mscale);
+			}
+		}
 
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
@@ -157,6 +194,8 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		
 		if(counter%2==0&&arg0.getSource()==scroll1){
 			P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), FixedPicture);
+			PointsforLandmarks[rposition][cposition] = (int) (P1.x/fscale);
+			PointsforLandmarks[rposition][++cposition] = (int) (P1.y/fscale);
 			counter++;
 
 		}
@@ -168,6 +207,8 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 			else
 				if(counter%2!=0&&arg0.getSource()==scroll2){
 					P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), MovingPicture);
+					PointsforLandmarks[rposition][cposition] = (int) (P1.x/mscale);
+					PointsforLandmarks[rposition][++cposition] = (int) (P1.y/mscale);
 					counter++;
 					scroll1.removeMouseListener(this);
 					scroll2.removeMouseListener(this);
@@ -178,8 +219,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 						return;
 					}
 
-		PointsforLandmarks[rposition][cposition] = P1.x;
-		PointsforLandmarks[rposition][++cposition] = P1.y;
+		
 		DisplayedLandmarks.setText(null);
 		for(int i=0;i<PointsforLandmarks.length;i++){
 			for(int j=0;j<PointsforLandmarks[i].length;j++){

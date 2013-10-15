@@ -8,9 +8,8 @@ import java.io.File;
 
 
 public class PicturePanel extends JPanel{
-	private int w;
-	private int h;
-	private BufferedImage img;//create the buffered image
+	public double w, h;
+	public BufferedImage img, original;//create the buffered image
 	private static final int TYPE = BufferedImage.TYPE_INT_ARGB_PRE;//set the type for later
 	
 	public PicturePanel (){
@@ -24,6 +23,7 @@ public class PicturePanel extends JPanel{
 	public void setImage(File input){//set the image
 		try{ 
 			img = ImageIO.read((input));
+			original=img;
 			MediaTracker mt = new MediaTracker(new Component(){});
 			mt.addImage(img, 0);
 			mt.waitForAll();
@@ -39,6 +39,16 @@ public class PicturePanel extends JPanel{
 	public void paint(Graphics g){
 		super.paint(g);
 		g.drawImage(img,0,0,null);
+	}
+	public void resize (double scale){
+		double newwidth = original.getWidth()*scale;
+		double newheight = original.getHeight()*scale;
+		BufferedImage resizedImage = new BufferedImage((int)newwidth, (int)newheight, original.getType());
+		Graphics2D g = resizedImage.createGraphics();
+		g.drawImage(original, 0, 0, (int)newwidth, (int)newheight, null);
+		img=resizedImage;
+		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
+		this.repaint();
 	}
 	
 }
