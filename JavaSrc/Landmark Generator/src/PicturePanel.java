@@ -97,9 +97,7 @@ else	if(maskcount==5){
 
 	    img.setRGB(0, 0, width, height, imagePixels, 0, width);
 	}
-	public BufferedImage getMask(){
-		return mask1;
-	}
+
 	public void resize (double scale){
 		double newwidth = original.getWidth()*scale;
 		double newheight = original.getHeight()*scale;

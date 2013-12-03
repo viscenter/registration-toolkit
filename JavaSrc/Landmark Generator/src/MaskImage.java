@@ -30,8 +30,8 @@ public void addCrosshair(int x,int y){
 		int starty = y - (cross.getHeight()/2);
 		this.setRGB(startx, starty, cross.getWidth(), cross.getHeight(), ARGBArray, 0, cross.getWidth());
 		*/
-	Color c = Color.WHITE;
-	int rgb = c.getRGB();
+	Color myWhite = new Color(255, 255, 255); // Color white
+	int rgb=myWhite.getRGB();
 	this.setRGB(x, y, rgb);
 	}
 }
