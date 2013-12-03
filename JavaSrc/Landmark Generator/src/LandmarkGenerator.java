@@ -64,10 +64,10 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 						.addComponent(open)
 						.addComponent(open2)
 						.addComponent(CreateFile)
-						.addComponent(Bigger1)
-						.addComponent(Bigger2)
-						.addComponent(Smaller1)
-						.addComponent(Smaller2)
+						.addComponent(Bigger1)//zoom in on FixedPicture
+						.addComponent(Bigger2)//zoom in on MovingPicture
+						.addComponent(Smaller1)//zoom out on FixedPicture
+						.addComponent(Smaller2)//zoom out on MovingPicture
 						.addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
 				);
 		layout.setVerticalGroup(
@@ -126,16 +126,20 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 			this.repaint();
 		}
 		if(e.getSource()==open2){
-			JFileChooser jfc = new JFileChooser();
-			int result = jfc.showOpenDialog(this);
+			JFileChooser jfc2 = new JFileChooser();
+			int result = jfc2.showOpenDialog(this);
 			if(result == JFileChooser.CANCEL_OPTION)
 				return;
-			File f = jfc.getSelectedFile();
+			File f = jfc2.getSelectedFile();
 			MovingPicture.setImage(f);
 			this.repaint();
 		}
 		if(e.getSource()==CreateFile){
-			String newfile = JOptionPane.showInputDialog(this  ,"File Name")+".txt";
+			JFileChooser jfc3 = new JFileChooser();
+			int result = jfc3.showSaveDialog(this);
+			if(result == JFileChooser.CANCEL_OPTION)
+				return;
+			File newfile = jfc3.getSelectedFile();
 			PrintWriter writer = null;
 			try {
 				writer = new PrintWriter(newfile, "UTF-8");
@@ -146,6 +150,72 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+			try {
+			    // retrieve image
+			    BufferedImage f1 = FixedPicture.getMask1();
+			    File outputfile = new File("FMask1.png");
+			    ImageIO.write(f1, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage f2 = FixedPicture.getMask2();
+			    File outputfile = new File("FMask2.png");
+			    ImageIO.write(f2, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage f3 = FixedPicture.getMask3();
+			    File outputfile = new File("FMask3.png");
+			    ImageIO.write(f3, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage f4 = FixedPicture.getMask4();
+			    File outputfile = new File("FMask4.png");
+			    ImageIO.write(f4, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage f5 = FixedPicture.getMask5();
+			    File outputfile = new File("fMask5.png");
+			    ImageIO.write(f5, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage m1 = MovingPicture.getMask1();
+			    File outputfile = new File("MMask1.png");
+			    ImageIO.write(m1, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage m2 = MovingPicture.getMask2();
+			    File outputfile = new File("MMask2.png");
+			    ImageIO.write(m2, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage m3 = MovingPicture.getMask3();
+			    File outputfile = new File("MMask3.png");
+			    ImageIO.write(m3, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage m4 = MovingPicture.getMask4();
+			    File outputfile = new File("MMask4.png");
+			    ImageIO.write(m4, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage m5 = MovingPicture.getMask5();
+			    File outputfile = new File("MMask5.png");
+			    ImageIO.write(m5, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
+			try {
+			    // retrieve image
+			    BufferedImage b = FixedPicture.img;
+			    File outputfile = new File("DisplayImage.png");
+			    ImageIO.write(b, "png", outputfile);
+			} catch(IOException e1){e1.printStackTrace();}
 			writer.print(DisplayedLandmarks.getText());
 			writer.close();
 		
@@ -163,6 +233,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		if(e.getSource()==Bigger1){
 			fscale*=1.1;
 			FixedPicture.resize(fscale);
+			
 		}
 			
 		if(e.getSource()==Bigger2){
@@ -196,6 +267,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 			P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), FixedPicture);
 			PointsforLandmarks[rposition][cposition] = (int) (P1.x/fscale);
 			PointsforLandmarks[rposition][++cposition] = (int) (P1.y/fscale);
+			FixedPicture.addcrosshair((int) (P1.x/fscale), (int) (P1.y/fscale));
 			counter++;
 
 		}
@@ -209,6 +281,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 					P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), MovingPicture);
 					PointsforLandmarks[rposition][cposition] = (int) (P1.x/mscale);
 					PointsforLandmarks[rposition][++cposition] = (int) (P1.y/mscale);
+					MovingPicture.addcrosshair((int) (P1.x/mscale), (int) (P1.y/mscale));
 					counter++;
 					scroll1.removeMouseListener(this);
 					scroll2.removeMouseListener(this);
