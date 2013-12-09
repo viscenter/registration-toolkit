@@ -10,7 +10,7 @@ import java.io.File;
 public class PicturePanel extends JPanel{
 	public int w, h,maskcount; 
 	private int panelwidth, panelheight;
-	private MaskImage mask1,mask2,mask3,mask4,mask5;
+	private int mask1,mask2,mask3,mask4,mask5;
 	public BufferedImage img, original;//create the buffered image
 	private static final int TYPE = BufferedImage.TYPE_INT_ARGB;//set the type for later
 	
@@ -36,51 +36,19 @@ public class PicturePanel extends JPanel{
 		catch(Exception ex){ex.printStackTrace();}
 		w = img.getWidth();
 		h = img.getHeight();
-		mask1 = new MaskImage(w,h);
-		mask2 = new MaskImage(w,h);
-		mask3 = new MaskImage(w,h);
-		mask4 = new MaskImage(w,h);
-		mask5 = new MaskImage(w,h);
+		
 		maskcount = 1;
 		
 		//pix = imgToArray();
 		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
 	}
-	public MaskImage getMask1(){return mask1;}
-	public MaskImage getMask2(){return mask2;}
-	public MaskImage getMask3(){return mask3;}
-	public MaskImage getMask4(){return mask4;}
-	public MaskImage getMask5(){return mask5;}
 	//override the paint function
 	public void paint(Graphics g){
 		super.paint(g);
 		g.drawImage(img,0,0,null);
 	}
-	public void addcrosshair(int x, int y){
-		if(maskcount==1){
-			mask1.addCrosshair(x,y);
-			maskcount++;
-		}
-else	if(maskcount==2){
-			mask2.addCrosshair(x,y);
-			maskcount++;
-	}
-else	if(maskcount==3){
-			mask3.addCrosshair(x,y);
-			maskcount++;
-}
-else	if(maskcount==4){
-			mask4.addCrosshair(x,y);
-			maskcount++;
-}
-else	if(maskcount==5){
-			mask5.addCrosshair(x,y);
-			maskcount++;
-}
-		applyMaskToAlpha();
-		this.repaint();
-	}
-	public void applyMaskToAlpha()
+	
+	/*public void applyMaskToAlpha()
 	{
 	    int width = img.getWidth();
 	    int height = img.getHeight();
@@ -97,7 +65,7 @@ else	if(maskcount==5){
 
 	    img.setRGB(0, 0, width, height, imagePixels, 0, width);
 	}
-
+*/
 	public void resize (double scale){
 		double newwidth = original.getWidth()*scale;
 		double newheight = original.getHeight()*scale;
@@ -107,6 +75,7 @@ else	if(maskcount==5){
 		img=resizedImage;
 		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
 		this.repaint();
+		
 	}
 	
 }
