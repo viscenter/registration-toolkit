@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename local variable &apos;file&apos; in &apos;PicturePanel.setImage(...)&apos; to &apos;input&apos;&#x0A;- Original project: &apos;Landmark Generator&apos;&#x0A;- Original element: &apos;PicturePanel.setImage(File).file&apos;&#x0A;- Renamed element: &apos;file&apos;&#x0A;- Update references to refactored element" description="Rename local variable &apos;file&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;{PicturePanel.java[PicturePanel~setImage~QFile;@file!753!761!758!761!QFile;!0!true" name="input" references="true" stamp="1377623068870" version="1.0"/>
-</session>
