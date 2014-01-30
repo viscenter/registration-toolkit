@@ -1,0 +1,7 @@
+examples/
+/JavaSrc/Landmark Generator/build/
+/JavaSrc/Landmark Generator/src/build/
+/JavaSrc/Landmark Generator/src/dist/
+.DS_Store
+*~
+*.class

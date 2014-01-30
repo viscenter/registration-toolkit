@@ -22,6 +22,7 @@ import javax.swing.plaf.SplitPaneUI;
 
 import java.awt.event.MouseAdapter;
 
+// Seth's UI
 
 public class LandmarkGenerator extends JFrame implements ActionListener, MouseListener{
   
