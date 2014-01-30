@@ -15,6 +15,7 @@ import java.util.Arrays;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+// Dylan's UI
 
 public class LandmarkGenerator extends JFrame implements ActionListener, MouseListener{
 
