@@ -16,7 +16,7 @@ public class test extends JFrame{
 	    JButton jButton3 = new javax.swing.JButton();
 		initComponents();
 	}
-	 void setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+	void setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
 
 	 private static void initComponents() {
 	
