@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/visdeveloper/visDev/registration-toolkit/LandmarkGenerator/src/Libraries/appframework-1.0.3.jar"/>
+	<classpathentry kind="lib" path="/Users/visdeveloper/visDev/registration-toolkit/LandmarkGenerator/src/Libraries/swing-layout-1.0.3.jar"/>
+	<classpathentry kind="lib" path="/Users/visdeveloper/visDev/registration-toolkit/LandmarkGenerator/src/Libraries/swing-worker-1.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
