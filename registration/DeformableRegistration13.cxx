@@ -242,7 +242,7 @@ int main( int argc, char *argv[] )
   optimizer->SetMinimumStepLength(  0.01 );
 
   optimizer->SetRelaxationFactor( 0.7 );
-  optimizer->SetNumberOfIterations( 200 );
+  optimizer->SetNumberOfIterations( 100 );
   // Software Guide : EndCodeSnippet
 
   // Create the Command observer and register it with the optimizer.
