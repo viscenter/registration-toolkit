@@ -11,8 +11,16 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Iterator;
 
+import javax.imageio.stream.ImageInputStream;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.metadata.IIOMetadata;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import javax.swing.*;
 
 // Dylan's UI
@@ -31,6 +39,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 	JPanel holdall=new JPanel();//make panel
 	static LandmarkGenerator Generator = new LandmarkGenerator();
 	int fpx1,fpy1,fpx2,fpy2,fpx3,fpy3,fpx4,fpy4,fpx5,fpy5,mpx1,mpy1,mpx2,mpy2,mpx3,mpy3,mpx4,mpy4,mpx5,mpy5;
+	int fixedDPIx, fixedDPIy, movingDPIx, movingDPIy;
 
 
 
@@ -115,7 +124,52 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		scroll2 = new JScrollPane(MovingPicture);//declares it
 	}
 
+	public static final double INCH_PER_MM = 25.45d;
 	
+	public double[] getDPI(File imageFile) throws IOException {
+
+        double[] dpi = new double[]{72, 72};
+
+        ImageInputStream iis = null;
+        try {
+            iis = ImageIO.createImageInputStream(imageFile);
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) {
+                throw new IOException("Bad format, no readers");
+            }
+            ImageReader reader = readers.next();
+            reader.setInput(iis);
+            IIOMetadata meta = reader.getImageMetadata(0);
+
+            Node root = meta.getAsTree("javax_imageio_1.0");
+            NodeList nl = root.getChildNodes();
+            float horizontalPixelSize = 0;
+            float verticalPixelSize = 0;
+            for (int index = 0; index < nl.getLength(); index++) {
+                Node child = nl.item(index);
+                if ("Dimension".equals(child.getNodeName())) {
+                    NodeList dnl = child.getChildNodes();
+                    for (int inner = 0; inner < dnl.getLength(); inner++) {
+                        child = dnl.item(inner);
+                        if ("HorizontalPixelSize".equals(child.getNodeName())) {
+                            horizontalPixelSize = Float.parseFloat(child.getAttributes().getNamedItem("value").getNodeValue());
+                        } else if ("VerticalPixelSize".equals(child.getNodeName())) {
+                            verticalPixelSize = Float.parseFloat(child.getAttributes().getNamedItem("value").getNodeValue());
+                        }
+                    }
+                }
+            }
+
+            dpi = new double[]{(INCH_PER_MM / horizontalPixelSize), (INCH_PER_MM / verticalPixelSize)};
+        } finally {
+            try {
+                iis.close();
+            } catch (Exception e) {
+            }
+        }
+
+        return dpi;
+    }
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
@@ -125,6 +179,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 				return;
 			File f = jfc.getSelectedFile();
 			FixedPicture.setImage(f);
+			// fixedDPIx = f.getDPIx();
 			this.repaint();
 		}
 		if(e.getSource()==open2){
