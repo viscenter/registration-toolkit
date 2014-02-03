@@ -39,7 +39,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 	JPanel holdall=new JPanel();//make panel
 	static LandmarkGenerator Generator = new LandmarkGenerator();
 	int fpx1,fpy1,fpx2,fpy2,fpx3,fpy3,fpx4,fpy4,fpx5,fpy5,mpx1,mpy1,mpx2,mpy2,mpx3,mpy3,mpx4,mpy4,mpx5,mpy5;
-	int fixedDPIx, fixedDPIy, movingDPIx, movingDPIy;
+	double fixedDPIx, fixedDPIy, movingDPIx, movingDPIy;
 
 
 
@@ -126,6 +126,8 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 
 	public static final double INCH_PER_MM = 25.45d;
 	
+	// taken from http://stackoverflow.com/questions/18460008/printable-prints-bufferedimage-with-incorrect-size
+	
 	public double[] getDPI(File imageFile) throws IOException {
 
         double[] dpi = new double[]{72, 72};
@@ -167,7 +169,8 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
             } catch (Exception e) {
             }
         }
-
+        System.out.println(dpi[0]);
+        System.out.println(dpi[1]);
         return dpi;
     }
 
@@ -179,7 +182,12 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 				return;
 			File f = jfc.getSelectedFile();
 			FixedPicture.setImage(f);
-			// fixedDPIx = f.getDPIx();
+			try {
+				fixedDPIx = getDPI(f)[0];
+				fixedDPIy = getDPI(f)[1];
+			} catch (IOException er) {
+				er.printStackTrace();
+			}
 			this.repaint();
 		}
 		if(e.getSource()==open2){
