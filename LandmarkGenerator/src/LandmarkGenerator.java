@@ -124,7 +124,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		scroll2 = new JScrollPane(MovingPicture);//declares it
 	}
 
-	public static final double INCH_PER_MM = 25.45d;
+	public static final double INCH_PER_MM = 25.4d;
 	
 	// taken from http://stackoverflow.com/questions/18460008/printable-prints-bufferedimage-with-incorrect-size
 	
@@ -150,10 +150,12 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
             for (int index = 0; index < nl.getLength(); index++) {
                 Node child = nl.item(index);
                 if ("Dimension".equals(child.getNodeName())) {
+                	System.out.println("good so far");
                     NodeList dnl = child.getChildNodes();
                     for (int inner = 0; inner < dnl.getLength(); inner++) {
                         child = dnl.item(inner);
                         if ("HorizontalPixelSize".equals(child.getNodeName())) {
+                        	System.out.println("found horizontal size");
                             horizontalPixelSize = Float.parseFloat(child.getAttributes().getNamedItem("value").getNodeValue());
                         } else if ("VerticalPixelSize".equals(child.getNodeName())) {
                             verticalPixelSize = Float.parseFloat(child.getAttributes().getNamedItem("value").getNodeValue());
