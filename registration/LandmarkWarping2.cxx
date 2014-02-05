@@ -33,6 +33,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkWarpImageFilter.h"
+#include "itkIndex.h"
 // Software Guide : EndCodeSnippet
 
 #include <fstream>
@@ -67,6 +68,8 @@ int main( int argc, char * argv[] )
 
   typedef   itk::ImageFileWriter< MovingImageType >  MovingWriterType;
 
+  typedef itk::Image<PixelType, Dimension> ImageType;
+
 
   FixedReaderType::Pointer fixedReader = FixedReaderType::New();
   fixedReader->SetFileName( argv[2] );
@@ -89,8 +92,19 @@ int main( int argc, char * argv[] )
   movingReader->SetFileName( argv[3] );
   movingWriter->SetFileName( argv[4] );
 
+  try
+    {
+    movingReader->Update();
+    }
+  catch( itk::ExceptionObject & excp )
+    {
+    std::cerr << "Exception thrown " << std::endl;
+    std::cerr << excp << std::endl;
+    return EXIT_FAILURE;
+    }
 
   FixedImageType::ConstPointer fixedImage = fixedReader->GetOutput();
+  MovingImageType::ConstPointer movingImage = movingReader->GetOutput();
 
 
   typedef itk::LandmarkDisplacementFieldSource<
@@ -113,30 +127,42 @@ int main( int argc, char * argv[] )
   LandmarkContainerType::Pointer sourceLandmarks = LandmarkContainerType::New();
   LandmarkContainerType::Pointer targetLandmarks = LandmarkContainerType::New();
 
-  LandmarkPointType sourcePoint;
-  LandmarkPointType targetPoint;
+  ImageType::IndexType sourceIndex, targetIndex;
+
+  LandmarkPointType sourcePoint, targetPoint;
 
   std::ifstream pointsFile;
   pointsFile.open( argv[1] );
 
   unsigned int pointId = 0;
 
-  pointsFile >> sourcePoint;
-  pointsFile >> targetPoint;
+  unsigned int sourceX, sourceY, targetX, targetY;
+
+  pointsFile >> sourceX >> sourceY >> targetX >> targetY;
+
+  sourceIndex[0] = sourceX;
+  sourceIndex[1] = sourceY;
+  targetIndex[0] = targetX;
+  targetIndex[1] = targetY;
 
   while( !pointsFile.fail() )
     {
+    fixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
+    movingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
+
     sourceLandmarks->InsertElement( pointId, sourcePoint );
     targetLandmarks->InsertElement( pointId, targetPoint );
     pointId++;
 
-    pointsFile >> sourcePoint;
-    pointsFile >> targetPoint;
+    pointsFile >> sourceX >> sourceY >> targetX >> targetY;
 
+    sourceIndex[0] = sourceX;
+    sourceIndex[1] = sourceY;
+    targetIndex[0] = targetX;
+    targetIndex[1] = targetY;
     }
 
   pointsFile.close();
-
 
   deformer->SetSourceLandmarks( sourceLandmarks.GetPointer() );
   deformer->SetTargetLandmarks( targetLandmarks.GetPointer() );
