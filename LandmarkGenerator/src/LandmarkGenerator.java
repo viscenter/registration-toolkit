@@ -9,10 +9,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
+
 import javax.swing.*;
 
 // Dylan's UI
@@ -31,6 +30,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 	JPanel holdall=new JPanel();//make panel
 	static LandmarkGenerator Generator = new LandmarkGenerator();
 	int fpx1,fpy1,fpx2,fpy2,fpx3,fpy3,fpx4,fpy4,fpx5,fpy5,mpx1,mpy1,mpx2,mpy2,mpx3,mpy3,mpx4,mpy4,mpx5,mpy5;
+	double fixedDPIx, fixedDPIy, movingDPIx, movingDPIy;
 
 
 
@@ -114,8 +114,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		scroll1 = new JScrollPane(FixedPicture);//declares it
 		scroll2 = new JScrollPane(MovingPicture);//declares it
 	}
-
-	
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
