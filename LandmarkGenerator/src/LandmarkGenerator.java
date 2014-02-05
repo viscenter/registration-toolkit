@@ -9,17 +9,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Iterator;
 
-import javax.imageio.stream.ImageInputStream;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.metadata.IIOMetadata;
-
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.swing.*;
 
@@ -124,58 +115,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		scroll2 = new JScrollPane(MovingPicture);//declares it
 	}
 
-	public static final double INCH_PER_MM = 25.4d;
-	
-	// taken from http://stackoverflow.com/questions/18460008/printable-prints-bufferedimage-with-incorrect-size
-	
-	public double[] getDPI(File imageFile) throws IOException {
-
-        double[] dpi = new double[]{72, 72};
-
-        ImageInputStream iis = null;
-        try {
-            iis = ImageIO.createImageInputStream(imageFile);
-            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
-            if (!readers.hasNext()) {
-                throw new IOException("Bad format, no readers");
-            }
-            ImageReader reader = readers.next();
-            reader.setInput(iis);
-            IIOMetadata meta = reader.getImageMetadata(0);
-
-            Node root = meta.getAsTree("javax_imageio_1.0");
-            NodeList nl = root.getChildNodes();
-            float horizontalPixelSize = 0;
-            float verticalPixelSize = 0;
-            for (int index = 0; index < nl.getLength(); index++) {
-                Node child = nl.item(index);
-                if ("Dimension".equals(child.getNodeName())) {
-                	System.out.println("good so far");
-                    NodeList dnl = child.getChildNodes();
-                    for (int inner = 0; inner < dnl.getLength(); inner++) {
-                        child = dnl.item(inner);
-                        if ("HorizontalPixelSize".equals(child.getNodeName())) {
-                        	System.out.println("found horizontal size");
-                            horizontalPixelSize = Float.parseFloat(child.getAttributes().getNamedItem("value").getNodeValue());
-                        } else if ("VerticalPixelSize".equals(child.getNodeName())) {
-                            verticalPixelSize = Float.parseFloat(child.getAttributes().getNamedItem("value").getNodeValue());
-                        }
-                    }
-                }
-            }
-
-            dpi = new double[]{(INCH_PER_MM / horizontalPixelSize), (INCH_PER_MM / verticalPixelSize)};
-        } finally {
-            try {
-                iis.close();
-            } catch (Exception e) {
-            }
-        }
-        System.out.println(dpi[0]);
-        System.out.println(dpi[1]);
-        return dpi;
-    }
-
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
 			JFileChooser jfc = new JFileChooser();
@@ -184,12 +123,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 				return;
 			File f = jfc.getSelectedFile();
 			FixedPicture.setImage(f);
-			try {
-				fixedDPIx = getDPI(f)[0];
-				fixedDPIy = getDPI(f)[1];
-			} catch (IOException er) {
-				er.printStackTrace();
-			}
 			this.repaint();
 		}
 		if(e.getSource()==open2){
