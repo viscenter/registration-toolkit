@@ -42,7 +42,7 @@
 int main( int argc, char * argv[] )
 {
 
-  if( argc < 3 )
+  if( argc < 5 )
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
@@ -149,6 +149,9 @@ int main( int argc, char * argv[] )
     {
     fixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
     movingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
+
+    // Print the physical points to stdout
+    // std::cout << sourcePoint << targetPoint << std::endl;
 
     sourceLandmarks->InsertElement( pointId, sourcePoint );
     targetLandmarks->InsertElement( pointId, targetPoint );
