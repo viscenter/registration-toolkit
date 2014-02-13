@@ -291,6 +291,7 @@ int main(int argc, char* argv[])
   // necessary to avoid "input images do not occupy the same physical space" error
   // not necessary in gray image for some reason
   // with color images this gives the desired output colored image
+  // TODO make it just use one warper and interpolator etc
   colorWarper->SetCoordinateTolerance(10);
 
   colorWarper->SetOutputSpacing( displacementField->GetSpacing() );
