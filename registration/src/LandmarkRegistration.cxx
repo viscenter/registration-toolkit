@@ -101,20 +101,19 @@ int main(int argc, char* argv[])
 
   typedef itk::Image< ColorPixelType, ImageDimension > ColorImageType;
 
-  typedef itk::CastImageFilter<
-                        ColorImageType,
-                        ColorImageType > CastFilterType;
-
   typedef itk::ImageFileReader< ColorImageType >  ColorReaderType;
   typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
 
 
   GrayReaderType::Pointer grayFixedReader = GrayReaderType::New();
+  ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
   grayFixedReader->SetFileName( argv[2] );
+  colorFixedReader->SetFileName( argv[2] );
 
   try
     {
     grayFixedReader->Update();
+    colorFixedReader->Update();
     }
   catch( itk::ExceptionObject & excp )
     {
@@ -127,7 +126,7 @@ int main(int argc, char* argv[])
   GrayWriterType::Pointer grayMovingWriter = GrayWriterType::New();
 
   grayMovingReader->SetFileName( argv[3] );
-  grayMovingWriter->SetFileName( argv[4] );
+  // grayMovingWriter->SetFileName( argv[4] );
 
   try
     {
@@ -141,6 +140,7 @@ int main(int argc, char* argv[])
     }
 
   GrayImageType::ConstPointer grayFixedImage = grayFixedReader->GetOutput();
+  ColorImageType::ConstPointer colorFixedImage = colorFixedReader->GetOutput();
   GrayImageType::ConstPointer grayMovingImage = grayMovingReader->GetOutput();
 
   ColorReaderType::Pointer colorMovingReader = ColorReaderType::New();
@@ -264,16 +264,16 @@ int main(int argc, char* argv[])
 
   grayMovingWriter->SetInput( grayWarper->GetOutput() );
 
-  try
-    {
-    grayMovingWriter->Update();
-    }
-  catch( itk::ExceptionObject & excp )
-    {
-    std::cerr << "Exception thrown " << std::endl;
-    std::cerr << excp << std::endl;
-    return EXIT_FAILURE;
-    }
+  // try
+  //   {
+  //   grayMovingWriter->Update();
+  //   }
+  // catch( itk::ExceptionObject & excp )
+  //   {
+  //   std::cerr << "Exception thrown " << std::endl;
+  //   std::cerr << excp << std::endl;
+  //   return EXIT_FAILURE;
+  //   }
 
   typedef itk::WarpVectorImageFilter< ColorImageType,
                                 ColorImageType,
@@ -313,4 +313,207 @@ int main(int argc, char* argv[])
     std::cerr << excp << std::endl;
     return EXIT_FAILURE;
     }
+
+  // end landmark warping
+  std::cout << "Finished Landmark Warping" << std::endl;
+  // proceed to registration
+
+  const unsigned int SpaceDimension = ImageDimension;
+  const unsigned int SplineOrder = 3;
+  typedef double CoordinateRepType;
+
+  typedef itk::BSplineTransform<
+                            CoordinateRepType,
+                            SpaceDimension,
+                            SplineOrder >     TransformType;
+
+  typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
+
+
+  typedef itk::MattesMutualInformationImageToImageMetric<
+                                    GrayImageType,
+                                    GrayImageType >    MetricType;
+
+  typedef itk::ImageRegistrationMethod<
+                                    GrayImageType,
+                                    GrayImageType >    RegistrationType;
+
+  MetricType::Pointer         metric        = MetricType::New();
+  OptimizerType::Pointer      optimizer     = OptimizerType::New();
+  RegistrationType::Pointer   registration  = RegistrationType::New();
+
+
+  registration->SetMetric(        metric        );
+  registration->SetOptimizer(     optimizer     );
+  registration->SetInterpolator(  grayInterpolator );
+
+
+  TransformType::Pointer  transform = TransformType::New();
+  registration->SetTransform( transform );
+
+  // the gray image is used for registration calculations
+  // the resulting transform is then applied to the color image
+
+  // fixedImage carries over from landmark warping
+  registration->SetFixedImage(  grayFixedImage   );
+  // carry warper from landmark warping into registration process
+  registration->SetMovingImage(   grayMovingWriter->GetInput()   );
+
+  grayFixedReader->Update();
+
+  GrayImageType::RegionType grayFixedRegion = grayFixedImage->GetBufferedRegion();
+
+  registration->SetFixedImageRegion( grayFixedRegion );
+
+  unsigned int numberOfGridNodesInOneDimension = 7;
+
+  TransformType::PhysicalDimensionsType   grayFixedPhysicalDimensions;
+  TransformType::MeshSizeType             grayMeshSize;
+  TransformType::OriginType               grayFixedOrigin;
+
+  for( unsigned int i=0; i< SpaceDimension; i++ )
+    {
+    grayFixedOrigin[i] = grayFixedImage->GetOrigin()[i];
+    grayFixedPhysicalDimensions[i] = grayFixedImage->GetSpacing()[i] *
+      static_cast<double>(
+      grayFixedImage->GetLargestPossibleRegion().GetSize()[i] - 1 );
+    }
+  grayMeshSize.Fill( numberOfGridNodesInOneDimension - SplineOrder );
+
+  transform->SetTransformDomainOrigin( grayFixedOrigin );
+  transform->SetTransformDomainPhysicalDimensions(
+    grayFixedPhysicalDimensions );
+  transform->SetTransformDomainMeshSize( grayMeshSize );
+  transform->SetTransformDomainDirection( grayFixedImage->GetDirection() );
+
+  typedef TransformType::ParametersType     ParametersType;
+
+  const unsigned int numberOfParameters =
+               transform->GetNumberOfParameters();
+
+  ParametersType parameters( numberOfParameters );
+
+  parameters.Fill( 0.0 );
+
+  transform->SetParameters( parameters );
+
+  registration->SetInitialTransformParameters( transform->GetParameters() );
+
+  optimizer->SetMaximumStepLength( 10.0   );
+  optimizer->SetMinimumStepLength(  0.01 );
+
+  optimizer->SetRelaxationFactor( 0.7 );
+  optimizer->SetNumberOfIterations( atoi(argv[5]) ); // TODO change this number
+
+  // Create the Command observer and register it with the optimizer.
+  //
+  CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
+  optimizer->AddObserver( itk::IterationEvent(), observer );
+
+  metric->SetNumberOfHistogramBins( 50 );
+
+  const unsigned int numberOfSamples =
+    static_cast<unsigned int>( grayFixedRegion.GetNumberOfPixels() * 60.0 / 100.0 );
+
+  metric->SetNumberOfSpatialSamples( numberOfSamples );
+
+  // Add a time probe
+  itk::TimeProbesCollectorBase chronometer;
+  itk::MemoryProbesCollectorBase memorymeter;
+
+  std::cout << std::endl << "Starting Registration" << std::endl;
+
+  try
+    {
+    memorymeter.Start( "Registration" );
+    chronometer.Start( "Registration" );
+
+    registration->Update();
+
+    chronometer.Stop( "Registration" );
+    memorymeter.Stop( "Registration" );
+
+    std::cout << "Optimizer stop condition = "
+              << registration->GetOptimizer()->GetStopConditionDescription()
+              << std::endl;
+    }
+  catch( itk::ExceptionObject & err )
+    {
+    std::cerr << "ExceptionObject caught !" << std::endl;
+    std::cerr << err << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  OptimizerType::ParametersType finalParameters =
+                    registration->GetLastTransformParameters();
+
+
+  // Report the time and memory taken by the registration
+  chronometer.Report( std::cout );
+  memorymeter.Report( std::cout );
+
+  transform->SetParameters( finalParameters );
+
+  // ColorWriterType::Pointer colorMovingWriter = ColorWriterType::New();
+
+  // colorMovingWriter->SetFileName(argv[4]);
+  // // change this to take a reader as input or something that makes sense TODO
+  // // colorMovingWriter->SetFileName(argv[3]);
+
+  // // colorMovingWriter->Update();
+
+  typedef itk::ResampleImageFilter<
+                            ColorImageType,
+                            ColorImageType >    ResampleFilterType;
+
+  typedef itk::CastImageFilter<
+                        ColorImageType,
+                        ColorImageType > CastFilterType;
+
+  ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+  resample->SetTransform( transform );
+
+  resample->SetInput( colorMovingWriter->GetInput() );
+
+  resample->SetSize(    colorFixedImage->GetLargestPossibleRegion().GetSize() );
+  resample->SetOutputOrigin(  colorFixedImage->GetOrigin() );
+  resample->SetOutputSpacing( colorFixedImage->GetSpacing() );
+  resample->SetOutputDirection( colorFixedImage->GetDirection() );
+
+  ColorPixelType defaultPixel;
+  defaultPixel[0] = 0;
+  defaultPixel[1] = 0;
+  defaultPixel[2] = 0;
+
+  resample->SetDefaultPixelValue( defaultPixel );
+
+  CastFilterType::Pointer  caster =  CastFilterType::New();
+
+  caster->SetInput( resample->GetOutput() );
+  colorMovingWriter->SetInput( caster->GetOutput()   );
+
+  try
+    {
+    colorMovingWriter->Update();
+    }
+  catch( itk::ExceptionObject & err )
+    {
+    std::cerr << "ExceptionObject caught !" << std::endl;
+    std::cerr << err << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::ofstream parametersFile;
+  parametersFile.open( "parameters.txt" );
+  parametersFile << finalParameters << std::endl;
+  parametersFile.close();
+
+  // end registration
+  std::cout << "Finished Registration" << std::endl;
+
+  // read in deformation field file and apply to color image
+  // TODO
+
+  return EXIT_SUCCESS;
 }
