@@ -28,6 +28,8 @@
 
 #include "itkRGBPixel.h"
 
+#include "itkCompositeTransform.h"
+
 #include <fstream>
 
 //  The following section of code implements a Command observer
@@ -84,6 +86,9 @@ int main(int argc, char* argv[])
   const     unsigned int   ImageDimension = 2;
   typedef   float          VectorComponentType;
 
+  typedef itk::CompositeTransform< double, ImageDimension > CompositeTransformType;
+  typedef itk::KernelTransform< double, ImageDimension > KernelTransformType;
+
   typedef   itk::Vector< VectorComponentType, ImageDimension >    VectorType;
 
   typedef   itk::Image< VectorType,  ImageDimension >   DisplacementFieldType;
@@ -104,6 +109,7 @@ int main(int argc, char* argv[])
   typedef itk::ImageFileReader< ColorImageType >  ColorReaderType;
   typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
 
+  CompositeTransformType::Pointer compositeTransform = CompositeTransformType::New();
 
   GrayReaderType::Pointer grayFixedReader = GrayReaderType::New();
   ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
@@ -126,7 +132,6 @@ int main(int argc, char* argv[])
   GrayWriterType::Pointer grayMovingWriter = GrayWriterType::New();
 
   grayMovingReader->SetFileName( argv[3] );
-  // grayMovingWriter->SetFileName( argv[4] );
 
   try
     {
@@ -239,6 +244,9 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
+  KernelTransformType::Pointer kernelTransform = deformer->GetModifiableKernelTransform();
+  compositeTransform->AddTransform(kernelTransform);
+
   DisplacementFieldType::ConstPointer displacementField = deformer->GetOutput();
 
   typedef itk::WarpImageFilter< GrayImageType,
@@ -263,17 +271,6 @@ int main(int argc, char* argv[])
   grayWarper->SetInput( grayMovingReader->GetOutput() );
 
   grayMovingWriter->SetInput( grayWarper->GetOutput() );
-
-  // try
-  //   {
-  //   grayMovingWriter->Update();
-  //   }
-  // catch( itk::ExceptionObject & excp )
-  //   {
-  //   std::cerr << "Exception thrown " << std::endl;
-  //   std::cerr << excp << std::endl;
-  //   return EXIT_FAILURE;
-  //   }
 
   typedef itk::WarpVectorImageFilter< ColorImageType,
                                 ColorImageType,
@@ -444,7 +441,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
-  OptimizerType::ParametersType finalParameters =
+  OptimizerType::ParametersType registrationParameters =
                     registration->GetLastTransformParameters();
 
 
@@ -452,15 +449,9 @@ int main(int argc, char* argv[])
   chronometer.Report( std::cout );
   memorymeter.Report( std::cout );
 
-  transform->SetParameters( finalParameters );
+  transform->SetParameters( registrationParameters );
 
-  // ColorWriterType::Pointer colorMovingWriter = ColorWriterType::New();
-
-  // colorMovingWriter->SetFileName(argv[4]);
-  // // change this to take a reader as input or something that makes sense TODO
-  // // colorMovingWriter->SetFileName(argv[3]);
-
-  // // colorMovingWriter->Update();
+  compositeTransform->AddTransform(transform);
 
   typedef itk::ResampleImageFilter<
                             ColorImageType,
@@ -504,6 +495,9 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
+  CompositeTransformType::ParametersType finalParameters =
+                    compositeTransform->GetParameters();
+
   std::ofstream parametersFile;
   parametersFile.open( "parameters.txt" );
   parametersFile << finalParameters << std::endl;
@@ -511,9 +505,6 @@ int main(int argc, char* argv[])
 
   // end registration
   std::cout << "Finished Registration" << std::endl;
-
-  // read in deformation field file and apply to color image
-  // TODO
 
   return EXIT_SUCCESS;
 }
