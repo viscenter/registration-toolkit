@@ -19,9 +19,6 @@
 #include "itkBSplineTransform.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
 
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-
 #include "itkResampleImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkSquaredDifferenceImageFilter.h"
@@ -88,6 +85,7 @@ int main(int argc, char* argv[])
 
   typedef itk::CompositeTransform< double, ImageDimension > CompositeTransformType;
   typedef itk::KernelTransform< double, ImageDimension > KernelTransformType;
+  typedef KernelTransformType::ParametersType KernelParametersType;
 
   typedef   itk::Vector< VectorComponentType, ImageDimension >    VectorType;
 
@@ -322,7 +320,7 @@ int main(int argc, char* argv[])
   typedef itk::BSplineTransform<
                             CoordinateRepType,
                             SpaceDimension,
-                            SplineOrder >     TransformType;
+                            SplineOrder >     BSplineTransformType;
 
   typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
 
@@ -345,7 +343,7 @@ int main(int argc, char* argv[])
   registration->SetInterpolator(  grayInterpolator );
 
 
-  TransformType::Pointer  transform = TransformType::New();
+  BSplineTransformType::Pointer  transform = BSplineTransformType::New();
   registration->SetTransform( transform );
 
   // the gray image is used for registration calculations
@@ -364,9 +362,9 @@ int main(int argc, char* argv[])
 
   unsigned int numberOfGridNodesInOneDimension = 7;
 
-  TransformType::PhysicalDimensionsType   grayFixedPhysicalDimensions;
-  TransformType::MeshSizeType             grayMeshSize;
-  TransformType::OriginType               grayFixedOrigin;
+  BSplineTransformType::PhysicalDimensionsType   grayFixedPhysicalDimensions;
+  BSplineTransformType::MeshSizeType             grayMeshSize;
+  BSplineTransformType::OriginType               grayFixedOrigin;
 
   for( unsigned int i=0; i< SpaceDimension; i++ )
     {
@@ -383,12 +381,12 @@ int main(int argc, char* argv[])
   transform->SetTransformDomainMeshSize( grayMeshSize );
   transform->SetTransformDomainDirection( grayFixedImage->GetDirection() );
 
-  typedef TransformType::ParametersType     ParametersType;
+  typedef BSplineTransformType::ParametersType     BSplineParametersType;
 
   const unsigned int numberOfParameters =
                transform->GetNumberOfParameters();
 
-  ParametersType parameters( numberOfParameters );
+  BSplineParametersType parameters( numberOfParameters );
 
   parameters.Fill( 0.0 );
 
@@ -441,7 +439,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
-  OptimizerType::ParametersType registrationParameters =
+  BSplineParametersType registrationParameters =
                     registration->GetLastTransformParameters();
 
 
@@ -498,13 +496,17 @@ int main(int argc, char* argv[])
   CompositeTransformType::ParametersType finalParameters =
                     compositeTransform->GetParameters();
 
+  // finalParameters is returned by reference and for some reason if you
+  // try to print it directly it causes a malloc error at program termination
+  CompositeTransformType::ParametersType printParameters = finalParameters;
+
   std::ofstream parametersFile;
   parametersFile.open( "parameters.txt" );
-  parametersFile << finalParameters << std::endl;
+  parametersFile << printParameters << std::endl;
   parametersFile.close();
 
   // end registration
-  std::cout << "Finished Registration" << std::endl;
+  std::cout << "Finished Registration" << std::endl << std::endl;
 
   return EXIT_SUCCESS;
 }
