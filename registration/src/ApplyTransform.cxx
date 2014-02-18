@@ -10,6 +10,10 @@
 #include "itkCastImageFilter.h"
 #include "itkTransformFileReader.h"
 #include "itkTransform.h"
+#include "itkTransformFactoryBase.h"
+#include "itkTransformFactory.h"
+#include "itkThinPlateSplineKernelTransform.h"
+#include "itkBSplineTransform.h"
 
 int main(int argc, char* argv[])
 {
@@ -17,8 +21,8 @@ int main(int argc, char* argv[])
     {
         std::cerr << "Missing Parameters " << std::endl;
         std::cerr << "Usage: " << argv[0];
-        std::cerr << " transformationFile fixedImage ";
-        std::cerr << "movingImage" << std::endl;
+        std::cerr << " transformationFile movingImage ";
+        std::cerr << "outputImage" << std::endl;
 
         return EXIT_FAILURE;
     }
@@ -37,9 +41,14 @@ int main(int argc, char* argv[])
     typedef itk::ResampleImageFilter<ImageType, ImageType> ResampleFilterType;
     typedef itk::CastImageFilter<ImageType, ImageType> CastFilterType;
 
-    itk::TransformFileReaderTemplate<double>::Pointer transformReader = 
-        itk::TransformFileReaderTemplate<double>::New();
+    itk::TransformFileReaderTemplate<double>::Pointer transformReader = itk::TransformFileReaderTemplate<double>::New();
     transformReader->SetFileName(argv[1]);
+
+    itk::TransformFactoryBase::RegisterDefaultTransforms();
+
+    typedef itk::ThinPlateSplineKernelTransform<double,ImageDimension> ThinPlateSplineKernelTransformType;
+    typedef itk::BSplineTransform<double, ImageDimension> BSplineTransformType;
+    itk::TransformFactory<ThinPlateSplineKernelTransformType>::RegisterTransform();
 
     try
         {
@@ -47,7 +56,7 @@ int main(int argc, char* argv[])
         }
     catch( itk::ExceptionObject & excp )
         {
-        std::cerr << "Exception thrown " << std::endl;
+        std::cerr << "Transform Reader exception thrown " << std::endl;
         std::cerr << excp << std::endl;
         return EXIT_FAILURE;
         }
@@ -69,11 +78,11 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
         }
 
-    ImageType::ConstPointer fixedImage = reader->GetOutput();
+    ImageType::ConstPointer movingImage = reader->GetOutput();
 
     CompositeTransformType::Pointer transform = CompositeTransformType::New();
-    itk::TransformFileReaderTemplate<double>::TransformListType transformList = 
-        *(transformReader->GetTransformList());
+    // itk::TransformFileReader::TransformListType transformList = 
+    //     *(transformReader->GetTransformList());
 
     // itk::TransformFileReaderTemplate<double>::TransformListType::iterator iterator;
     // for(iterator = transformList.begin(); iterator != transformList.end(); ++iterator)
@@ -81,7 +90,26 @@ int main(int argc, char* argv[])
     //     transform->AddTransform(*iterator);
     // }
 
-    std::cout << *(transformList.begin()) << std::endl;
+    typedef itk::TransformFileReader::TransformListType * TransformListType;
+    TransformListType transforms = transformReader->GetTransformList();
+    std::cout << "Number of transforms = " << transforms->size() << std::endl;
+
+    itk::TransformFileReader::TransformListType::const_iterator it = transforms->begin();
+    if(!strcmp((*it)->GetNameOfClass(),"ThinPlateSplineKernelTransform"))
+        {
+        ThinPlateSplineKernelTransformType::Pointer thinPlate_read = static_cast<ThinPlateSplineKernelTransformType*>((*it).GetPointer());
+        thinPlate_read->Print(std::cout);
+        }
+
+    it++;
+
+    if(!strcmp((*it)->GetNameOfClass(),"BSplineTransform"))
+        {
+        BSplineTransformType::Pointer bspline_read = static_cast<BSplineTransformType*>((*it).GetPointer());
+        bspline_read->Print(std::cout);
+        }
+
+    // std::cout << *(transformReader->GetTransformList()->begin()) << std::endl;
 
     // std::ifstream parametersFile;
     // parametersFile.open(argv[1]);
@@ -92,8 +120,8 @@ int main(int argc, char* argv[])
 
     ResampleFilterType::Pointer resample = ResampleFilterType::New();
     resample->SetTransform(transform);
+    resample->SetInput(movingImage);
 
-    resample->SetInput(writer->GetInput());
 
     PixelType defaultPixel;
     defaultPixel[0] = 0;
@@ -112,7 +140,7 @@ int main(int argc, char* argv[])
     }
     catch(itk::ExceptionObject & err)
     {
-        std::cerr << "ExceptionObject caught!" << std::endl;
+        std::cerr << "Image writer exception caught!" << std::endl;
         std::cerr << err << std::endl;
         return EXIT_FAILURE;
     }

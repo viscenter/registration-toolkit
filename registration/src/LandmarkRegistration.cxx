@@ -27,6 +27,8 @@
 
 #include "itkCompositeTransform.h"
 
+#include "itkTransformFileWriter.h"
+
 #include <fstream>
 
 //  The following section of code implements a Command observer
@@ -493,17 +495,23 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
-  CompositeTransformType::ParametersType finalParameters =
-                    compositeTransform->GetParameters();
+  // CompositeTransformType::ParametersType finalParameters =
+  //                   compositeTransform->GetParameters();
 
   // finalParameters is returned by reference and for some reason if you
   // try to print it directly it causes a malloc error at program termination
-  CompositeTransformType::ParametersType printParameters = finalParameters;
+  // CompositeTransformType::ParametersType printParameters = finalParameters;
 
-  std::ofstream parametersFile;
-  parametersFile.open( "parameters.txt" );
-  parametersFile << printParameters << std::endl;
-  parametersFile.close();
+  // std::ofstream parametersFile;
+  // parametersFile.open( "parameters.txt" );
+  // parametersFile << printParameters << std::endl;
+  // parametersFile.close();
+
+  itk::TransformFileWriter::Pointer transformWriter = itk::TransformFileWriter::New();
+  transformWriter->SetFileName("transform.tfm");
+  transformWriter->SetInput(kernelTransform);
+  transformWriter->AddTransform(transform);
+  transformWriter->Update();
 
   // end registration
   std::cout << "Finished Registration" << std::endl << std::endl;
