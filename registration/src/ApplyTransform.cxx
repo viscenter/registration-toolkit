@@ -13,7 +13,6 @@
 #include "itkTransform.h"
 #include "itkTransformFactoryBase.h"
 #include "itkTransformFactory.h"
-#include "itkKernelTransform.h"
 #include "itkThinPlateSplineKernelTransform.h"
 #include "itkBSplineTransform.h"
 
@@ -48,9 +47,9 @@ int main(int argc, char* argv[])
 
     itk::TransformFactoryBase::RegisterDefaultTransforms();
 
-    typedef itk::KernelTransform<double,ImageDimension> KernelTransformType;
+    typedef itk::ThinPlateSplineKernelTransform<double,ImageDimension> ThinPlateSplineKernelTransformType;
     typedef itk::BSplineTransform<double, ImageDimension> BSplineTransformType;
-    itk::TransformFactory<KernelTransformType>::RegisterTransform();
+    itk::TransformFactory<ThinPlateSplineKernelTransformType>::RegisterTransform();
 
     try
         {
@@ -92,18 +91,17 @@ int main(int argc, char* argv[])
     //     transform->AddTransform(*iterator);
     // }
 
-
     typedef itk::TransformFileReader::TransformListType * TransformListType;
     TransformListType transforms = transformReader->GetTransformList();
     std::cout << "Number of transforms = " << transforms->size() << std::endl;
 
     itk::TransformFileReader::TransformListType::const_iterator it = transforms->begin();
     
-    KernelTransformType::Pointer kernel_read;
-    if(!strcmp((*it)->GetNameOfClass(),"KernelTransform"))
+    ThinPlateSplineKernelTransformType::Pointer thinPlate_read;
+    if(!strcmp((*it)->GetNameOfClass(),"ThinPlateSplineKernelTransform"))
         {
-        kernel_read = static_cast<KernelTransformType*>((*it).GetPointer());
-        kernel_read->Print(std::cout);
+        thinPlate_read = static_cast<ThinPlateSplineKernelTransformType*>((*it).GetPointer());
+        thinPlate_read->Print(std::cout);
         }
 
     it++;
@@ -115,7 +113,7 @@ int main(int argc, char* argv[])
         bspline_read->Print(std::cout);
         }
 
-    transform->AddTransform(kernel_read);
+    transform->AddTransform(thinPlate_read);
     transform->AddTransform(bspline_read);
 
     // std::cout << *(transformReader->GetTransformList()->begin()) << std::endl;
@@ -180,7 +178,6 @@ int main(int argc, char* argv[])
     caster->SetInput(resample->GetOutput());
     writer->SetInput(caster->GetOutput());
 
-    std::cout << "good************************************:" << std::endl;
     try
     {
         writer->Update();
