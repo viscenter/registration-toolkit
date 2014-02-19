@@ -30,6 +30,8 @@
 #include "itkTransformFileWriter.h"
 
 #include <fstream>
+#include <string>
+#include <iostream>
 
 //  The following section of code implements a Command observer
 //  used to monitor the evolution of the registration process.
@@ -494,27 +496,46 @@ int main(int argc, char* argv[])
     std::cerr << err << std::endl;
     return EXIT_FAILURE;
     }
+  
+  // end registration
+  std::cout << "Finished Registration" << std::endl << std::endl;
 
-  // CompositeTransformType::ParametersType finalParameters =
-  //                   compositeTransform->GetParameters();
+  std::cout << "Writing Transformation to File" << std::endl;
 
-  // finalParameters is returned by reference and for some reason if you
-  // try to print it directly it causes a malloc error at program termination
-  // CompositeTransformType::ParametersType printParameters = finalParameters;
-
-  // std::ofstream parametersFile;
-  // parametersFile.open( "parameters.txt" );
-  // parametersFile << printParameters << std::endl;
-  // parametersFile.close();
+  std::string transformFileName = "transform.tfm";
 
   itk::TransformFileWriter::Pointer transformWriter = itk::TransformFileWriter::New();
-  transformWriter->SetFileName("transform.tfm");
+  transformWriter->SetFileName(transformFileName);
   transformWriter->SetInput(kernelTransform);
   transformWriter->AddTransform(transform);
   transformWriter->Update();
 
-  // end registration
-  std::cout << "Finished Registration" << std::endl << std::endl;
+  std::ofstream transformFile;
+  transformFile.open(transformFileName, std::ios::app);
+  transformFile << std::endl;
+  transformFile << "#Fixed image parameters added by UKY Vis Center" 
+    << std::endl;
+  transformFile << "#Size " 
+    << colorFixedImage->GetLargestPossibleRegion().GetSize()[0]
+    << " " << colorFixedImage->GetLargestPossibleRegion().GetSize()[1] 
+    << std::endl;
+  transformFile << "#Origin " 
+    << colorFixedImage->GetOrigin()[0]
+    << " " << colorFixedImage->GetOrigin()[1] 
+    << std::endl;
+  transformFile << "#Spacing " 
+    << colorFixedImage->GetSpacing()[0]
+    << " " << colorFixedImage->GetSpacing()[1] 
+    << std::endl;
+  transformFile << "#Direction " 
+    << colorFixedImage->GetDirection()[0][0]
+    << " " << colorFixedImage->GetDirection()[0][1]
+    << " " << colorFixedImage->GetDirection()[1][0]
+    << " " << colorFixedImage->GetDirection()[1][1] 
+    << std::endl;
+
+  std::cout << "Finished Writing Transformation to File" << std::endl << std::endl;
+
 
   return EXIT_SUCCESS;
 }

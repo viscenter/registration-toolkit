@@ -95,19 +95,25 @@ int main(int argc, char* argv[])
     std::cout << "Number of transforms = " << transforms->size() << std::endl;
 
     itk::TransformFileReader::TransformListType::const_iterator it = transforms->begin();
+    
+    ThinPlateSplineKernelTransformType::Pointer thinPlate_read;
     if(!strcmp((*it)->GetNameOfClass(),"ThinPlateSplineKernelTransform"))
         {
-        ThinPlateSplineKernelTransformType::Pointer thinPlate_read = static_cast<ThinPlateSplineKernelTransformType*>((*it).GetPointer());
+        thinPlate_read = static_cast<ThinPlateSplineKernelTransformType*>((*it).GetPointer());
         thinPlate_read->Print(std::cout);
         }
 
     it++;
 
+    BSplineTransformType::Pointer bspline_read;
     if(!strcmp((*it)->GetNameOfClass(),"BSplineTransform"))
         {
-        BSplineTransformType::Pointer bspline_read = static_cast<BSplineTransformType*>((*it).GetPointer());
+        bspline_read = static_cast<BSplineTransformType*>((*it).GetPointer());
         bspline_read->Print(std::cout);
         }
+
+    transform->AddTransform(thinPlate_read);
+    transform->AddTransform(bspline_read);
 
     // std::cout << *(transformReader->GetTransformList()->begin()) << std::endl;
 
