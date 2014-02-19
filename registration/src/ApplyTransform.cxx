@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #include "itkRGBPixel.h"
 #include "itkImage.h"
@@ -12,6 +13,7 @@
 #include "itkTransform.h"
 #include "itkTransformFactoryBase.h"
 #include "itkTransformFactory.h"
+#include "itkKernelTransform.h"
 #include "itkThinPlateSplineKernelTransform.h"
 #include "itkBSplineTransform.h"
 
@@ -46,9 +48,9 @@ int main(int argc, char* argv[])
 
     itk::TransformFactoryBase::RegisterDefaultTransforms();
 
-    typedef itk::ThinPlateSplineKernelTransform<double,ImageDimension> ThinPlateSplineKernelTransformType;
+    typedef itk::KernelTransform<double,ImageDimension> KernelTransformType;
     typedef itk::BSplineTransform<double, ImageDimension> BSplineTransformType;
-    itk::TransformFactory<ThinPlateSplineKernelTransformType>::RegisterTransform();
+    itk::TransformFactory<KernelTransformType>::RegisterTransform();
 
     try
         {
@@ -90,17 +92,18 @@ int main(int argc, char* argv[])
     //     transform->AddTransform(*iterator);
     // }
 
+
     typedef itk::TransformFileReader::TransformListType * TransformListType;
     TransformListType transforms = transformReader->GetTransformList();
     std::cout << "Number of transforms = " << transforms->size() << std::endl;
 
     itk::TransformFileReader::TransformListType::const_iterator it = transforms->begin();
     
-    ThinPlateSplineKernelTransformType::Pointer thinPlate_read;
-    if(!strcmp((*it)->GetNameOfClass(),"ThinPlateSplineKernelTransform"))
+    KernelTransformType::Pointer kernel_read;
+    if(!strcmp((*it)->GetNameOfClass(),"KernelTransform"))
         {
-        thinPlate_read = static_cast<ThinPlateSplineKernelTransformType*>((*it).GetPointer());
-        thinPlate_read->Print(std::cout);
+        kernel_read = static_cast<KernelTransformType*>((*it).GetPointer());
+        kernel_read->Print(std::cout);
         }
 
     it++;
@@ -112,7 +115,7 @@ int main(int argc, char* argv[])
         bspline_read->Print(std::cout);
         }
 
-    transform->AddTransform(thinPlate_read);
+    transform->AddTransform(kernel_read);
     transform->AddTransform(bspline_read);
 
     // std::cout << *(transformReader->GetTransformList()->begin()) << std::endl;
@@ -128,6 +131,43 @@ int main(int argc, char* argv[])
     resample->SetTransform(transform);
     resample->SetInput(movingImage);
 
+    std::ifstream transformFile;
+    transformFile.open(argv[1]);
+    std::string line;
+    std::getline(transformFile, line);
+    while(line != "#Fixed image parameters added by UKY Vis Center")
+    {
+        std::getline(transformFile, line);
+    }
+    int i, j, k, l;
+
+    transformFile >> line >> i >> j;
+    ImageType::SizeType size;
+    size[0] = i;
+    size[1] = j;
+    resample->SetSize(size);
+
+    transformFile >> line >> i >> j;
+    int origin[2];
+    origin[0] = i;
+    origin[1] = j;
+    resample->SetOutputOrigin(origin);
+
+    transformFile >> line >> i >> j;
+    ImageType::SpacingType spacing;
+    spacing[0] = i;
+    spacing[1] = j;
+    resample->SetOutputSpacing(spacing);
+
+    transformFile >> line >> i >> j >> k >> l;
+    ImageType::DirectionType direction;
+    direction[0][0] = i;
+    direction[0][1] = j;
+    direction[1][0] = k;
+    direction[1][1] = l;
+    resample->SetOutputDirection(direction);
+
+
 
     PixelType defaultPixel;
     defaultPixel[0] = 0;
@@ -140,6 +180,7 @@ int main(int argc, char* argv[])
     caster->SetInput(resample->GetOutput());
     writer->SetInput(caster->GetOutput());
 
+    std::cout << "good************************************:" << std::endl;
     try
     {
         writer->Update();

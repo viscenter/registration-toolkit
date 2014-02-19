@@ -17,6 +17,7 @@
 #include "itkMemoryProbesCollectorBase.h"
 
 #include "itkBSplineTransform.h"
+#include "itkKernelTransform.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
 
 #include "itkResampleImageFilter.h"
@@ -504,7 +505,7 @@ int main(int argc, char* argv[])
 
   std::string transformFileName = "transform.tfm";
 
-  itk::TransformFileWriter::Pointer transformWriter = itk::TransformFileWriter::New();
+  itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
   transformWriter->SetFileName(transformFileName);
   transformWriter->SetInput(kernelTransform);
   transformWriter->AddTransform(transform);
