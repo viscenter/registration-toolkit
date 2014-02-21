@@ -11,33 +11,33 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
 import javax.imageio.ImageIO;
-
 import javax.swing.*;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.LayoutStyle.ComponentPlacement;
 
 // Dylan's UI
 
 public class LandmarkGenerator extends JFrame implements ActionListener, MouseListener{
 
 	static PicturePanel FixedPicture;
-	static PicturePanel MovingPicture;
-	static JButton open,open2,makeLandmarks,CreateFile, Bigger1, Bigger2, Smaller1, Smaller2;
-	static JScrollPane scroll1,scroll2;
-	int counter;
-	static int cposition,rposition;		
-	static double fscale, mscale;
-	static int [][] PointsforLandmarks=new int[5][4];
-	static JEditorPane DisplayedLandmarks = new JEditorPane();
-	JPanel holdall=new JPanel();//make panel
-	static LandmarkGenerator Generator = new LandmarkGenerator();
-	int fpx1,fpy1,fpx2,fpy2,fpx3,fpy3,fpx4,fpy4,fpx5,fpy5,mpx1,mpy1,mpx2,mpy2,mpx3,mpy3,mpx4,mpy4,mpx5,mpy5;
-	double fixedDPIx, fixedDPIy, movingDPIx, movingDPIy;
+    static PicturePanel MovingPicture;
+    static PicturePanel RightPanel, LeftPanel;
+    static JButton open,open2,makeLandmarks,CreateFile, Bigger1, Bigger2, Smaller1, Smaller2;
+    static JScrollPane scroll1,scroll2;
+	JPanel RightControls, LeftControls;
+    int counter;
+    static int cposition,rposition;                
+    static double fscale, mscale;
+    static int [][] PointsforLandmarks=new int[5][4];
+    static JEditorPane DisplayedLandmarks = new JEditorPane();
+    static LandmarkGenerator Generator = new LandmarkGenerator();
+    int fpx1,fpy1,fpx2,fpy2,fpx3,fpy3,fpx4,fpy4,fpx5,fpy5,mpx1,mpy1,mpx2,mpy2,mpx3,mpy3,mpx4,mpy4,mpx5,mpy5;
 
 
 
 
 	public LandmarkGenerator(){
 		super("Landmark Generator");
-		this.add(holdall);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setVisible(true);
 		this.setSize(1600,1000);
@@ -55,38 +55,190 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 	}
 
 	public void CreateLayout(){
-		GroupLayout layout = new GroupLayout(holdall);
-		holdall.setLayout(layout);
-		layout.setHorizontalGroup(
-				layout.createSequentialGroup()
-				.addComponent(scroll1,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-				.addComponent(scroll2,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-						.addComponent(makeLandmarks)
-						.addComponent(open)
-						.addComponent(open2)
-						.addComponent(CreateFile)
-						.addComponent(Bigger1)//zoom in on FixedPicture
-						.addComponent(Bigger2)//zoom in on MovingPicture
-						.addComponent(Smaller1)//zoom out on FixedPicture
-						.addComponent(Smaller2)//zoom out on MovingPicture
-						.addComponent(DisplayedLandmarks,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-				);
-		layout.setVerticalGroup(
-				layout.createSequentialGroup()
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-						.addComponent(scroll1)
-						.addComponent(scroll2)
-						.addComponent(DisplayedLandmarks, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 600, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-						.addComponent(open)
-						.addComponent(open2)
-						.addComponent(Bigger1)
-						.addComponent(Bigger2)
-						.addComponent(Smaller1)
+		
+		this.setBounds(100, 100, 1210, 768);
+		
+		LeftPanel.setPreferredSize(new Dimension(450, 500));
+
+		RightPanel.setPreferredSize(new Dimension(450, 500));
+
+		scroll2.setPreferredSize(new Dimension(500, 600));
+
+		RightControls.setPreferredSize(new Dimension(450, 10));
+
+		open2.setAlignmentX(0.5f);
+
+		Smaller2.setAlignmentX(0.5f);
+
+		Bigger2.setAlignmentX(0.5f);
+		GroupLayout gl_RightControls = new GroupLayout(RightControls);
+		gl_RightControls.setHorizontalGroup(
+			gl_RightControls.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_RightControls.createSequentialGroup()
+					.addGap(173)
+					.addGroup(gl_RightControls.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_RightControls.createSequentialGroup()
+							.addGap(10)
+							.addComponent(open2))
+						.addGroup(gl_RightControls.createSequentialGroup()
+							.addComponent(Smaller2)
+							.addComponent(Bigger2)))
+					.addContainerGap(177, Short.MAX_VALUE))
+		);
+		gl_RightControls.setVerticalGroup(
+			gl_RightControls.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_RightControls.createSequentialGroup()
+					.addGroup(gl_RightControls.createParallelGroup(Alignment.LEADING)
 						.addComponent(Smaller2)
-						.addComponent(makeLandmarks)
-						.addComponent(CreateFile)
-				);
+						.addComponent(Bigger2))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(open2)
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+		);
+		RightControls.setLayout(gl_RightControls);
+		GroupLayout gl_RightPanel = new GroupLayout(RightPanel);
+		gl_RightPanel.setHorizontalGroup(
+			gl_RightPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_RightPanel.createSequentialGroup()
+					.addGroup(gl_RightPanel.createParallelGroup(Alignment.TRAILING, false)
+						.addComponent(RightControls, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+						.addComponent(scroll2, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+		);
+		gl_RightPanel.setVerticalGroup(
+			gl_RightPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_RightPanel.createSequentialGroup()
+					.addComponent(scroll2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+					.addComponent(RightControls, GroupLayout.PREFERRED_SIZE, 67, GroupLayout.PREFERRED_SIZE))
+		);
+		RightPanel.setLayout(gl_RightPanel);
+
+		JPanel LandmarksPanel = new JPanel();
+		LandmarksPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+		LandmarksPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		JPanel ProgramControlsPanel = new JPanel();
+		GroupLayout groupLayout = new GroupLayout(this.getContentPane());
+		groupLayout.setHorizontalGroup(
+			groupLayout.createParallelGroup(Alignment.LEADING)
+				.addGroup(groupLayout.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
+						.addComponent(ProgramControlsPanel, GroupLayout.DEFAULT_SIZE, 1198, Short.MAX_VALUE)
+						.addGroup(groupLayout.createSequentialGroup()
+							.addComponent(LeftPanel, GroupLayout.PREFERRED_SIZE, 500, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(RightPanel, GroupLayout.PREFERRED_SIZE, 500, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(LandmarksPanel, GroupLayout.PREFERRED_SIZE, 186, GroupLayout.PREFERRED_SIZE)))
+					.addContainerGap())
+		);
+		groupLayout.setVerticalGroup(
+			groupLayout.createParallelGroup(Alignment.LEADING)
+				.addGroup(groupLayout.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING, false)
+						.addComponent(RightPanel, GroupLayout.DEFAULT_SIZE, 673, Short.MAX_VALUE)
+						.addComponent(LeftPanel, GroupLayout.PREFERRED_SIZE, 673, Short.MAX_VALUE)
+						.addComponent(LandmarksPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(ProgramControlsPanel, GroupLayout.DEFAULT_SIZE, 55, Short.MAX_VALUE)
+					.addContainerGap())
+		);
+
+		GroupLayout gl_ProgramControlsPanel = new GroupLayout(ProgramControlsPanel);
+		gl_ProgramControlsPanel.setHorizontalGroup(
+			gl_ProgramControlsPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(Alignment.TRAILING, gl_ProgramControlsPanel.createSequentialGroup()
+					.addContainerGap(1015, Short.MAX_VALUE)
+					.addComponent(CreateFile))
+		);
+		gl_ProgramControlsPanel.setVerticalGroup(
+			gl_ProgramControlsPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_ProgramControlsPanel.createSequentialGroup()
+					.addContainerGap(26, Short.MAX_VALUE)
+					.addComponent(CreateFile))
+		);
+		ProgramControlsPanel.setLayout(gl_ProgramControlsPanel);
+
+		DisplayedLandmarks = new JEditorPane();
+		DisplayedLandmarks.setBorder(UIManager.getBorder("ScrollPane.border"));
+		DisplayedLandmarks.setEditable(false);
+		DisplayedLandmarks.setAlignmentY(Component.TOP_ALIGNMENT);
+		DisplayedLandmarks.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		GroupLayout gl_LandmarksPanel = new GroupLayout(LandmarksPanel);
+		gl_LandmarksPanel.setHorizontalGroup(
+			gl_LandmarksPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_LandmarksPanel.createSequentialGroup()
+					.addGroup(gl_LandmarksPanel.createParallelGroup(Alignment.LEADING)
+						.addComponent(DisplayedLandmarks, GroupLayout.PREFERRED_SIZE, 186, GroupLayout.PREFERRED_SIZE)
+						.addComponent(makeLandmarks, GroupLayout.PREFERRED_SIZE, 186, GroupLayout.PREFERRED_SIZE))
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+		);
+		gl_LandmarksPanel.setVerticalGroup(
+			gl_LandmarksPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_LandmarksPanel.createSequentialGroup()
+					.addComponent(DisplayedLandmarks, GroupLayout.PREFERRED_SIZE, 598, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(makeLandmarks)
+					.addContainerGap(40, Short.MAX_VALUE))
+		);
+		LandmarksPanel.setLayout(gl_LandmarksPanel);
+
+		scroll1.setPreferredSize(new Dimension(500, 600));
+
+
+		open.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		Smaller1.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		Bigger1.setAlignmentX(Component.CENTER_ALIGNMENT);
+		GroupLayout gl_LeftControls = new GroupLayout(LeftControls);
+		gl_LeftControls.setHorizontalGroup(
+			gl_LeftControls.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_LeftControls.createSequentialGroup()
+					.addGap(172)
+					.addGroup(gl_LeftControls.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_LeftControls.createSequentialGroup()
+							.addGap(10)
+							.addComponent(open))
+						.addGroup(gl_LeftControls.createSequentialGroup()
+							.addComponent(Smaller1)
+							.addComponent(Bigger1)))
+					.addContainerGap(178, Short.MAX_VALUE))
+		);
+		gl_LeftControls.setVerticalGroup(
+			gl_LeftControls.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_LeftControls.createSequentialGroup()
+					.addGroup(gl_LeftControls.createParallelGroup(Alignment.LEADING)
+						.addComponent(Smaller1)
+						.addComponent(Bigger1))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(open)
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+		);
+		LeftControls.setLayout(gl_LeftControls);
+		GroupLayout gl_LeftPanel = new GroupLayout(LeftPanel);
+		gl_LeftPanel.setHorizontalGroup(
+			gl_LeftPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_LeftPanel.createSequentialGroup()
+					.addGroup(gl_LeftPanel.createParallelGroup(Alignment.TRAILING, false)
+						.addComponent(LeftControls, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+						.addComponent(scroll1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+		);
+		gl_LeftPanel.setVerticalGroup(
+			gl_LeftPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_LeftPanel.createSequentialGroup()
+					.addComponent(scroll1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+					.addComponent(LeftControls, GroupLayout.PREFERRED_SIZE, 67, GroupLayout.PREFERRED_SIZE)
+					.addContainerGap())
+		);
+		LeftPanel.setLayout(gl_LeftPanel);
+		this.getContentPane().setLayout(groupLayout);
 		CreateFile.addActionListener(this);
 		open.addActionListener(this);
 		open2.addActionListener(this);
@@ -95,25 +247,29 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		Bigger2.addActionListener(this);
 		Smaller1.addActionListener(this);
 		Smaller2.addActionListener(this);
-	}
+}
 
 	public void Initializer(){
-		makeLandmarks = new JButton("Create Landmarks");
-		open = new JButton("Open 1st Image");
-		open2 = new JButton("Open 2nd Image");
-		CreateFile = new JButton("Write to File");
-		Bigger1 = new JButton("Zoom in 1st picture");
-		Bigger2 = new JButton("Zoom in 2nd picture");
-		Smaller1 = new JButton("Zoom out 1st picture");
-		Smaller2 = new JButton("Zoom out 2nd picture");
-		counter=0;
-		fscale = 1;
-		mscale = 1;
-		FixedPicture = new PicturePanel();
+        makeLandmarks = new JButton("Create Landmarks");
+        open = new JButton("Open 1st Image");
+        open2 = new JButton("Open 2nd Image");
+        RightControls = new JPanel();
+        LeftControls = new JPanel();
+        CreateFile = new JButton("Write to File");
+        Bigger1 = new JButton("+");
+        Bigger2 = new JButton("+");
+        Smaller1 = new JButton("-");
+        Smaller2 = new JButton("-");
+        counter=0;
+        fscale = 1;
+        mscale = 1;
+        FixedPicture = new PicturePanel();
 		MovingPicture = new PicturePanel();
-		scroll1 = new JScrollPane(FixedPicture);//declares it
-		scroll2 = new JScrollPane(MovingPicture);//declares it
-	}
+        LeftPanel = new PicturePanel();
+        RightPanel = new PicturePanel();
+        scroll1 = new JScrollPane(FixedPicture);//declares it
+        scroll2 = new JScrollPane(MovingPicture);//declares it
+}
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
