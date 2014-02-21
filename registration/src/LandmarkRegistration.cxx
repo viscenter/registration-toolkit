@@ -34,20 +34,63 @@
 #include <string>
 #include <iostream>
 
+// const    unsigned int    ImageDimension = 2;
+// typedef  unsigned char   PixelType;
+
+// typedef itk::Image< PixelType, ImageDimension >  MovingImageType;
+// typedef itk::Image< PixelType, ImageDimension >  FixedImageType;
+// typedef itk::ImageFileReader< MovingImageType > MovingImageReaderType;
+
+// MovingImageReaderType::Pointer movingImageReader;
+  
+// const unsigned int SpaceDimension = ImageDimension;
+// const unsigned int SplineOrder = 3;
+// typedef double CoordinateRepType;
+
+// typedef itk::BSplineDeformableTransform<
+//                           CoordinateRepType,
+//                           SpaceDimension,
+//                           SplineOrder >     TransformType;
+
+// FixedImageType::ConstPointer fixedImage;
+
+// TransformType::Pointer  transform;
+
+const unsigned int ImageDimension = 2;
+
+typedef itk::RGBPixel<unsigned char>  ColorPixelType;
+
+typedef itk::Image< ColorPixelType, ImageDimension > ColorImageType;
+typedef itk::ImageFileReader<ColorImageType> ColorReaderType;
+
+ColorReaderType::Pointer colorMovingReader;
+
+const unsigned int SpaceDimension = ImageDimension;
+const unsigned int SplineOrder = 3;
+typedef double CoordinateRepType;
+
+typedef itk::BSplineTransform<CoordinateRepType,
+                                        SpaceDimension,
+                                        SplineOrder> BSplineTransformType;
+
+ColorImageType::Pointer colorFixedImage;
+
+BSplineTransformType::Pointer bSplineTransform;
+
+
 //  The following section of code implements a Command observer
 //  used to monitor the evolution of the registration process.
+//
 #include "itkCommand.h"
-class CommandIterationUpdate : public itk::Command
+class CommandIterationUpdate : public itk::Command 
 {
 public:
   typedef  CommandIterationUpdate   Self;
   typedef  itk::Command             Superclass;
   typedef itk::SmartPointer<Self>   Pointer;
   itkNewMacro( Self );
-
 protected:
   CommandIterationUpdate() {};
-
 public:
   typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
   typedef   const OptimizerType *                  OptimizerPointer;
@@ -59,7 +102,7 @@ public:
 
   void Execute(const itk::Object * object, const itk::EventObject & event)
     {
-    OptimizerPointer optimizer =
+    OptimizerPointer optimizer = 
       dynamic_cast< OptimizerPointer >( object );
     if( !(itk::IterationEvent().CheckEvent( &event )) )
       {
@@ -69,6 +112,87 @@ public:
     std::cout << optimizer->GetCurrentIteration() << "   ";
     std::cout << optimizer->GetValue() << "   ";
     std::cout << std::endl;
+    
+    OptimizerType::ParametersType finalParameters = 
+                      optimizer->GetCurrentPosition();
+    
+    bSplineTransform->SetParameters( finalParameters );
+
+
+    typedef itk::ResampleImageFilter< 
+                              ColorImageType, 
+                              ColorImageType >    ResampleFilterType;
+
+    ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+    resample->SetTransform( bSplineTransform );
+    resample->SetInput( colorMovingReader->GetOutput() );
+
+    resample->SetSize(    colorFixedImage->GetLargestPossibleRegion().GetSize() );
+    resample->SetOutputOrigin(  colorFixedImage->GetOrigin() );
+    resample->SetOutputSpacing( colorFixedImage->GetSpacing() );
+    resample->SetOutputDirection( colorFixedImage->GetDirection() );
+
+    ColorPixelType defaultPixel;
+    defaultPixel[0] = 0;
+    defaultPixel[1] = 0;
+    defaultPixel[2] = 0;
+
+    resample->SetDefaultPixelValue( defaultPixel );
+
+    typedef itk::CastImageFilter< 
+                          ColorImageType,
+                          ColorImageType > CastFilterType;
+
+    typedef itk::ImageFileWriter< ColorImageType >  WriterType;
+
+
+    WriterType::Pointer      writer =  WriterType::New();
+    CastFilterType::Pointer  caster =  CastFilterType::New();
+
+    char outfilename[21];
+    sprintf(outfilename,"registered-%03d.jpg",optimizer->GetCurrentIteration());
+
+    writer->SetFileName( outfilename );
+
+    caster->SetInput( resample->GetOutput() );
+    writer->SetInput( caster->GetOutput()   );
+
+
+    try
+      {
+      writer->Update();
+      }
+    catch( itk::ExceptionObject & err ) 
+      { 
+      std::cerr << "ExceptionObject caught !" << std::endl; 
+      std::cerr << err << std::endl; 
+      //return EXIT_FAILURE;
+      }
+    }
+};
+
+class RegistrationCommandIterationUpdate : public itk::Command 
+{
+public:
+  typedef  RegistrationCommandIterationUpdate   Self;
+  typedef  itk::Command             Superclass;
+  typedef itk::SmartPointer<Self>   Pointer;
+  itkNewMacro( Self );
+protected:
+  RegistrationCommandIterationUpdate() {};
+public:
+  typedef itk::RegularStepGradientDescentOptimizer RegistrationType;
+  typedef   const RegistrationType *                  RegistrationPointer;
+
+  void Execute(itk::Object *caller, const itk::EventObject & event)
+    {
+    Execute( (const itk::Object *)caller, event);
+    }
+
+  void Execute(const itk::Object * object, const itk::EventObject & event)
+    {
+      std::cout << "Registration Execute: " << event.GetEventName() << std::endl;
     }
 };
 
@@ -80,7 +204,8 @@ int main(int argc, char* argv[])
     std::cerr << "Usage: " << argv[0];
     std::cerr << " landmarksFile fixedImage ";
     std::cerr << "movingImage outputImageFile ";
-    std::cerr << "numberOfIterations" << std::endl;
+    std::cerr << "numberOfIterations ";
+    std::cerr << "[createVideoFrames]" << std::endl;
     // TODO allow for output of transformation images to be used in gif
     return EXIT_FAILURE;
     }
@@ -348,8 +473,8 @@ int main(int argc, char* argv[])
   registration->SetInterpolator(  grayInterpolator );
 
 
-  BSplineTransformType::Pointer  transform = BSplineTransformType::New();
-  registration->SetTransform( transform );
+  BSplineTransformType::Pointer  bSplineTransform = BSplineTransformType::New();
+  registration->SetTransform( bSplineTransform );
 
   // the gray image is used for registration calculations
   // the resulting transform is then applied to the color image
@@ -380,24 +505,24 @@ int main(int argc, char* argv[])
     }
   grayMeshSize.Fill( numberOfGridNodesInOneDimension - SplineOrder );
 
-  transform->SetTransformDomainOrigin( grayFixedOrigin );
-  transform->SetTransformDomainPhysicalDimensions(
+  bSplineTransform->SetTransformDomainOrigin( grayFixedOrigin );
+  bSplineTransform->SetTransformDomainPhysicalDimensions(
     grayFixedPhysicalDimensions );
-  transform->SetTransformDomainMeshSize( grayMeshSize );
-  transform->SetTransformDomainDirection( grayFixedImage->GetDirection() );
+  bSplineTransform->SetTransformDomainMeshSize( grayMeshSize );
+  bSplineTransform->SetTransformDomainDirection( grayFixedImage->GetDirection() );
 
   typedef BSplineTransformType::ParametersType     BSplineParametersType;
 
   const unsigned int numberOfParameters =
-               transform->GetNumberOfParameters();
+               bSplineTransform->GetNumberOfParameters();
 
   BSplineParametersType parameters( numberOfParameters );
 
   parameters.Fill( 0.0 );
 
-  transform->SetParameters( parameters );
+  bSplineTransform->SetParameters( parameters );
 
-  registration->SetInitialTransformParameters( transform->GetParameters() );
+  registration->SetInitialTransformParameters( bSplineTransform->GetParameters() );
 
   optimizer->SetMaximumStepLength( 10.0   );
   optimizer->SetMinimumStepLength(  0.01 );
@@ -407,8 +532,15 @@ int main(int argc, char* argv[])
 
   // Create the Command observer and register it with the optimizer.
   //
-  CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
-  optimizer->AddObserver( itk::IterationEvent(), observer );
+  // CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
+  // optimizer->AddObserver( itk::IterationEvent(), observer );
+
+  if (argc >= 7)
+  {
+    std::cout << "Video frames enabled." << std::endl;
+    RegistrationCommandIterationUpdate::Pointer registrationobserver = RegistrationCommandIterationUpdate::New();
+    registration->AddObserver( itk::AnyEvent(), registrationobserver );
+  }
 
   metric->SetNumberOfHistogramBins( 50 );
 
@@ -452,9 +584,9 @@ int main(int argc, char* argv[])
   chronometer.Report( std::cout );
   memorymeter.Report( std::cout );
 
-  transform->SetParameters( registrationParameters );
+  bSplineTransform->SetParameters( registrationParameters );
 
-  compositeTransform->AddTransform(transform);
+  compositeTransform->AddTransform(bSplineTransform);
 
   typedef itk::ResampleImageFilter<
                             ColorImageType,
@@ -466,7 +598,7 @@ int main(int argc, char* argv[])
 
   ResampleFilterType::Pointer resample = ResampleFilterType::New();
 
-  resample->SetTransform( transform );
+  resample->SetTransform( bSplineTransform );
 
   resample->SetInput( colorMovingWriter->GetInput() );
 
@@ -508,7 +640,7 @@ int main(int argc, char* argv[])
   itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
   transformWriter->SetFileName(transformFileName);
   transformWriter->SetInput(kernelTransform);
-  transformWriter->AddTransform(transform);
+  transformWriter->AddTransform(bSplineTransform);
   transformWriter->Update();
 
   std::ofstream transformFile;

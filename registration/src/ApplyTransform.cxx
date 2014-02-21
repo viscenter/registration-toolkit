@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
     typedef itk::BSplineTransform<double, ImageDimension> BSplineTransformType;
     itk::TransformFactory<ThinPlateSplineKernelTransformType>::RegisterTransform();
 
+    typedef itk::LinearInterpolateImageFunction<ImageType, double>  InterpolatorType;
+
     try
         {
         transformReader->Update();
@@ -68,18 +70,18 @@ int main(int argc, char* argv[])
     reader->SetFileName(argv[2]);
     writer->SetFileName(argv[3]);
 
-    try
-        {
-        reader->Update();
-        }
-    catch( itk::ExceptionObject & excp )
-        {
-        std::cerr << "Exception thrown " << std::endl;
-        std::cerr << excp << std::endl;
-        return EXIT_FAILURE;
-        }
+    // try
+    //     {
+    //     reader->Update();
+    //     }
+    // catch( itk::ExceptionObject & excp )
+    //     {
+    //     std::cerr << "Exception thrown " << std::endl;
+    //     std::cerr << excp << std::endl;
+    //     return EXIT_FAILURE;
+    //     }
 
-    ImageType::ConstPointer movingImage = reader->GetOutput();
+    // ImageType::ConstPointer movingImage = reader->GetOutput();
 
     CompositeTransformType::Pointer transform = CompositeTransformType::New();
     // itk::TransformFileReader::TransformListType transformList = 
@@ -113,8 +115,8 @@ int main(int argc, char* argv[])
         bspline_read->Print(std::cout);
         }
 
-    transform->AddTransform(thinPlate_read);
     transform->AddTransform(bspline_read);
+    transform->AddTransform(thinPlate_read);
 
     // std::cout << *(transformReader->GetTransformList()->begin()) << std::endl;
 
@@ -126,8 +128,11 @@ int main(int argc, char* argv[])
     // transform->SetParameters(parameters);
 
     ResampleFilterType::Pointer resample = ResampleFilterType::New();
-    resample->SetTransform(transform);
-    resample->SetInput(movingImage);
+
+    resample->SetInput(reader->GetOutput());
+
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+    resample->SetInterpolator(interpolator);
 
     std::ifstream transformFile;
     transformFile.open(argv[1]);
@@ -165,6 +170,7 @@ int main(int argc, char* argv[])
     direction[1][1] = l;
     resample->SetOutputDirection(direction);
 
+    resample->SetTransform(transform);
 
 
     PixelType defaultPixel;
@@ -174,9 +180,12 @@ int main(int argc, char* argv[])
 
     resample->SetDefaultPixelValue( defaultPixel );
 
-    CastFilterType::Pointer caster = CastFilterType::New();
-    caster->SetInput(resample->GetOutput());
-    writer->SetInput(caster->GetOutput());
+    resample->UpdateLargestPossibleRegion();
+
+    // CastFilterType::Pointer caster = CastFilterType::New();
+
+    // caster->SetInput(resample->GetOutput());
+    writer->SetInput(resample->GetOutput());
 
     try
     {
