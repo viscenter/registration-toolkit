@@ -116,8 +116,8 @@ public:
     std::cout << optimizer->GetValue() << "   ";
     std::cout << std::endl;
 
-    BSplineParametersType registrationParameters =
-                    registration->GetLastTransformParameters();
+    OptimizerType::ParametersType registrationParameters =
+                    optimizer->GetCurrentPosition();
 
     transform->SetParameters( registrationParameters );
 
