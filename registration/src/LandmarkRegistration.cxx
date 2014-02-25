@@ -59,9 +59,13 @@ typedef itk::ResampleImageFilter<
                           ColorImageType,
                           ColorImageType >    ResampleFilterType;
 
+ResampleFilterType::Pointer resample;
+
 typedef itk::CastImageFilter<
                       ColorImageType,
                       ColorImageType > CastFilterType;
+
+CastFilterType::Pointer  caster;
 
 typedef itk::ImageFileReader< ColorImageType >  ColorReaderType;
 typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
@@ -79,6 +83,7 @@ typedef itk::ImageRegistrationMethod<
 RegistrationType::Pointer   registration;
 
 ColorWriterType::Pointer colorMovingWriter;
+ColorReaderType::Pointer colorMovingReader;
 
 ColorImageType::ConstPointer colorFixedImage;
 
@@ -116,16 +121,16 @@ public:
     std::cout << optimizer->GetValue() << "   ";
     std::cout << std::endl;
 
-    OptimizerType::ParametersType registrationParameters =
+    BSplineParametersType registrationParameters =
                     optimizer->GetCurrentPosition();
 
     transform->SetParameters( registrationParameters );
 
-    ResampleFilterType::Pointer resample = ResampleFilterType::New();
+    resample = ResampleFilterType::New();
 
     resample->SetTransform( transform );
 
-    resample->SetInput( colorMovingWriter->GetInput() );
+    resample->SetInput( colorMovingReader->GetOutput() );
 
     resample->SetSize(    colorFixedImage->GetLargestPossibleRegion().GetSize() );
     resample->SetOutputOrigin(  colorFixedImage->GetOrigin() );
@@ -141,12 +146,13 @@ public:
 
     ColorWriterType::Pointer videoFrameWriter = ColorWriterType::New();
 
-    CastFilterType::Pointer  caster =  CastFilterType::New();
+    caster =  CastFilterType::New();
 
     char outfilename[21];
     sprintf(outfilename,"registered-%03d.jpg",optimizer->GetCurrentIteration());
 
     caster->SetInput( resample->GetOutput() );
+    videoFrameWriter->SetFileName(outfilename);
     videoFrameWriter->SetInput( caster->GetOutput()   );
 
     try
@@ -224,11 +230,11 @@ int main(int argc, char* argv[])
     }
 
   GrayImageType::ConstPointer grayFixedImage = grayFixedReader->GetOutput();
-  ColorImageType::ConstPointer colorFixedImage = colorFixedReader->GetOutput();
+  colorFixedImage = colorFixedReader->GetOutput();
   GrayImageType::ConstPointer grayMovingImage = grayMovingReader->GetOutput();
 
-  ColorReaderType::Pointer colorMovingReader = ColorReaderType::New();
-  ColorWriterType::Pointer colorMovingWriter = ColorWriterType::New();
+  colorMovingReader = ColorReaderType::New();
+  colorMovingWriter = ColorWriterType::New();
 
   colorMovingReader->SetFileName( argv[3] );
   colorMovingWriter->SetFileName( argv[4] );
@@ -394,15 +400,6 @@ int main(int argc, char* argv[])
   std::cout << "Finished Landmark Warping" << std::endl;
   // proceed to registration
 
-  const unsigned int SpaceDimension = ImageDimension;
-  const unsigned int SplineOrder = 3;
-  typedef double CoordinateRepType;
-
-  typedef itk::BSplineTransform<
-                            CoordinateRepType,
-                            SpaceDimension,
-                            SplineOrder >     BSplineTransformType;
-
   typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
 
 
@@ -410,13 +407,9 @@ int main(int argc, char* argv[])
                                     GrayImageType,
                                     GrayImageType >    MetricType;
 
-  typedef itk::ImageRegistrationMethod<
-                                    GrayImageType,
-                                    GrayImageType >    RegistrationType;
-
   MetricType::Pointer         metric        = MetricType::New();
   OptimizerType::Pointer      optimizer     = OptimizerType::New();
-  RegistrationType::Pointer   registration  = RegistrationType::New();
+  registration  = RegistrationType::New();
 
 
   registration->SetMetric(        metric        );
@@ -424,7 +417,7 @@ int main(int argc, char* argv[])
   registration->SetInterpolator(  grayInterpolator );
 
 
-  BSplineTransformType::Pointer  transform = BSplineTransformType::New();
+  transform = BSplineTransformType::New();
   registration->SetTransform( transform );
 
   // the gray image is used for registration calculations
@@ -530,15 +523,7 @@ int main(int argc, char* argv[])
 
   compositeTransform->AddTransform(transform);
 
-  typedef itk::ResampleImageFilter<
-                            ColorImageType,
-                            ColorImageType >    ResampleFilterType;
-
-  typedef itk::CastImageFilter<
-                        ColorImageType,
-                        ColorImageType > CastFilterType;
-
-  ResampleFilterType::Pointer resample = ResampleFilterType::New();
+  resample = ResampleFilterType::New();
 
   resample->SetTransform( transform );
 
@@ -556,7 +541,7 @@ int main(int argc, char* argv[])
 
   resample->SetDefaultPixelValue( defaultPixel );
 
-  CastFilterType::Pointer  caster =  CastFilterType::New();
+  caster =  CastFilterType::New();
 
   caster->SetInput( resample->GetOutput() );
   colorMovingWriter->SetInput( caster->GetOutput()   );
