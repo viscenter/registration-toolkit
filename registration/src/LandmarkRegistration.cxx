@@ -126,11 +126,11 @@ public:
 
     transform->SetParameters( registrationParameters );
 
-    resample = ResampleFilterType::New();
+    ResampleFilterType::Pointer resample = ResampleFilterType::New();
 
     resample->SetTransform( transform );
 
-    resample->SetInput( colorMovingReader->GetOutput() );
+    resample->SetInput( colorMovingWriter->GetInput() );
 
     resample->SetSize(    colorFixedImage->GetLargestPossibleRegion().GetSize() );
     resample->SetOutputOrigin(  colorFixedImage->GetOrigin() );
@@ -146,13 +146,14 @@ public:
 
     ColorWriterType::Pointer videoFrameWriter = ColorWriterType::New();
 
-    caster =  CastFilterType::New();
+    CastFilterType::Pointer caster =  CastFilterType::New();
 
     char outfilename[21];
     sprintf(outfilename,"registered-%03d.jpg",optimizer->GetCurrentIteration());
 
-    caster->SetInput( resample->GetOutput() );
     videoFrameWriter->SetFileName(outfilename);
+    
+    caster->SetInput( resample->GetOutput() );
     videoFrameWriter->SetInput( caster->GetOutput()   );
 
     try
