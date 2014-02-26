@@ -26,8 +26,6 @@
 
 #include "itkRGBPixel.h"
 
-#include "itkCompositeTransform.h"
-
 #include "itkTransformFileWriter.h"
 
 #include <fstream>
@@ -190,7 +188,6 @@ int main(int argc, char* argv[])
 
   typedef   float          VectorComponentType;
 
-  typedef itk::CompositeTransform< double, ImageDimension > CompositeTransformType;
   typedef itk::KernelTransform< double, ImageDimension > KernelTransformType;
   typedef KernelTransformType::ParametersType KernelParametersType;
 
@@ -200,8 +197,6 @@ int main(int argc, char* argv[])
 
   typedef   itk::ImageFileReader< GrayImageType >  GrayReaderType;
   typedef   itk::ImageFileWriter< GrayImageType >  GrayWriterType;
-
-  CompositeTransformType::Pointer compositeTransform = CompositeTransformType::New();
 
   GrayReaderType::Pointer grayFixedReader = GrayReaderType::New();
   ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
@@ -337,7 +332,6 @@ int main(int argc, char* argv[])
     }
 
   KernelTransformType::Pointer kernelTransform = deformer->GetModifiableKernelTransform();
-  compositeTransform->AddTransform(kernelTransform);
 
   DisplacementFieldType::ConstPointer displacementField = deformer->GetOutput();
 
@@ -538,8 +532,6 @@ int main(int argc, char* argv[])
 
   transform->SetParameters( registrationParameters );
 
-  compositeTransform->AddTransform(transform);
-
   resample = ResampleFilterType::New();
 
   resample->SetTransform( transform );
@@ -583,14 +575,14 @@ int main(int argc, char* argv[])
 
   itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
   transformWriter->SetFileName(transformFileName);
-  transformWriter->SetInput(kernelTransform);
-  transformWriter->AddTransform(transform);
+  transformWriter->SetInput(transform);
+  // transformWriter->AddTransform(transform);
   transformWriter->Update();
 
   std::ofstream transformFile;
   transformFile.open(transformFileName, std::ios::app);
   transformFile << std::endl;
-  transformFile << "#Fixed image parameters added by UKY Vis Center" 
+  transformFile << "#Fixed image parameters" 
     << std::endl;
   transformFile << "#Size " 
     << colorFixedImage->GetLargestPossibleRegion().GetSize()[0]
@@ -609,7 +601,42 @@ int main(int argc, char* argv[])
     << " " << colorFixedImage->GetDirection()[0][1]
     << " " << colorFixedImage->GetDirection()[1][0]
     << " " << colorFixedImage->GetDirection()[1][1] 
-    << std::endl;
+    << std::endl << std::endl;
+
+  transformFile << "#Landmark warping physical points" << std::endl;
+
+  pointsFile.open( argv[1] );
+
+  pointsFile >> sourceX >> sourceY >> targetX >> targetY;
+
+  sourceIndex[0] = sourceX;
+  sourceIndex[1] = sourceY;
+  targetIndex[0] = targetX;
+  targetIndex[1] = targetY;
+
+  grayFixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
+  grayMovingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
+
+  transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[0] << std::endl;
+
+  while( !pointsFile.fail() )
+    {
+    pointsFile >> sourceX >> sourceY >> targetX >> targetY;
+
+    sourceIndex[0] = sourceX;
+    sourceIndex[1] = sourceY;
+    targetIndex[0] = targetX;
+    targetIndex[1] = targetY;
+
+    grayFixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
+    grayMovingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
+
+    transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[0] << std::endl;
+    }
+
+  pointsFile.close();
+
+  transformFile.close();
 
   std::cout << "Finished Writing Transformation to File" << std::endl << std::endl;
 

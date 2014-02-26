@@ -13,7 +13,6 @@
 #include "itkTransform.h"
 #include "itkTransformFactoryBase.h"
 #include "itkTransformFactory.h"
-#include "itkThinPlateSplineKernelTransform.h"
 #include "itkBSplineTransform.h"
 
 int main(int argc, char* argv[])
@@ -37,8 +36,6 @@ int main(int argc, char* argv[])
     typedef itk::ImageFileReader<ImageType> ReaderType;
     typedef itk::ImageFileWriter<ImageType> WriterType;
 
-    typedef itk::CompositeTransform<double, ImageDimension> CompositeTransformType;
-
     typedef itk::ResampleImageFilter<ImageType, ImageType> ResampleFilterType;
     typedef itk::CastImageFilter<ImageType, ImageType> CastFilterType;
 
@@ -47,9 +44,7 @@ int main(int argc, char* argv[])
 
     itk::TransformFactoryBase::RegisterDefaultTransforms();
 
-    typedef itk::ThinPlateSplineKernelTransform<double,ImageDimension> ThinPlateSplineKernelTransformType;
     typedef itk::BSplineTransform<double, ImageDimension> BSplineTransformType;
-    itk::TransformFactory<ThinPlateSplineKernelTransformType>::RegisterTransform();
 
     typedef itk::LinearInterpolateImageFunction<ImageType, double>  InterpolatorType;
 
@@ -70,44 +65,12 @@ int main(int argc, char* argv[])
     reader->SetFileName(argv[2]);
     writer->SetFileName(argv[3]);
 
-    // try
-    //     {
-    //     reader->Update();
-    //     }
-    // catch( itk::ExceptionObject & excp )
-    //     {
-    //     std::cerr << "Exception thrown " << std::endl;
-    //     std::cerr << excp << std::endl;
-    //     return EXIT_FAILURE;
-    //     }
-
-    // ImageType::ConstPointer movingImage = reader->GetOutput();
-
-    CompositeTransformType::Pointer transform = CompositeTransformType::New();
-    // itk::TransformFileReader::TransformListType transformList = 
-    //     *(transformReader->GetTransformList());
-
-    // itk::TransformFileReaderTemplate<double>::TransformListType::iterator iterator;
-    // for(iterator = transformList.begin(); iterator != transformList.end(); ++iterator)
-    // {
-    //     transform->AddTransform(*iterator);
-    // }
-
     typedef itk::TransformFileReader::TransformListType * TransformListType;
     TransformListType transforms = transformReader->GetTransformList();
     std::cout << "Number of transforms = " << transforms->size() << std::endl;
 
     itk::TransformFileReader::TransformListType::const_iterator it = transforms->begin();
     
-    ThinPlateSplineKernelTransformType::Pointer thinPlate_read;
-    if(!strcmp((*it)->GetNameOfClass(),"ThinPlateSplineKernelTransform"))
-        {
-        thinPlate_read = static_cast<ThinPlateSplineKernelTransformType*>((*it).GetPointer());
-        thinPlate_read->Print(std::cout);
-        }
-
-    it++;
-
     BSplineTransformType::Pointer bspline_read;
     if(!strcmp((*it)->GetNameOfClass(),"BSplineTransform"))
         {
@@ -115,30 +78,11 @@ int main(int argc, char* argv[])
         bspline_read->Print(std::cout);
         }
 
-    transform->AddTransform(bspline_read);
-    transform->AddTransform(thinPlate_read);
-
-    // std::cout << *(transformReader->GetTransformList()->begin()) << std::endl;
-
-    // std::ifstream parametersFile;
-    // parametersFile.open(argv[1]);
-    // parametersFile >> parameters;
-    // parametersFile.close();
-
-    // transform->SetParameters(parameters);
-
-    ResampleFilterType::Pointer resample = ResampleFilterType::New();
-
-    resample->SetInput(reader->GetOutput());
-
-    InterpolatorType::Pointer interpolator = InterpolatorType::New();
-    resample->SetInterpolator(interpolator);
-
     std::ifstream transformFile;
     transformFile.open(argv[1]);
     std::string line;
     std::getline(transformFile, line);
-    while(line != "#Fixed image parameters added by UKY Vis Center")
+    while(line != "#Fixed image parameters")
     {
         std::getline(transformFile, line);
     }
@@ -148,21 +92,18 @@ int main(int argc, char* argv[])
     ImageType::SizeType size;
     size[0] = i;
     size[1] = j;
-    resample->SetSize(size);
     std::cout << size << std::endl;
 
     transformFile >> line >> i >> j;
     int origin[2];
     origin[0] = i;
     origin[1] = j;
-    resample->SetOutputOrigin(origin);
     std::cout << origin << std::endl;
 
     transformFile >> line >> i >> j;
     ImageType::SpacingType spacing;
     spacing[0] = i;
     spacing[1] = j;
-    resample->SetOutputSpacing(spacing);
     std::cout << spacing << std::endl;
 
     transformFile >> line >> i >> j >> k >> l;
@@ -171,25 +112,23 @@ int main(int argc, char* argv[])
     direction[0][1] = j;
     direction[1][0] = k;
     direction[1][1] = l;
-    resample->SetOutputDirection(direction);
     std::cout << direction << std::endl;
-
-    resample->SetTransform(thinPlate_read);
-
 
     PixelType defaultPixel;
     defaultPixel[0] = 0;
     defaultPixel[1] = 0;
     defaultPixel[2] = 0;
 
-    resample->SetDefaultPixelValue( defaultPixel );
+    while(line != "#Landmark warping physical points")
+    {
+        std::getline(transformFile, line);
+    }
+    while(!transformFile.fail())
+    {
+        transformFile >> line >> i >> j >> k >> l;
+    }
 
-    // resample->UpdateLargestPossibleRegion();
-
-    CastFilterType::Pointer caster = CastFilterType::New();
-
-    caster->SetInput(resample->GetOutput());
-    writer->SetInput(resample->GetOutput());
+    transformFile.close();
 
     try
     {
