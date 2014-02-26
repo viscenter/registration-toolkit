@@ -87,6 +87,8 @@ ColorReaderType::Pointer colorMovingReader;
 
 ColorImageType::ConstPointer colorFixedImage;
 
+bool createVideoFrames;
+
 #include "itkCommand.h"
 class CommandIterationUpdate : public itk::Command
 {
@@ -121,50 +123,53 @@ public:
     std::cout << optimizer->GetValue() << "   ";
     std::cout << std::endl;
 
-    BSplineParametersType registrationParameters =
-                    optimizer->GetCurrentPosition();
-
-    transform->SetParameters( registrationParameters );
-
-    ResampleFilterType::Pointer resample = ResampleFilterType::New();
-
-    resample->SetTransform( transform );
-
-    resample->SetInput( colorMovingWriter->GetInput() );
-
-    resample->SetSize(    colorFixedImage->GetLargestPossibleRegion().GetSize() );
-    resample->SetOutputOrigin(  colorFixedImage->GetOrigin() );
-    resample->SetOutputSpacing( colorFixedImage->GetSpacing() );
-    resample->SetOutputDirection( colorFixedImage->GetDirection() );
-
-    ColorPixelType defaultPixel;
-    defaultPixel[0] = 0;
-    defaultPixel[1] = 0;
-    defaultPixel[2] = 0;
-
-    resample->SetDefaultPixelValue( defaultPixel );
-
-    ColorWriterType::Pointer videoFrameWriter = ColorWriterType::New();
-
-    CastFilterType::Pointer caster =  CastFilterType::New();
-
-    char outfilename[21];
-    sprintf(outfilename,"registered-%03d.jpg",optimizer->GetCurrentIteration());
-
-    videoFrameWriter->SetFileName(outfilename);
-    
-    caster->SetInput( resample->GetOutput() );
-    videoFrameWriter->SetInput( caster->GetOutput()   );
-
-    try
+    if(createVideoFrames)
       {
-      videoFrameWriter->Update();
-      }
-    catch( itk::ExceptionObject & err )
-      {
-      std::cerr << "ExceptionObject caught !" << std::endl;
-      std::cerr << err << std::endl;
-      // return EXIT_FAILURE;
+      BSplineParametersType registrationParameters =
+                      optimizer->GetCurrentPosition();
+
+      transform->SetParameters( registrationParameters );
+
+      ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+      resample->SetTransform( transform );
+
+      resample->SetInput( colorMovingWriter->GetInput() );
+
+      resample->SetSize(    colorFixedImage->GetLargestPossibleRegion().GetSize() );
+      resample->SetOutputOrigin(  colorFixedImage->GetOrigin() );
+      resample->SetOutputSpacing( colorFixedImage->GetSpacing() );
+      resample->SetOutputDirection( colorFixedImage->GetDirection() );
+
+      ColorPixelType defaultPixel;
+      defaultPixel[0] = 0;
+      defaultPixel[1] = 0;
+      defaultPixel[2] = 0;
+
+      resample->SetDefaultPixelValue( defaultPixel );
+
+      ColorWriterType::Pointer videoFrameWriter = ColorWriterType::New();
+
+      CastFilterType::Pointer caster =  CastFilterType::New();
+
+      char outfilename[21];
+      sprintf(outfilename,"registered-%03d.jpg",optimizer->GetCurrentIteration());
+
+      videoFrameWriter->SetFileName(outfilename);
+      
+      caster->SetInput( resample->GetOutput() );
+      videoFrameWriter->SetInput( caster->GetOutput()   );
+
+      try
+        {
+        videoFrameWriter->Update();
+        }
+      catch( itk::ExceptionObject & err )
+        {
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        // return EXIT_FAILURE;
+        }
       }
     }
 };
@@ -177,7 +182,8 @@ int main(int argc, char* argv[])
     std::cerr << "Usage: " << argv[0];
     std::cerr << " landmarksFile fixedImage ";
     std::cerr << "movingImage outputImageFile ";
-    std::cerr << "numberOfIterations" << std::endl;
+    std::cerr << "numberOfIterations ";
+    std::cerr << "[createVideoFrames]" << std::endl;
     // TODO allow for output of transformation images to be used in gif
     return EXIT_FAILURE;
     }
@@ -471,12 +477,22 @@ int main(int argc, char* argv[])
   optimizer->SetMinimumStepLength(  0.01 );
 
   optimizer->SetRelaxationFactor( 0.7 );
-  optimizer->SetNumberOfIterations( atoi(argv[5]) ); // TODO change this number
+  optimizer->SetNumberOfIterations( atoi(argv[5]) );
 
   // Create the Command observer and register it with the optimizer.
   //
   CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
   optimizer->AddObserver( itk::IterationEvent(), observer );
+
+  // create video frames if asked for
+  if(argc > 6)
+  {
+    createVideoFrames = true;
+  }
+  else
+  {
+    createVideoFrames = false;
+  }
 
   metric->SetNumberOfHistogramBins( 50 );
 

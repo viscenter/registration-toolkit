@@ -149,18 +149,21 @@ int main(int argc, char* argv[])
     size[0] = i;
     size[1] = j;
     resample->SetSize(size);
+    std::cout << size << std::endl;
 
     transformFile >> line >> i >> j;
     int origin[2];
     origin[0] = i;
     origin[1] = j;
     resample->SetOutputOrigin(origin);
+    std::cout << origin << std::endl;
 
     transformFile >> line >> i >> j;
     ImageType::SpacingType spacing;
     spacing[0] = i;
     spacing[1] = j;
     resample->SetOutputSpacing(spacing);
+    std::cout << spacing << std::endl;
 
     transformFile >> line >> i >> j >> k >> l;
     ImageType::DirectionType direction;
@@ -169,8 +172,9 @@ int main(int argc, char* argv[])
     direction[1][0] = k;
     direction[1][1] = l;
     resample->SetOutputDirection(direction);
+    std::cout << direction << std::endl;
 
-    resample->SetTransform(transform);
+    resample->SetTransform(thinPlate_read);
 
 
     PixelType defaultPixel;
@@ -180,11 +184,11 @@ int main(int argc, char* argv[])
 
     resample->SetDefaultPixelValue( defaultPixel );
 
-    resample->UpdateLargestPossibleRegion();
+    // resample->UpdateLargestPossibleRegion();
 
-    // CastFilterType::Pointer caster = CastFilterType::New();
+    CastFilterType::Pointer caster = CastFilterType::New();
 
-    // caster->SetInput(resample->GetOutput());
+    caster->SetInput(resample->GetOutput());
     writer->SetInput(resample->GetOutput());
 
     try
