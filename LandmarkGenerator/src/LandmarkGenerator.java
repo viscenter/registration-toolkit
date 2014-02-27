@@ -250,6 +250,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 }
 
 	public void Initializer(){
+		this.setResizable(false);
         makeLandmarks = new JButton("Create Landmarks");
         open = new JButton("Open 1st Image");
         open2 = new JButton("Open 2nd Image");
