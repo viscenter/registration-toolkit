@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    std::cout << std::endl << "Beginning Transformation" << std::endl;
+    std::cout << std::endl << "Beginning transformation" << std::endl;
 
     const unsigned int ImageDimension = 2;
     typedef itk::RGBPixel<unsigned char> PixelType;
@@ -85,7 +85,6 @@ int main(int argc, char* argv[])
 
     typedef itk::TransformFileReader::TransformListType * TransformListType;
     TransformListType transforms = transformReader->GetTransformList();
-    std::cout << "Number of transforms = " << transforms->size() << std::endl;
 
     itk::TransformFileReader::TransformListType::const_iterator it = transforms->begin();
     
@@ -93,7 +92,7 @@ int main(int argc, char* argv[])
     if(!strcmp((*it)->GetNameOfClass(),"BSplineTransform"))
         {
         bspline_read = static_cast<BSplineTransformType*>((*it).GetPointer());
-        bspline_read->Print(std::cout);
+        // bspline_read->Print(std::cout);
         }
 
     std::ifstream transformFile;
@@ -110,19 +109,19 @@ int main(int argc, char* argv[])
     ImageType::SizeType size;
     size[0] = i;
     size[1] = j;
-    std::cout << size << std::endl;
+    // std::cout << size << std::endl;
 
     transformFile >> line >> i >> j;
     int origin[2];
     origin[0] = i;
     origin[1] = j;
-    std::cout << origin << std::endl;
+    // std::cout << origin << std::endl;
 
     transformFile >> line >> i >> j;
     ImageType::SpacingType spacing;
     spacing[0] = i;
     spacing[1] = j;
-    std::cout << spacing << std::endl;
+    // std::cout << spacing << std::endl;
 
     transformFile >> line >> i >> j >> k >> l;
     ImageType::DirectionType direction;
@@ -130,7 +129,7 @@ int main(int argc, char* argv[])
     direction[0][1] = j;
     direction[1][0] = k;
     direction[1][1] = l;
-    std::cout << direction << std::endl;
+    // std::cout << direction << std::endl;
 
     PixelType defaultPixel;
     defaultPixel[0] = 0;
@@ -233,9 +232,39 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    std::cout << "Applied Landmark Warping" << std::endl;
+    std::cout << "Applied landmark warping" << std::endl;
 
-    std::cout << "Finished Applying Transformation" << std::endl << std::endl;
+    ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+    resample->SetTransform(bspline_read);
+
+    resample->SetInput(writer->GetInput());
+
+    resample->SetSize(size);
+    resample->SetOutputOrigin(origin);
+    resample->SetOutputSpacing(spacing);
+    resample->SetOutputDirection(direction);
+    resample->SetDefaultPixelValue(defaultPixel);
+
+    CastFilterType::Pointer caster = CastFilterType::New();
+
+    caster->SetInput(resample->GetOutput());
+    writer->SetInput(caster->GetOutput());
+
+    try
+        {
+        writer->Update();
+        }
+    catch( itk::ExceptionObject & err )
+        {
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        return EXIT_FAILURE;
+        }
+
+    std::cout << "Applied registration transform" << std::endl;
+
+    std::cout << "Finished applying transformations" << std::endl << std::endl;
 
     return EXIT_SUCCESS;
 }
