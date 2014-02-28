@@ -250,6 +250,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 }
 
 	public void Initializer(){
+		this.setResizable(false);
         makeLandmarks = new JButton("Create Landmarks");
         open = new JButton("Open 1st Image");
         open2 = new JButton("Open 2nd Image");
@@ -306,91 +307,12 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			try {
-			    // retrieve image
-			    MaskImage f1 = new MaskImage(FixedPicture.img.getWidth(),FixedPicture.img.getHeight());
-			    f1.addCrosshair(fpx1, fpy1);
-			    File outputfile = new File(newfile.getParent() + "/FMask1.png");
-			    ImageIO.write(f1, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage f2 = new MaskImage(FixedPicture.img.getWidth(),FixedPicture.img.getHeight());
-			    f2.addCrosshair(fpx2, fpy2);
-			    File outputfile = new File(newfile.getParent()+"/FMask2.png");
-			    ImageIO.write(f2, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage f3 = new MaskImage(FixedPicture.img.getWidth(),FixedPicture.img.getHeight());
-			    f3.addCrosshair(fpx3, fpy3);
-			    File outputfile = new File(newfile.getParent()+"/FMask3.png");
-			    ImageIO.write(f3, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage f4 = new MaskImage(FixedPicture.img.getWidth(),FixedPicture.img.getHeight());
-			    f4.addCrosshair(fpx4, fpy4);
-			    File outputfile = new File(newfile.getParent()+"/FMask4.png");
-			    ImageIO.write(f4, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage f5 = new MaskImage(FixedPicture.img.getWidth(),FixedPicture.img.getHeight());
-			    f5.addCrosshair(fpx5, fpy5);
-			    File outputfile = new File(newfile.getParent()+"/FMask5.png");
-			    ImageIO.write(f5, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage m1 = new MaskImage(MovingPicture.img.getWidth(),MovingPicture.img.getHeight());
-			    m1.addCrosshair(mpx1, mpy1);
-			    File outputfile = new File(newfile.getParent()+"/MMask1.png");
-			    ImageIO.write(m1, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage m2 = new MaskImage(MovingPicture.img.getWidth(),MovingPicture.img.getHeight());
-				m2.addCrosshair(mpx2, mpy2);
-				File outputfile = new File(newfile.getParent()+"/MMask2.png");
-			    ImageIO.write(m2, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage m3 = new MaskImage(MovingPicture.img.getWidth(),MovingPicture.img.getHeight());
-				m3.addCrosshair(mpx3, mpy3);
-				File outputfile = new File(newfile.getParent()+"/MMask3.png");
-			    ImageIO.write(m3, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage m4 = new MaskImage(MovingPicture.img.getWidth(),MovingPicture.img.getHeight());
-				m4.addCrosshair(mpx4, mpy4);
-				File outputfile = new File(newfile.getParent()+"/MMask4.png");
-			    ImageIO.write(m4, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-				MaskImage m5 = new MaskImage(MovingPicture.img.getWidth(),MovingPicture.img.getHeight());
-				m5.addCrosshair(mpx5, mpy5);
-				File outputfile = new File(newfile.getParent()+"/MMask5.png");
-			    ImageIO.write(m5, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
-			try {
-			    // retrieve image
-			    BufferedImage b = FixedPicture.img;
-			    File outputfile = new File("DisplayImage.png");
-			    ImageIO.write(b, "png", outputfile);
-			} catch(IOException e1){e1.printStackTrace();}
+			
 			writer.print(DisplayedLandmarks.getText());
 			writer.close();
 		
 		}
 		if(e.getSource()==makeLandmarks){
-			//String input = JOptionPane.showInputDialog(this  ,"Landmark number to edit:");
-			//int Input = Integer.parseInt(input);
-			//if(Input%2==0){Selector(scroll2,Input);}
-			//else
 			
 			scroll1.addMouseListener(this);
 			scroll2.addMouseListener(this);
@@ -433,26 +355,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 			P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), FixedPicture);
 			PointsforLandmarks[rposition][cposition] = (int) (P1.x/fscale);
 			PointsforLandmarks[rposition][++cposition] = (int) (P1.y/fscale);
-			if(counter==0){
-				fpx1=(int) (P1.x/fscale);
-				fpy1=(int) (P1.y/fscale);
-			}
-			if(counter==2){
-				fpx2=(int) (P1.x/fscale);
-				fpy2=(int) (P1.y/fscale);
-			}
-			if(counter==4){
-				fpx3=(int) (P1.x/fscale);
-				fpy3=(int) (P1.y/fscale);
-			}
-			if(counter==6){
-				fpx4=(int) (P1.x/fscale);
-				fpy4=(int) (P1.y/fscale);
-			}
-			if(counter==8){
-				fpx5=(int) (P1.x/fscale);
-				fpy5=(int) (P1.y/fscale);
-			}
+			
 			counter++;
 
 		}
@@ -466,26 +369,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 					P1 = SwingUtilities.convertPoint(s, arg0.getPoint(), MovingPicture);
 					PointsforLandmarks[rposition][cposition] = (int) (P1.x/mscale);
 					PointsforLandmarks[rposition][++cposition] = (int) (P1.y/mscale);
-					if(counter==1){
-						mpx1=(int) (P1.x/fscale);
-						mpy1=(int) (P1.y/fscale);
-					}
-					if(counter==3){
-						mpx2=(int) (P1.x/fscale);
-						mpy2=(int) (P1.y/fscale);
-					}
-					if(counter==5){
-						mpx3=(int) (P1.x/fscale);
-						mpy3=(int) (P1.y/fscale);
-					}
-					if(counter==7){
-						mpx4=(int) (P1.x/fscale);
-						mpy4=(int) (P1.y/fscale);
-					}
-					if(counter==9){
-						mpx5=(int) (P1.x/fscale);
-						mpy5=(int) (P1.y/fscale);
-					}
 
 					counter++;
 					scroll1.removeMouseListener(this);
