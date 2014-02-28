@@ -5,10 +5,8 @@ project(Registration)
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
-add_executable(LandmarkRegistration LandmarkRegistration.cxx)
-add_executable(DeformableRegistration DeformableRegistration13.cxx)
-add_executable(LandmarkWarping LandmarkWarping2.cxx)
+add_executable(ApplyTransform src/ApplyTransform.cxx)
+add_executable(LandmarkRegistration src/LandmarkRegistration.cxx)
 
+target_link_libraries(ApplyTransform ${ITK_LIBRARIES})
 target_link_libraries(LandmarkRegistration ${ITK_LIBRARIES})
-target_link_libraries(DeformableRegistration ${ITK_LIBRARIES})
-target_link_libraries(LandmarkWarping ${ITK_LIBRARIES})
