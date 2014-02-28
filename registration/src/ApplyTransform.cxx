@@ -6,7 +6,6 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "itkCompositeTransform.h"
 #include "itkResampleImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkTransformFileReader.h"
@@ -14,6 +13,12 @@
 #include "itkTransformFactoryBase.h"
 #include "itkTransformFactory.h"
 #include "itkBSplineTransform.h"
+#include "itkLandmarkDisplacementFieldSource.h"
+#include "itkVector.h"
+#include "itkIndex.h"
+#include "itkWarpVectorImageFilter.h"
+#include "itkImageRegion.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 int main(int argc, char* argv[])
 {
@@ -46,7 +51,7 @@ int main(int argc, char* argv[])
 
     typedef itk::BSplineTransform<double, ImageDimension> BSplineTransformType;
 
-    typedef itk::LinearInterpolateImageFunction<ImageType, double>  InterpolatorType;
+    typedef itk::VectorLinearInterpolateImageFunction<ImageType, double>  InterpolatorType;
 
     try
         {
@@ -64,6 +69,19 @@ int main(int argc, char* argv[])
 
     reader->SetFileName(argv[2]);
     writer->SetFileName(argv[3]);
+
+    try
+        {
+        reader->Update();
+        }
+    catch( itk::ExceptionObject & excp )
+        {
+        std::cerr << "Image Reader exception thrown " << std::endl;
+        std::cerr << excp << std::endl;
+        return EXIT_FAILURE;
+        }
+
+    ImageType::ConstPointer readImage = reader->GetOutput();
 
     typedef itk::TransformFileReader::TransformListType * TransformListType;
     TransformListType transforms = transformReader->GetTransformList();
@@ -119,16 +137,90 @@ int main(int argc, char* argv[])
     defaultPixel[1] = 0;
     defaultPixel[2] = 0;
 
+    typedef   float          VectorComponentType;
+    typedef   itk::Vector< VectorComponentType, ImageDimension >    VectorType;
+    typedef   itk::Image< VectorType,  ImageDimension >   DisplacementFieldType;
+    typedef itk::LandmarkDisplacementFieldSource<
+                                DisplacementFieldType
+                                             >  DisplacementSourceType;
+
+    DisplacementSourceType::Pointer deformer = DisplacementSourceType::New();
+
+    deformer->SetOutputSpacing( spacing );
+    deformer->SetOutputOrigin(  origin );
+
+    itk::Index<ImageDimension> index;
+    index.Fill(0);
+    itk::ImageRegion<ImageDimension> region(index, size);
+
+    deformer->SetOutputRegion(  region );
+    deformer->SetOutputDirection( direction );
+
+    typedef DisplacementSourceType::LandmarkContainerPointer   LandmarkContainerPointer;
+    typedef DisplacementSourceType::LandmarkContainer          LandmarkContainerType;
+    typedef DisplacementSourceType::LandmarkPointType          LandmarkPointType;
+
+    LandmarkContainerType::Pointer sourceLandmarks = LandmarkContainerType::New();
+    LandmarkContainerType::Pointer targetLandmarks = LandmarkContainerType::New();
+
+    ImageType::IndexType sourceIndex, targetIndex;
+
+    LandmarkPointType sourcePoint, targetPoint;
+
     while(line != "#Landmark warping physical points")
     {
         std::getline(transformFile, line);
     }
+
+    unsigned int pointId = 0;
+
     while(!transformFile.fail())
     {
-        transformFile >> line >> i >> j >> k >> l;
+        transformFile >> line >> sourcePoint >> targetPoint;
+
+        sourceLandmarks->InsertElement( pointId, sourcePoint );
+        targetLandmarks->InsertElement( pointId, targetPoint );
+        pointId++;
     }
 
     transformFile.close();
+
+    deformer->SetSourceLandmarks( sourceLandmarks.GetPointer() );
+    deformer->SetTargetLandmarks( targetLandmarks.GetPointer() );
+
+    try
+        {
+        deformer->UpdateLargestPossibleRegion();
+        }
+    catch( itk::ExceptionObject & excp )
+        {
+        std::cerr << "Exception thrown " << std::endl;
+        std::cerr << excp << std::endl;
+        return EXIT_FAILURE;
+        }
+
+    DisplacementFieldType::ConstPointer displacementField = deformer->GetOutput();
+
+    typedef itk::WarpVectorImageFilter< ImageType,
+                                ImageType,
+                                DisplacementFieldType  >  FilterType;
+
+    FilterType::Pointer warper = FilterType::New();
+
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+
+    warper->SetInterpolator( interpolator );
+
+    warper->SetCoordinateTolerance(10);
+
+    warper->SetOutputSpacing( displacementField->GetSpacing() );
+    warper->SetOutputOrigin(  displacementField->GetOrigin() );
+
+    warper->SetDisplacementField( displacementField );
+
+    warper->SetInput( reader->GetOutput() );
+
+    writer->SetInput( warper->GetOutput() );
 
     try
     {
@@ -140,6 +232,8 @@ int main(int argc, char* argv[])
         std::cerr << err << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::cout << "Applied Landmark Warping" << std::endl;
 
     std::cout << "Finished Applying Transformation" << std::endl << std::endl;
 

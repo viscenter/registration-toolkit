@@ -617,7 +617,7 @@ int main(int argc, char* argv[])
   grayFixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
   grayMovingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
 
-  transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[0] << std::endl;
+  transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[1] << std::endl;
 
   while( !pointsFile.fail() )
     {
@@ -631,7 +631,7 @@ int main(int argc, char* argv[])
     grayFixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
     grayMovingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
 
-    transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[0] << std::endl;
+    transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[1] << std::endl;
     }
 
   pointsFile.close();
