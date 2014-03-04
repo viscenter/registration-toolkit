@@ -427,7 +427,9 @@ int main(int argc, char* argv[])
   // fixedImage carries over from landmark warping
   registration->SetFixedImage(  grayFixedImage   );
   // carry warper from landmark warping into registration process
-  registration->SetMovingImage(   grayMovingWriter->GetInput()   );
+  grayMovingReader->SetFileName(argv[4]);
+  grayMovingReader->Update();
+  registration->SetMovingImage(   grayMovingReader->GetOutput()  );
 
   grayFixedReader->Update();
 
@@ -468,9 +470,9 @@ int main(int argc, char* argv[])
   registration->SetInitialTransformParameters( transform->GetParameters() );
 
   optimizer->SetMaximumStepLength( 10.0   );
-  optimizer->SetMinimumStepLength(  0.01 );
+  optimizer->SetMinimumStepLength(  0.1 );
 
-  optimizer->SetRelaxationFactor( 0.7 );
+  optimizer->SetRelaxationFactor( 0.1 );
   optimizer->SetNumberOfIterations( atoi(argv[5]) );
 
   // Create the Command observer and register it with the optimizer.
