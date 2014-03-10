@@ -182,7 +182,6 @@ int main(int argc, char* argv[])
     std::cerr << "movingImage outputImageFile ";
     std::cerr << "numberOfIterations ";
     std::cerr << "[createVideoFrames]" << std::endl;
-    // TODO allow for output of transformation images to be used in gif
     return EXIT_FAILURE;
     }
 
@@ -374,7 +373,6 @@ int main(int argc, char* argv[])
   // necessary to avoid "input images do not occupy the same physical space" error
   // not necessary in gray image for some reason
   // with color images this gives the desired output colored image
-  // TODO make it just use one warper and interpolator etc
   colorWarper->SetCoordinateTolerance(10);
 
   colorWarper->SetOutputSpacing( displacementField->GetSpacing() );
@@ -450,7 +448,12 @@ int main(int argc, char* argv[])
       static_cast<double>(
       grayFixedImage->GetLargestPossibleRegion().GetSize()[i] - 1 );
     }
-  grayMeshSize.Fill( numberOfGridNodesInOneDimension - SplineOrder );
+
+  /* Below changed to increase flexibility of transform which
+    completely changed the success of the registration for the better */
+
+  // grayMeshSize.Fill( numberOfGridNodesInOneDimension - SplineOrder );
+  grayMeshSize.Fill(12);
 
   transform->SetTransformDomainOrigin( grayFixedOrigin );
   transform->SetTransformDomainPhysicalDimensions(
@@ -470,9 +473,9 @@ int main(int argc, char* argv[])
   registration->SetInitialTransformParameters( transform->GetParameters() );
 
   optimizer->SetMaximumStepLength( 10.0   );
-  optimizer->SetMinimumStepLength(  0.1 );
+  optimizer->SetMinimumStepLength(  0.01 );
 
-  optimizer->SetRelaxationFactor( 0.1 );
+  optimizer->SetRelaxationFactor( 0.8 );
   optimizer->SetNumberOfIterations( atoi(argv[5]) );
 
   // Create the Command observer and register it with the optimizer.
