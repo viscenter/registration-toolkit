@@ -271,35 +271,6 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
         scroll1 = new JScrollPane(FixedPicture);//declares it
         scroll2 = new JScrollPane(MovingPicture);//declares it
 }
-	
-	public void setFixedZoom(){
-		
-		if(FixedPicture.original.getWidth()<=FixedPicture.getWidth()||FixedPicture.original.getHeight()<=FixedPicture.getHeight()){
-				fscale*=1.1;
-				FixedPicture.resize(fscale,LeftPanel.getSize());
-		}
-		else
-
-			while(FixedPicture.original.getWidth()>FixedPicture.getWidth()||FixedPicture.original.getHeight()>FixedPicture.getHeight()){
-				fscale/=1.1;
-				FixedPicture.resize(fscale,LeftPanel.getSize());
-			}
-		
-	}
-public void setMovingZoom(){
-	
-	if(MovingPicture.original.getWidth()<=MovingPicture.getWidth()||MovingPicture.original.getHeight()<=MovingPicture.getHeight()){
-			mscale*=1.1;
-			MovingPicture.resize(mscale,RightPanel.getSize());
-	}
-	else
-
-		while(FixedPicture.original.getWidth()>FixedPicture.getWidth()||FixedPicture.original.getHeight()>FixedPicture.getHeight()){
-			fscale/=1.1;
-			FixedPicture.resize(fscale,LeftPanel.getSize());
-		}
-	
-}
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
@@ -309,7 +280,6 @@ public void setMovingZoom(){
 				return;
 			File f = jfc.getSelectedFile();
 			FixedPicture.setImage(f);
-			this.setFixedZoom();
 			this.repaint();
 		}
 		if(e.getSource()==open2){
@@ -319,7 +289,6 @@ public void setMovingZoom(){
 				return;
 			File f = jfc2.getSelectedFile();
 			MovingPicture.setImage(f);
-			this.setMovingZoom();
 			this.repaint();
 		}
 		if(e.getSource()==CreateFile){
@@ -350,46 +319,23 @@ public void setMovingZoom(){
 
 		}
 		if(e.getSource()==Bigger1){
-			
 			fscale*=1.1;
-			
-			if(FixedPicture.isresizable(fscale,LeftPanel.getSize())){
-					FixedPicture.resize(fscale,LeftPanel.getSize());}
-			else
-				{fscale/=1.1;
-				JOptionPane.showMessageDialog(Generator, "Maximum zoom limit reached in FixedPicture", "Selection Error", JOptionPane.PLAIN_MESSAGE);}
-
+			FixedPicture.resize(fscale);
 			
 		}
 			
 		if(e.getSource()==Bigger2){
 			mscale*=1.1;
-			
-			if(MovingPicture.isresizable(mscale, RightPanel.getSize())){
-					MovingPicture.resize(mscale,RightPanel.getSize());}
-			else
-				{mscale/=1.1;
-				JOptionPane.showMessageDialog(Generator, "Maximum zoom limit reached in MovingPicture", "Selection Error", JOptionPane.PLAIN_MESSAGE);}
-		}
+			MovingPicture.resize(mscale);}
 		if(e.getSource()==Smaller1){
 			fscale/=1.1;
-			
-			if(FixedPicture.isresizable(fscale,LeftPanel.getSize())){
-					FixedPicture.resize(fscale,LeftPanel.getSize());}
-			else
-				{fscale*=1.1;
-				JOptionPane.showMessageDialog(Generator, "Minimum zoom limit reached in FixedPicture", "Selection Error", JOptionPane.PLAIN_MESSAGE);}
+			FixedPicture.resize(fscale);
 		}
 			
 		if(e.getSource()==Smaller2){
 			mscale/=1.1;
-			
-			if(MovingPicture.isresizable(mscale, RightPanel.getSize())){
-					MovingPicture.resize(mscale,RightPanel.getSize());}
-			else
-				{mscale*=1.1;
-				JOptionPane.showMessageDialog(Generator, "Minimum zoom limit reached in MovingPicture", "Selection Error", JOptionPane.PLAIN_MESSAGE);}
-		}
+			MovingPicture.resize(mscale);
+			}
 		}
 
 	@Override

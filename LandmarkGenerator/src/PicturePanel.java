@@ -66,18 +66,9 @@ public class PicturePanel extends JPanel{
 	    img.setRGB(0, 0, width, height, imagePixels, 0, width);
 	}
 */
-	public boolean isresizable (double scale,Dimension size){
+	public void resize (double scale){
 		double newwidth = original.getWidth()*scale;
 		double newheight = original.getHeight()*scale;
-		if(newwidth>size.width&&newheight>size.height&&scale<=2){
-			return true;
-		}
-		else{return false;}
-	}
-	public void resize (double scale,Dimension size){
-		double newwidth = original.getWidth()*scale;
-		double newheight = original.getHeight()*scale;
-		
 		BufferedImage resizedImage = new BufferedImage((int)newwidth, (int)newheight, original.getType());
 		Graphics2D g = resizedImage.createGraphics();
 		g.drawImage(original, 0, 0, (int)newwidth, (int)newheight, null);
