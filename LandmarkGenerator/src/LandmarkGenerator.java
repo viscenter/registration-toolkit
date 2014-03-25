@@ -32,6 +32,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 	static JEditorPane DisplayedLandmarks = new JEditorPane();
 	static LandmarkGenerator Generator = new LandmarkGenerator();
 	int fpx1,fpy1,fpx2,fpy2,fpx3,fpy3,fpx4,fpy4,fpx5,fpy5,mpx1,mpy1,mpx2,mpy2,mpx3,mpy3,mpx4,mpy4,mpx5,mpy5;
+	JFileChooser jfc;
 
 
 
@@ -270,6 +271,7 @@ public class LandmarkGenerator extends JFrame implements ActionListener, MouseLi
 		RightPanel = new PicturePanel();
 		scroll1 = new JScrollPane(FixedPicture);//declares it
 		scroll2 = new JScrollPane(MovingPicture);//declares it
+		jfc = new JFileChooser();
 	}
 
 	public void setFixedZoom(){
@@ -335,7 +337,6 @@ boolean canzoom = true;
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==open){
 			fscale=1;
-			JFileChooser jfc = new JFileChooser();
 			int result = jfc.showOpenDialog(this);
 			if(result == JFileChooser.CANCEL_OPTION)
 				return;
@@ -348,11 +349,10 @@ boolean canzoom = true;
 		}
 		if(e.getSource()==open2){
 			mscale=1;
-			JFileChooser jfc2 = new JFileChooser();
-			int result = jfc2.showOpenDialog(this);
+			int result = jfc.showOpenDialog(this);
 			if(result == JFileChooser.CANCEL_OPTION)
 				return;
-			File f = jfc2.getSelectedFile();
+			File f = jfc.getSelectedFile();
 			MovingPicture.setImage(f);
 			this.setMovingZoom();
 			this.repaint();
@@ -360,11 +360,10 @@ boolean canzoom = true;
 			Smaller2.setEnabled(true);
 		}
 		if(e.getSource()==CreateFile){
-			JFileChooser jfc3 = new JFileChooser();
-			int result = jfc3.showSaveDialog(this);
+			int result = jfc.showSaveDialog(this);
 			if(result == JFileChooser.CANCEL_OPTION)
 				return;
-			File newfile = jfc3.getSelectedFile();
+			File newfile = jfc.getSelectedFile();
 			PrintWriter writer = null;
 			try {
 				writer = new PrintWriter(newfile, "UTF-8");
