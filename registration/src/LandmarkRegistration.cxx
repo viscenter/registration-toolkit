@@ -185,6 +185,23 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
+  std::printf("%-17s\n\n", "Landmark Registration");
+  std::printf("%-17s %s\n", "Landmarks file: ", argv[1]);
+  std::printf("%-17s %s\n", "Fixed image: ", argv[2]);
+  std::printf("%-17s %s\n", "Moving image: ", argv[3]);
+  std::printf("%-17s %s\n", "Output image: ", argv[4]);
+  std::printf("%-17s %s\n", "Iterations: ", argv[5]);
+  if(argc > 6)
+  {
+    std::printf("%-17s %s\n", "Video frames: ", "Yes");
+  }
+  else
+  {
+    std::printf("%-17s %s\n", "Video frames: ", "No");
+  }
+
+  std::cout << std::endl << "Starting Landmark Warping" << std::endl;
+
   typedef   float          VectorComponentType;
 
   typedef itk::KernelTransform< double, ImageDimension > KernelTransformType;
@@ -281,8 +298,6 @@ int main(int argc, char* argv[])
   pointsFile.open( argv[1] );
 
   unsigned int pointId = 0;
-
-  std::cout << std::endl << "Starting Landmark Warping" << std::endl;
 
   unsigned int sourceX, sourceY, targetX, targetY;
 
@@ -477,6 +492,9 @@ int main(int argc, char* argv[])
 
   optimizer->SetRelaxationFactor( 0.8 );
   optimizer->SetNumberOfIterations( atoi(argv[5]) );
+
+  // Stop before 100 iterations if things are going well
+  optimizer->SetGradientMagnitudeTolerance(0.0001);
 
   // Create the Command observer and register it with the optimizer.
   //
