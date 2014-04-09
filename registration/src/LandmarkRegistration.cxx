@@ -603,7 +603,7 @@ int main(int argc, char* argv[])
   transformWriter->Update();
 
   std::ofstream transformFile;
-  transformFile.open(transformFileName, std::ios::app);
+  transformFile.open(transformFileName.c_str(), std::ios::app);
   transformFile << std::endl;
   transformFile << "#Fixed image parameters" 
     << std::endl;
