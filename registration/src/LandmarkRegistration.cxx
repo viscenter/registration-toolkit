@@ -487,10 +487,10 @@ int main(int argc, char* argv[])
 
   registration->SetInitialTransformParameters( transform->GetParameters() );
 
-  optimizer->SetMaximumStepLength( 10.0   );
+  optimizer->SetMaximumStepLength( grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0 );
   optimizer->SetMinimumStepLength(  0.01 );
 
-  optimizer->SetRelaxationFactor( 0.8 );
+  optimizer->SetRelaxationFactor( 0.85 );
   optimizer->SetNumberOfIterations( atoi(argv[5]) );
 
   // Stop before 100 iterations if things are going well
