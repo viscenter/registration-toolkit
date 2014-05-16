@@ -7,10 +7,11 @@ import java.io.File;
 
 
 
+@SuppressWarnings("serial")
 public class PicturePanel extends JPanel{
 	public int w, h,maskcount; 
 	private int panelwidth, panelheight;
-	private int mask1,mask2,mask3,mask4,mask5;
+	//private int mask1,mask2,mask3,mask4; not used 
 	public BufferedImage img, original;//create the buffered image
 	private static final int TYPE = BufferedImage.TYPE_INT_ARGB;//set the type for later
 
