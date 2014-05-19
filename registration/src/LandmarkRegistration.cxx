@@ -182,9 +182,25 @@ int main(int argc, char* argv[])
     std::cerr << "movingImage outputImageFile ";
     std::cerr << "numberOfIterations ";
     std::cerr << "[createVideoFrames]" << std::endl;
-    // TODO allow for output of transformation images to be used in gif
     return EXIT_FAILURE;
     }
+
+  std::printf("%-17s\n\n", "Landmark Registration");
+  std::printf("%-17s %s\n", "Landmarks file: ", argv[1]);
+  std::printf("%-17s %s\n", "Fixed image: ", argv[2]);
+  std::printf("%-17s %s\n", "Moving image: ", argv[3]);
+  std::printf("%-17s %s\n", "Output image: ", argv[4]);
+  std::printf("%-17s %s\n", "Iterations: ", argv[5]);
+  if(argc > 6)
+  {
+    std::printf("%-17s %s\n", "Video frames: ", "Yes");
+  }
+  else
+  {
+    std::printf("%-17s %s\n", "Video frames: ", "No");
+  }
+
+  std::cout << std::endl << "Starting Landmark Warping" << std::endl;
 
   typedef   float          VectorComponentType;
 
@@ -283,8 +299,6 @@ int main(int argc, char* argv[])
 
   unsigned int pointId = 0;
 
-  std::cout << std::endl << "Starting Landmark Warping" << std::endl;
-
   unsigned int sourceX, sourceY, targetX, targetY;
 
   pointsFile >> sourceX >> sourceY >> targetX >> targetY;
@@ -374,7 +388,6 @@ int main(int argc, char* argv[])
   // necessary to avoid "input images do not occupy the same physical space" error
   // not necessary in gray image for some reason
   // with color images this gives the desired output colored image
-  // TODO make it just use one warper and interpolator etc
   colorWarper->SetCoordinateTolerance(10);
 
   colorWarper->SetOutputSpacing( displacementField->GetSpacing() );
@@ -427,7 +440,9 @@ int main(int argc, char* argv[])
   // fixedImage carries over from landmark warping
   registration->SetFixedImage(  grayFixedImage   );
   // carry warper from landmark warping into registration process
-  registration->SetMovingImage(   grayMovingWriter->GetInput()   );
+  grayMovingReader->SetFileName(argv[4]);
+  grayMovingReader->Update();
+  registration->SetMovingImage(   grayMovingReader->GetOutput()  );
 
   grayFixedReader->Update();
 
@@ -448,7 +463,12 @@ int main(int argc, char* argv[])
       static_cast<double>(
       grayFixedImage->GetLargestPossibleRegion().GetSize()[i] - 1 );
     }
-  grayMeshSize.Fill( numberOfGridNodesInOneDimension - SplineOrder );
+
+  /* Below changed to increase flexibility of transform which
+    completely changed the success of the registration for the better */
+
+  // grayMeshSize.Fill( numberOfGridNodesInOneDimension - SplineOrder );
+  grayMeshSize.Fill(12);
 
   transform->SetTransformDomainOrigin( grayFixedOrigin );
   transform->SetTransformDomainPhysicalDimensions(
@@ -467,11 +487,14 @@ int main(int argc, char* argv[])
 
   registration->SetInitialTransformParameters( transform->GetParameters() );
 
-  optimizer->SetMaximumStepLength( 10.0   );
+  optimizer->SetMaximumStepLength( grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0 );
   optimizer->SetMinimumStepLength(  0.01 );
 
-  optimizer->SetRelaxationFactor( 0.7 );
+  optimizer->SetRelaxationFactor( 0.85 );
   optimizer->SetNumberOfIterations( atoi(argv[5]) );
+
+  // Stop before 100 iterations if things are going well
+  optimizer->SetGradientMagnitudeTolerance(0.0001);
 
   // Create the Command observer and register it with the optimizer.
   //
@@ -580,7 +603,7 @@ int main(int argc, char* argv[])
   transformWriter->Update();
 
   std::ofstream transformFile;
-  transformFile.open(transformFileName, std::ios::app);
+  transformFile.open(transformFileName.c_str(), std::ios::app);
   transformFile << std::endl;
   transformFile << "#Fixed image parameters" 
     << std::endl;
