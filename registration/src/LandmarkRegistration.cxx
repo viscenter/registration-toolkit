@@ -401,7 +401,7 @@ int main(int argc, char* argv[])
 
   try
     {
-    colorMovingWriter->Update();
+    // colorMovingWriter->Update();
     }
   catch( itk::ExceptionObject & excp )
     {
@@ -514,7 +514,21 @@ int main(int argc, char* argv[])
   metric->SetNumberOfHistogramBins( 50 );
 
   const unsigned int numberOfSamples =
-    static_cast<unsigned int>( grayFixedRegion.GetNumberOfPixels() * 60.0 / 100.0 );
+    // original value in example (very slow and source of much frustration)
+    // static_cast<unsigned int>( grayFixedRegion.GetNumberOfPixels() * 60.0 / 100.0 );
+
+    // http://www.itk.org/Insight/Doxygen/html/Registration_2ImageRegistration16_8cxx-example.html
+    //  The metric requires two parameters to be selected: the number
+    //  of bins used to compute the entropy and the number of spatial samples
+    //  used to compute the density estimates. In typical application, 50
+    //  histogram bins are sufficient and the metric is relatively insensitive
+    //  to changes in the number of bins. The number of spatial samples
+    //  to be used depends on the content of the image. If the images are
+    //  smooth and do not contain much detail, then using approximately
+    //  1 percent of the pixels will do. On the other hand, if the images
+    //  are detailed, it may be necessary to use a much higher proportion,
+    //  such as 20 percent.
+    static_cast<unsigned int>(grayFixedRegion.GetNumberOfPixels() / 80.0);
 
   metric->SetNumberOfSpatialSamples( numberOfSamples );
 
