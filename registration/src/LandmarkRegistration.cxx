@@ -1,82 +1,15 @@
-#include "itkVector.h"
-#include "itkImage.h"
-#include "itkLandmarkDisplacementFieldSource.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkWarpImageFilter.h"
-#include "itkWarpVectorImageFilter.h"
-#include "itkIndex.h"
+#include "LandmarkRegistration.h"
 
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
 
-#include "itkImageRegistrationMethod.h"
-#include "itkMattesMutualInformationImageToImageMetric.h"
 
-#include "itkTimeProbesCollectorBase.h"
-#include "itkMemoryProbesCollectorBase.h"
-
-#include "itkBSplineTransform.h"
-#include "itkKernelTransform.h"
-#include "itkRegularStepGradientDescentOptimizer.h"
-
-#include "itkResampleImageFilter.h"
-#include "itkCastImageFilter.h"
-#include "itkSquaredDifferenceImageFilter.h"
-
-#include "itkRGBPixel.h"
-
-#include "itkTransformFileWriter.h"
-
-#include <fstream>
-#include <string>
-#include <iostream>
-
-//  The following section of code implements a Command observer
-//  used to monitor the evolution of the registration process.
-
-const     unsigned int   ImageDimension = 2;
-const unsigned int SpaceDimension = ImageDimension;
-const unsigned int SplineOrder = 3;
-typedef double CoordinateRepType;
-
-typedef itk::BSplineTransform<
-                          CoordinateRepType,
-                          SpaceDimension,
-                          SplineOrder >     BSplineTransformType;
-
-typedef BSplineTransformType::ParametersType     BSplineParametersType;
 
 BSplineTransformType::Pointer  transform;
 
-typedef itk::RGBPixel<unsigned char>  ColorPixelType;
-
-typedef itk::Image< ColorPixelType, ImageDimension > ColorImageType;
-
-typedef itk::ResampleImageFilter<
-                          ColorImageType,
-                          ColorImageType >    ResampleFilterType;
-
 ResampleFilterType::Pointer resample;
-
-typedef itk::CastImageFilter<
-                      ColorImageType,
-                      ColorImageType > CastFilterType;
 
 CastFilterType::Pointer  caster;
 
-typedef itk::ImageFileReader< ColorImageType >  ColorReaderType;
-typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
 
-ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
-
-typedef   unsigned char GrayPixelType;
-
-typedef itk::Image<GrayPixelType, ImageDimension> GrayImageType;
-
-typedef itk::ImageRegistrationMethod<
-                                    GrayImageType,
-                                    GrayImageType >    RegistrationType;
 
 RegistrationType::Pointer   registration;
 
@@ -87,12 +20,15 @@ ColorImageType::ConstPointer colorFixedImage;
 
 bool createVideoFrames;
 
-#include "itkCommand.h"
+ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
+
+
+
 class CommandIterationUpdate : public itk::Command
 {
 public:
-  typedef  CommandIterationUpdate   Self;
-  typedef  itk::Command             Superclass;
+  typedef CommandIterationUpdate    Self;
+  typedef itk::Command              Superclass;
   typedef itk::SmartPointer<Self>   Pointer;
   itkNewMacro( Self );
 
@@ -101,7 +37,7 @@ protected:
 
 public:
   typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
-  typedef   const OptimizerType *                  OptimizerPointer;
+  typedef const OptimizerType *                    OptimizerPointer;
 
   void Execute(itk::Object *caller, const itk::EventObject & event)
     {
@@ -210,18 +146,6 @@ int main(int argc, char* argv[])
 
   printf("\nStarting landmark warping\n");
 
-  typedef   float          VectorComponentType;
-
-  typedef itk::KernelTransform< double, ImageDimension > KernelTransformType;
-  typedef KernelTransformType::ParametersType KernelParametersType;
-
-  typedef   itk::Vector< VectorComponentType, ImageDimension >    VectorType;
-
-  typedef   itk::Image< VectorType,  ImageDimension >   DisplacementFieldType;
-
-  typedef   itk::ImageFileReader< GrayImageType >  GrayReaderType;
-  typedef   itk::ImageFileWriter< GrayImageType >  GrayWriterType;
-
   GrayReaderType::Pointer grayFixedReader = GrayReaderType::New();
   ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
   grayFixedReader->SetFileName( argv[2] );
@@ -278,10 +202,6 @@ int main(int argc, char* argv[])
 
   ColorImageType::ConstPointer colorMovingImage = colorMovingReader->GetOutput();
 
-  typedef itk::LandmarkDisplacementFieldSource<
-                                DisplacementFieldType
-                                             >  DisplacementSourceType;
-
   DisplacementSourceType::Pointer deformer = DisplacementSourceType::New();
 
   deformer->SetOutputSpacing( grayFixedImage->GetSpacing() );
@@ -291,10 +211,6 @@ int main(int argc, char* argv[])
 
   //  Create source and target landmarks.
   //
-  typedef DisplacementSourceType::LandmarkContainerPointer   LandmarkContainerPointer;
-  typedef DisplacementSourceType::LandmarkContainer          LandmarkContainerType;
-  typedef DisplacementSourceType::LandmarkPointType          LandmarkPointType;
-
   LandmarkContainerType::Pointer sourceLandmarks = LandmarkContainerType::New();
   LandmarkContainerType::Pointer targetLandmarks = LandmarkContainerType::New();
 
@@ -357,14 +273,7 @@ int main(int argc, char* argv[])
 
   DisplacementFieldType::ConstPointer displacementField = deformer->GetOutput();
 
-  typedef itk::WarpImageFilter< GrayImageType,
-                                GrayImageType,
-                                DisplacementFieldType  >  GrayFilterType;
-
   GrayFilterType::Pointer grayWarper = GrayFilterType::New();
-
-  typedef itk::LinearInterpolateImageFunction<
-                       GrayImageType, double >  GrayInterpolatorType;
 
   GrayInterpolatorType::Pointer grayInterpolator = GrayInterpolatorType::New();
 
@@ -380,14 +289,7 @@ int main(int argc, char* argv[])
 
   grayMovingWriter->SetInput( grayWarper->GetOutput() );
 
-  typedef itk::WarpVectorImageFilter< ColorImageType,
-                                ColorImageType,
-                                DisplacementFieldType  >  ColorFilterType;
-
   ColorFilterType::Pointer colorWarper = ColorFilterType::New();
-
-  typedef itk::VectorLinearInterpolateImageFunction<
-                       ColorImageType, double >  ColorInterpolatorType;
 
   ColorInterpolatorType::Pointer colorInterpolator = ColorInterpolatorType::New();
 
@@ -422,12 +324,6 @@ int main(int argc, char* argv[])
   printf("Finished landmark warping\n");
 
   // proceed to registration
-  typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
-
-  typedef itk::MattesMutualInformationImageToImageMetric<
-                                    GrayImageType,
-                                    GrayImageType >    MetricType;
-
   MetricType::Pointer         metric        = MetricType::New();
   OptimizerType::Pointer      optimizer     = OptimizerType::New();
   registration  = RegistrationType::New();
