@@ -185,22 +185,30 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
     }
 
-  std::printf("%-17s\n\n", "Landmark Registration");
-  std::printf("%-17s %s\n", "Landmarks file: ", argv[1]);
-  std::printf("%-17s %s\n", "Fixed image: ", argv[2]);
-  std::printf("%-17s %s\n", "Moving image: ", argv[3]);
-  std::printf("%-17s %s\n", "Output image: ", argv[4]);
-  std::printf("%-17s %s\n", "Iterations: ", argv[5]);
+  // Add a time probe
+  itk::TimeProbesCollectorBase chronometer;
+  itk::MemoryProbesCollectorBase memorymeter;
+  memorymeter.Start( "LandmarkRegistration" );
+  chronometer.Start( "LandmarkRegistration" );
+
+  printf("%-17s\n\n", "Landmark Registration");
+  printf("%-17s %s\n", "Landmarks file: ", argv[1]);
+  printf("%-17s %s\n", "Fixed image: ", argv[2]);
+  printf("%-17s %s\n", "Moving image: ", argv[3]);
+  printf("%-17s %s\n", "Output image: ", argv[4]);
+  printf("%-17s %s\n", "Iterations: ", argv[5]);
   if(argc > 6)
   {
-    std::printf("%-17s %s\n", "Video frames: ", "Yes");
+    printf("%-17s %s\n", "Video frames: ", "Yes");
+    createVideoFrames = true;
   }
   else
   {
-    std::printf("%-17s %s\n", "Video frames: ", "No");
+    printf("%-17s %s\n", "Video frames: ", "No");
+    createVideoFrames = false;
   }
 
-  std::cout << std::endl << "Starting Landmark Warping" << std::endl;
+  printf("\nStarting landmark warping\n");
 
   typedef   float          VectorComponentType;
 
@@ -401,7 +409,7 @@ int main(int argc, char* argv[])
 
   try
     {
-    // colorMovingWriter->Update();
+    colorMovingWriter->Update();
     }
   catch( itk::ExceptionObject & excp )
     {
@@ -411,11 +419,10 @@ int main(int argc, char* argv[])
     }
 
   // end landmark warping
-  std::cout << "Finished Landmark Warping" << std::endl;
+  printf("Finished landmark warping\n");
+
   // proceed to registration
-
   typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
-
 
   typedef itk::MattesMutualInformationImageToImageMetric<
                                     GrayImageType,
@@ -425,11 +432,9 @@ int main(int argc, char* argv[])
   OptimizerType::Pointer      optimizer     = OptimizerType::New();
   registration  = RegistrationType::New();
 
-
   registration->SetMetric(        metric        );
   registration->SetOptimizer(     optimizer     );
   registration->SetInterpolator(  grayInterpolator );
-
 
   transform = BSplineTransformType::New();
   registration->SetTransform( transform );
@@ -494,6 +499,7 @@ int main(int argc, char* argv[])
   optimizer->SetNumberOfIterations( atoi(argv[5]) );
 
   // Stop before 100 iterations if things are going well
+  //
   optimizer->SetGradientMagnitudeTolerance(0.0001);
 
   // Create the Command observer and register it with the optimizer.
@@ -501,23 +507,14 @@ int main(int argc, char* argv[])
   CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
   optimizer->AddObserver( itk::IterationEvent(), observer );
 
-  // create video frames if asked for
-  if(argc > 6)
-  {
-    createVideoFrames = true;
-  }
-  else
-  {
-    createVideoFrames = false;
-  }
-
   metric->SetNumberOfHistogramBins( 50 );
 
   const unsigned int numberOfSamples =
     // original value in example (very slow and source of much frustration)
+    //
     // static_cast<unsigned int>( grayFixedRegion.GetNumberOfPixels() * 60.0 / 100.0 );
 
-    // http://www.itk.org/Insight/Doxygen/html/Registration_2ImageRegistration16_8cxx-example.html
+    //  http://www.itk.org/Insight/Doxygen/html/Registration_2ImageRegistration16_8cxx-example.html
     //  The metric requires two parameters to be selected: the number
     //  of bins used to compute the entropy and the number of spatial samples
     //  used to compute the density estimates. In typical application, 50
@@ -528,25 +525,22 @@ int main(int argc, char* argv[])
     //  1 percent of the pixels will do. On the other hand, if the images
     //  are detailed, it may be necessary to use a much higher proportion,
     //  such as 20 percent.
+    //
     static_cast<unsigned int>(grayFixedRegion.GetNumberOfPixels() / 80.0);
 
   metric->SetNumberOfSpatialSamples( numberOfSamples );
 
-  // Add a time probe
-  itk::TimeProbesCollectorBase chronometer;
-  itk::MemoryProbesCollectorBase memorymeter;
-
-  std::cout << std::endl << "Starting Registration" << std::endl;
+  printf("\nStarting registration\n");
 
   try
     {
-    memorymeter.Start( "Registration" );
-    chronometer.Start( "Registration" );
+    // memorymeter.Start( "Registration" );
+    // chronometer.Start( "Registration" );
 
     registration->Update();
 
-    chronometer.Stop( "Registration" );
-    memorymeter.Stop( "Registration" );
+    // chronometer.Stop( "Registration" );
+    // memorymeter.Stop( "Registration" );
 
     std::cout << "Optimizer stop condition = "
               << registration->GetOptimizer()->GetStopConditionDescription()
@@ -564,8 +558,8 @@ int main(int argc, char* argv[])
 
 
   // Report the time and memory taken by the registration
-  chronometer.Report( std::cout );
-  memorymeter.Report( std::cout );
+  // chronometer.Report( std::cout );
+  // memorymeter.Report( std::cout );
 
   transform->SetParameters( registrationParameters );
 
@@ -604,9 +598,9 @@ int main(int argc, char* argv[])
     }
   
   // end registration
-  std::cout << "Finished Registration" << std::endl << std::endl;
+  printf("Finished registration\n\n");
 
-  std::cout << "Writing Transformation to File" << std::endl;
+  printf("Writing transformation to file\n");
 
   std::string transformFileName = "transform.tfm";
 
@@ -672,11 +666,15 @@ int main(int argc, char* argv[])
     }
 
   pointsFile.close();
-
   transformFile.close();
 
-  std::cout << "Finished Writing Transformation to File" << std::endl << std::endl;
+  printf("Finished writing transformation to file\n\n");
 
+  printf("Time and memory usage information:\n");
+  chronometer.Stop( "LandmarkRegistration" );
+  memorymeter.Stop( "LandmarkRegistration" );
+  chronometer.Report( std::cout );
+  memorymeter.Report( std::cout );
 
   return EXIT_SUCCESS;
 }
