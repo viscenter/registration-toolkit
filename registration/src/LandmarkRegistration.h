@@ -26,7 +26,20 @@
 #include <iostream>
 #include <string>
 
+typedef unsigned char                  GrayPixelType;
+typedef itk::RGBPixel< unsigned char > ColorPixelType;
+
 const unsigned int ImageDimension = 2;
+
+typedef itk::Image< GrayPixelType,  ImageDimension > GrayImageType;
+typedef itk::Image< ColorPixelType, ImageDimension > ColorImageType;
+
+typedef itk::ImageFileReader< GrayImageType >  GrayReaderType;
+typedef itk::ImageFileWriter< GrayImageType >  GrayWriterType;
+
+typedef itk::ImageFileReader< ColorImageType >  ColorReaderType;
+typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
+
 const unsigned int SpaceDimension = ImageDimension;
 const unsigned int SplineOrder = 3;
 
@@ -35,68 +48,43 @@ typedef double CoordinateRepType;
 typedef itk::BSplineTransform< CoordinateRepType,
 			       SpaceDimension,
 			       SplineOrder >     BSplineTransformType;
-
 typedef BSplineTransformType::ParametersType     BSplineParametersType;
 
-typedef itk::RGBPixel<unsigned char>  ColorPixelType;
-
-typedef itk::Image< ColorPixelType, ImageDimension > ColorImageType;
-
-typedef itk::ResampleImageFilter<
-                          ColorImageType,
-                          ColorImageType >    ResampleFilterType;
-
-typedef itk::CastImageFilter<
-                      ColorImageType,
-                      ColorImageType > CastFilterType;
-
-typedef itk::ImageFileReader< ColorImageType >  ColorReaderType;
-typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
-
-typedef   unsigned char GrayPixelType;
-
-typedef itk::Image<GrayPixelType, ImageDimension> GrayImageType;
-
-typedef itk::ImageRegistrationMethod<
-                                    GrayImageType,
-                                    GrayImageType >    RegistrationType;
-
-typedef   float          VectorComponentType;
-
 typedef itk::KernelTransform< double, ImageDimension > KernelTransformType;
-typedef KernelTransformType::ParametersType KernelParametersType;
+typedef KernelTransformType::ParametersType            KernelParametersType;
 
-typedef   itk::Vector< VectorComponentType, ImageDimension >    VectorType;
+typedef itk::ResampleImageFilter< ColorImageType,
+                                  ColorImageType >    ResampleFilterType;
+typedef itk::CastImageFilter<     ColorImageType,
+                                  ColorImageType >    CastFilterType;
 
-typedef   itk::Image< VectorType,  ImageDimension >   DisplacementFieldType;
+typedef itk::ImageRegistrationMethod< GrayImageType,
+                                      GrayImageType >    RegistrationType;
 
-typedef   itk::ImageFileReader< GrayImageType >  GrayReaderType;
-typedef   itk::ImageFileWriter< GrayImageType >  GrayWriterType;
-
+typedef float                                              VectorComponentType;
+typedef itk::Vector< VectorComponentType, ImageDimension > VectorType;
+typedef itk::Image< VectorType,  ImageDimension >          DisplacementFieldType;
 typedef itk::LandmarkDisplacementFieldSource<
-                                DisplacementFieldType
-                                             >  DisplacementSourceType;
+                                DisplacementFieldType >    DisplacementSourceType;
 
 typedef DisplacementSourceType::LandmarkContainerPointer   LandmarkContainerPointer;
 typedef DisplacementSourceType::LandmarkContainer          LandmarkContainerType;
 typedef DisplacementSourceType::LandmarkPointType          LandmarkPointType;
 
-typedef itk::WarpImageFilter< GrayImageType,
-                                GrayImageType,
-                                DisplacementFieldType  >  GrayFilterType;
+typedef itk::WarpImageFilter<       GrayImageType,
+                                    GrayImageType,
+                                    DisplacementFieldType > GrayFilterType;
+typedef itk::WarpVectorImageFilter< ColorImageType,
+                                    ColorImageType,
+                                    DisplacementFieldType > ColorFilterType;
 
 typedef itk::LinearInterpolateImageFunction<
-                       GrayImageType, double >  GrayInterpolatorType;
-
-typedef itk::WarpVectorImageFilter< ColorImageType,
-                                ColorImageType,
-                                DisplacementFieldType  >  ColorFilterType;
-
+                       GrayImageType,  double >  GrayInterpolatorType;
 typedef itk::VectorLinearInterpolateImageFunction<
                        ColorImageType, double >  ColorInterpolatorType;
 
-typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
+typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
 
 typedef itk::MattesMutualInformationImageToImageMetric<
                                     GrayImageType,
-                                    GrayImageType >    MetricType;
+                                    GrayImageType > MetricType;
