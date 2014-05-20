@@ -11,8 +11,8 @@ my $crosshair = "~/visDev/registration-toolkit/registration/src/crosshair.png";
 @output = `identify $staticImage`;
 $output[0] =~ /(\d+)x(\d+)/;
 $pointsize = int($1 / 38);
-$strokewidth = int($1/1000);
-$scale = int($1/45);
+$strokewidth = int($1 / 1000);
+$scale = int($1 / 45);
 
 system("convert $crosshair -scale $scale" . "x" . "$scale crosshair_intermediate.png");
 
