@@ -307,7 +307,7 @@ int main(int argc, char* argv[])
   // The registration process will stop if the metric starts changing less than this
   double gradientMagnitudeTolerance = 0.0001;
 
-  int numberOfHistogramBins = 50;
+  int numberOfHistogramBins = 256;
 
   unsigned int numberOfSamples =
     // original value in example (very slow and source of much frustration)
