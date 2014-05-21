@@ -26,7 +26,7 @@
 #include <iostream>
 #include <string>
 
-typedef unsigned short                 GrayPixelType;
+typedef unsigned char                  GrayPixelType;
 typedef itk::RGBPixel< unsigned char > ColorPixelType;
 
 const unsigned int ImageDimension = 2;
