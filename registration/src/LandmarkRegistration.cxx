@@ -301,7 +301,7 @@ int main(int argc, char* argv[])
   double minimumStepLength = 0.001;
 
   // Optimizer step length is reduced by this factor each iteration
-  double relaxationFactor = 0.9;
+  double relaxationFactor = 0.8;
   // The registration process will stop by this many iterations if it has not already
   int numberOfIterations = atoi(argv[5]);
   // The registration process will stop if the metric starts changing less than this
