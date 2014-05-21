@@ -294,12 +294,14 @@ int main(int argc, char* argv[])
   int transformMeshFillSize = 12;
 
   // The maximum step length when the optimizer starts moving around
-  double maximumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
+  // double maximumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
+  double maximumStepLength = 0.1;
   // Registration will stop if the step length drops below this value
-  double minimumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 10000.0;
+  // double minimumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
+  double minimumStepLength = 0.001;
 
   // Optimizer step length is reduced by this factor each iteration
-  double relaxationFactor = 0.85;
+  double relaxationFactor = 0.9;
   // The registration process will stop by this many iterations if it has not already
   int numberOfIterations = atoi(argv[5]);
   // The registration process will stop if the metric starts changing less than this
@@ -325,7 +327,7 @@ int main(int argc, char* argv[])
     static_cast<unsigned int>(grayFixedRegion.GetNumberOfPixels() / 80.0);
 
   //////////////////////////////////////////////////////////////////////////////////////////
-  
+
   BSplineTransformType::PhysicalDimensionsType   grayFixedPhysicalDimensions;
   BSplineTransformType::MeshSizeType             grayMeshSize;
   BSplineTransformType::OriginType               grayFixedOrigin;
@@ -353,7 +355,7 @@ int main(int argc, char* argv[])
 
   optimizer->SetMaximumStepLength(          maximumStepLength          );
   optimizer->SetMinimumStepLength(          minimumStepLength          );
-  optimizer->SetRelaxationFactor(           relaxationFactor           );  
+  optimizer->SetRelaxationFactor(           relaxationFactor           );
   optimizer->SetNumberOfIterations(         numberOfIterations         );
   optimizer->SetGradientMagnitudeTolerance( gradientMagnitudeTolerance );
 
@@ -415,7 +417,7 @@ int main(int argc, char* argv[])
     std::cerr << err << std::endl;
     return EXIT_FAILURE;
     }
-  
+
   printf("Finished registration\n\n");
   printf("Writing transformation to file\n");
 
@@ -429,25 +431,25 @@ int main(int argc, char* argv[])
   std::ofstream transformFile;
   transformFile.open(transformFileName.c_str(), std::ios::app);
   transformFile << std::endl;
-  transformFile << "#Fixed image parameters" 
+  transformFile << "#Fixed image parameters"
     << std::endl;
-  transformFile << "#Size " 
+  transformFile << "#Size "
     << colorFixedImage->GetLargestPossibleRegion().GetSize()[0]
-    << " " << colorFixedImage->GetLargestPossibleRegion().GetSize()[1] 
+    << " " << colorFixedImage->GetLargestPossibleRegion().GetSize()[1]
     << std::endl;
-  transformFile << "#Origin " 
+  transformFile << "#Origin "
     << colorFixedImage->GetOrigin()[0]
-    << " " << colorFixedImage->GetOrigin()[1] 
+    << " " << colorFixedImage->GetOrigin()[1]
     << std::endl;
-  transformFile << "#Spacing " 
+  transformFile << "#Spacing "
     << colorFixedImage->GetSpacing()[0]
-    << " " << colorFixedImage->GetSpacing()[1] 
+    << " " << colorFixedImage->GetSpacing()[1]
     << std::endl;
-  transformFile << "#Direction " 
+  transformFile << "#Direction "
     << colorFixedImage->GetDirection()[0][0]
     << " " << colorFixedImage->GetDirection()[0][1]
     << " " << colorFixedImage->GetDirection()[1][0]
-    << " " << colorFixedImage->GetDirection()[1][1] 
+    << " " << colorFixedImage->GetDirection()[1][1]
     << std::endl << std::endl;
 
   transformFile << "#Landmark warping physical points" << std::endl;
