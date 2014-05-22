@@ -112,13 +112,20 @@ int main(int argc, char* argv[])
   memorymeter.Start( "LandmarkRegistration" );
   chronometer.Start( "LandmarkRegistration" );
 
+  char* landmarksFileName = argv[1];
+  char* fixedImageFileName = argv[2];
+  char* movingImageFileName = argv[3];
+  char* outputImageFileName = argv[4];
+  char* transformFileName = argv[5];
+  char* iterationsIn = argv[6];
+
   printf("%-17s\n\n",  "Landmark Registration");
-  printf("%-17s %s\n", "Landmarks file: ", argv[1]);
-  printf("%-17s %s\n", "Fixed image: ", argv[2]);
-  printf("%-17s %s\n", "Moving image: ", argv[3]);
-  printf("%-17s %s\n", "Output image: ", argv[4]);
-  printf("%-17s %s\n", "Transform file:", argv[5]);
-  printf("%-17s %s\n", "Iterations: ", argv[6]);
+  printf("%-17s %s\n", "Landmarks file: ", landmarksFileName);
+  printf("%-17s %s\n", "Fixed image: ", fixedImageFileName);
+  printf("%-17s %s\n", "Moving image: ", movingImageFileName);
+  printf("%-17s %s\n", "Output image: ", outputImageFileName);
+  printf("%-17s %s\n", "Transform file:", transformFileName);
+  printf("%-17s %s\n", "Iterations: ", iterationsIn);
   if(argc > 7)
   {
     printf("%-17s %s\n", "Video frames: ", "Yes");
@@ -139,11 +146,11 @@ int main(int argc, char* argv[])
   colorMovingReader                         = ColorReaderType::New();
   colorMovingWriter                         = ColorWriterType::New();
 
-  grayFixedReader->SetFileName(   argv[2] );
-  colorFixedReader->SetFileName(  argv[2] );
-  grayMovingReader->SetFileName(  argv[3] );
-  colorMovingReader->SetFileName( argv[3] );
-  colorMovingWriter->SetFileName( argv[4] );
+  grayFixedReader->SetFileName(   fixedImageFileName );
+  colorFixedReader->SetFileName(  fixedImageFileName );
+  grayMovingReader->SetFileName(  movingImageFileName );
+  colorMovingReader->SetFileName( movingImageFileName );
+  colorMovingWriter->SetFileName( outputImageFileName );
 
   try
     {
@@ -179,7 +186,7 @@ int main(int argc, char* argv[])
   LandmarkPointType        sourcePoint, targetPoint;
 
   std::ifstream pointsFile;
-  pointsFile.open( argv[1] );
+  pointsFile.open( landmarksFileName );
 
   unsigned int pointId = 0;
   unsigned int sourceX, sourceY, targetX, targetY;
@@ -270,7 +277,7 @@ int main(int argc, char* argv[])
   registration                              = RegistrationType::New();
   transform                                 = BSplineTransformType::New();
 
-  grayMovingReader->SetFileName(argv[4]);
+  grayMovingReader->SetFileName(outputImageFileName);
   grayMovingReader->Update();
   grayFixedReader->Update();
 
@@ -305,7 +312,7 @@ int main(int argc, char* argv[])
   // Optimizer step length is reduced by this factor each iteration
   double relaxationFactor = 0.85;
   // The registration process will stop by this many iterations if it has not already
-  int numberOfIterations = atoi(argv[6]);
+  int numberOfIterations = atoi(iterationsIn);
   // The registration process will stop if the metric starts changing less than this
   double gradientMagnitudeTolerance = 0.0001;
 
@@ -424,15 +431,13 @@ int main(int argc, char* argv[])
   printf("Finished registration\n\n");
   printf("Writing transformation to file\n");
 
-  std::string transformFileName = argv[5];
-
   itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
   transformWriter->SetFileName(transformFileName);
   transformWriter->SetInput(transform);
   transformWriter->Update();
 
   std::ofstream transformFile;
-  transformFile.open(transformFileName.c_str(), std::ios::app);
+  transformFile.open(transformFileName, std::ios::app);
   transformFile << std::endl;
   transformFile << "#Fixed image parameters"
     << std::endl;
@@ -457,7 +462,7 @@ int main(int argc, char* argv[])
 
   transformFile << "#Landmark warping physical points" << std::endl;
 
-  pointsFile.open( argv[1] );
+  pointsFile.open( landmarksFileName );
 
   pointsFile >> sourceX >> sourceY >> targetX >> targetY;
 
