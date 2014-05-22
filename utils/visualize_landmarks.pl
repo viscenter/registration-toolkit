@@ -1,12 +1,14 @@
 #!/usr/bin/perl
 use warnings;
+use File::Basename;
 
 die "not enough arguments\n" if scalar @ARGV != 3;
 
 my $land = $ARGV[0];
 my $staticImage = $ARGV[1];
 my $movingImage = $ARGV[2];
-my $crosshair = "~/visDev/registration-toolkit/registration/src/crosshair.png";
+my $dirname = dirname(__FILE__);
+my $crosshair = "$dirname/crosshair.png";
 
 @output = `identify $staticImage`;
 $output[0] =~ /(\d+)x(\d+)/;
