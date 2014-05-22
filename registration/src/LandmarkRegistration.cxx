@@ -294,20 +294,20 @@ int main(int argc, char* argv[])
   int transformMeshFillSize = 12;
 
   // The maximum step length when the optimizer starts moving around
-  // double maximumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
-  double maximumStepLength = 0.1;
+  double maximumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
+  // double maximumStepLength = 0.1;
   // Registration will stop if the step length drops below this value
-  // double minimumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
-  double minimumStepLength = 0.001;
+  double minimumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
+  // double minimumStepLength = 0.001;
 
   // Optimizer step length is reduced by this factor each iteration
-  double relaxationFactor = 0.8;
+  double relaxationFactor = 0.85;
   // The registration process will stop by this many iterations if it has not already
   int numberOfIterations = atoi(argv[5]);
   // The registration process will stop if the metric starts changing less than this
   double gradientMagnitudeTolerance = 0.0001;
 
-  int numberOfHistogramBins = 256;
+  int numberOfHistogramBins = 50;
 
   unsigned int numberOfSamples =
     // original value in example (very slow and source of much frustration)
@@ -353,6 +353,7 @@ int main(int argc, char* argv[])
   transform->SetParameters( parameters );
   registration->SetInitialTransformParameters( transform->GetParameters() );
 
+  optimizer->MinimizeOn();
   optimizer->SetMaximumStepLength(          maximumStepLength          );
   optimizer->SetMinimumStepLength(          minimumStepLength          );
   optimizer->SetRelaxationFactor(           relaxationFactor           );
