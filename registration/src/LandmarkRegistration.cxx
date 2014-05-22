@@ -112,12 +112,12 @@ int main(int argc, char* argv[])
   memorymeter.Start( "LandmarkRegistration" );
   chronometer.Start( "LandmarkRegistration" );
 
-  char* landmarksFileName = argv[1];
-  char* fixedImageFileName = argv[2];
+  char* landmarksFileName   = argv[1];
+  char* fixedImageFileName  = argv[2];
   char* movingImageFileName = argv[3];
   char* outputImageFileName = argv[4];
-  char* transformFileName = argv[5];
-  char* iterationsIn = argv[6];
+  char* transformFileName   = argv[5];
+  char* iterationsIn        = argv[6];
 
   printf("%-17s\n\n",  "Landmark Registration");
   printf("%-17s %s\n", "Landmarks file: ", landmarksFileName);
@@ -432,13 +432,20 @@ int main(int argc, char* argv[])
   printf("Writing transformation to file\n");
 
   itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
-  transformWriter->SetFileName(transformFileName);
+  std::string strTransformFileName = transformFileName;
+  transformWriter->SetFileName(strTransformFileName);
   transformWriter->SetInput(transform);
   transformWriter->Update();
 
   std::ofstream transformFile;
   transformFile.open(transformFileName, std::ios::app);
   transformFile << std::endl;
+
+  transformFile << "#Fixed image: "
+		<< fixedImageFileName << std::endl;
+  transformFile << "#Moving Image: "
+		<< movingImageFileName << std::endl << std::endl;
+
   transformFile << "#Fixed image parameters"
     << std::endl;
   transformFile << "#Size "
