@@ -94,12 +94,13 @@ public:
 
 int main(int argc, char* argv[])
 {
-  if( argc < 6 )
+  if( argc < 7 )
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " landmarksFile fixedImage ";
     std::cerr << "movingImage outputImageFile ";
+    std::cerr << "transformDestination ";
     std::cerr << "numberOfIterations ";
     std::cerr << "[createVideoFrames]" << std::endl;
     return EXIT_FAILURE;
@@ -116,8 +117,9 @@ int main(int argc, char* argv[])
   printf("%-17s %s\n", "Fixed image: ", argv[2]);
   printf("%-17s %s\n", "Moving image: ", argv[3]);
   printf("%-17s %s\n", "Output image: ", argv[4]);
-  printf("%-17s %s\n", "Iterations: ", argv[5]);
-  if(argc > 6)
+  printf("%-17s %s\n", "Transform file:", argv[5]);
+  printf("%-17s %s\n", "Iterations: ", argv[6]);
+  if(argc > 7)
   {
     printf("%-17s %s\n", "Video frames: ", "Yes");
     createVideoFrames = true;
@@ -301,7 +303,7 @@ int main(int argc, char* argv[])
   // Optimizer step length is reduced by this factor each iteration
   double relaxationFactor = 0.85;
   // The registration process will stop by this many iterations if it has not already
-  int numberOfIterations = atoi(argv[5]);
+  int numberOfIterations = atoi(argv[6]);
   // The registration process will stop if the metric starts changing less than this
   double gradientMagnitudeTolerance = 0.0001;
 
@@ -419,7 +421,7 @@ int main(int argc, char* argv[])
   printf("Finished registration\n\n");
   printf("Writing transformation to file\n");
 
-  std::string transformFileName = "transform.tfm";
+  std::string transformFileName = argv[5];
 
   itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
   transformWriter->SetFileName(transformFileName);
