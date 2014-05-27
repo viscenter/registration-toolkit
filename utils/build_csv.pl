@@ -3,9 +3,9 @@ use warnings;
 use strict;
 use File::Find;
 
-my $iterations = 100;
+my $iterations = 200;
 my $reg_suffix = "_Reg2010.tif";
-my $tfm_suffix = "_Reg2010.tfm";
+my $tfm_suffix = ".tfm";
 our @landmarks;
 our %data;
 
