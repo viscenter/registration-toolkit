@@ -3,9 +3,9 @@ use warnings;
 use strict;
 use File::Find;
 
-my $iterations = 100;
+my $iterations = 200;
 my $reg_suffix = "_Reg2010.tif";
-my $tfm_suffix = "_Reg2010.tfm";
+my $tfm_suffix = ".tfm";
 our @landmarks;
 our %data;
 
@@ -18,13 +18,14 @@ sub wanted {
   }
 }
 
-my %transforms;
+my %folder;
 for (@landmarks) {
   /(.+)landmarks/;
-  $transforms{$1 . "transforms"}++
+  $folder{$1 . "transforms"}++;
+  $folder{$1 . "registered"}++
 }
 
-for (keys %transforms) {
+for (keys %folder) {
   mkdir $_ if not defined -e $_
 }
 
@@ -36,6 +37,7 @@ for my $ldm (@landmarks) {
   my ($page, $year) = ($1, $2);
   my $output_image = $data{$page}->{$year};
   $output_image =~ s/[.]tif$/$reg_suffix/i;
+  $output_image =~ s#(\d{4})#$1/registered#;
 
   my $tfm_file = $ldm;
   $tfm_file =~ s/[.]ldm$/$tfm_suffix/i;
