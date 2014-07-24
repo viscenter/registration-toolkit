@@ -1,0 +1,101 @@
+Steps for Chad
+
+1. nxstorage.vis.uky.edu ~ connect to server
+2. FoLIO
+3. FoLIO_Datastore
+4. ChadGospels
+    -2D
+        -JPG
+            -1912 ~ all jpg images of 1912
+                -Extras
+                
+            -1912_Reg2010 ~contains all registered images for 1912
+                -diffs ~ jpg diffs
+                -landmarks
+                -transforms
+                
+            -1929 ~ all jpg images of 1929
+                -Extras
+                
+            -1929_Reg2010 ~contains all registered images for 1929
+                -diffs ~ jpg diffs
+                -landmarks
+                -transforms
+                
+            -1962 ~ all jpg images of 1962
+                -Extras
+                
+            -1962_Reg2010 ~contains all registered images for 1929
+                -diffs ~ jpg diffs
+                -landmarks
+                -transforms
+                
+            -2003 ~ all jpg images of 2003
+                -Extras
+                
+            -2003_Reg2010 ~contains all registered images for 2003
+                -diffs ~ jpg diffs
+                -landmarks
+                -transforms
+                
+            -2010 ~ all jpg images of 2010
+                -Extras
+                
+        -Metadata
+        -TIF
+            -1912 ~ all tif images of 1912
+                -Extras
+                
+            -1912_Reg2010 ~contains all registered images for 1912
+                -diffs ~ tif diffs
+                -landmarks
+                -transforms
+                
+            -1929 ~ all tif images of 1929
+                -Extras
+                
+            -1929_Reg2010 ~contains all registered images for 1929
+                -diffs ~ tif diffs
+                -landmarks
+                -transforms
+                
+            -1962 ~ all tif images of 1962
+                -Extras
+                
+            -1962_Reg2010 ~contains all registered images for 1929
+                -diffs ~ tif diffs
+                -landmarks
+                -transforms
+                
+            -2003 ~ all tif images of 2003
+                -Extras
+                
+            -2003_Reg2010 ~contains all registered images for 2003
+                -diffs ~ tif diffs
+                -landmarks
+                -transforms
+                
+            -2010 ~ all tif images of 2010
+                -Extras
+                
+    -3D
+    -Documents
+    -Examples
+        -Registration ~ holds folders for each page of Chad 
+                        the folders contain all jpg images from all 
+                        years(1912, 1929, 1962, 2003, 2010), and 
+                        registered/diff images of years(1912,
+                        1962, 1929, 2003)
+            
+    -Multispectral
+    -Production Photographs
+    -RAW
+    -README
+    -Unsorted
+
+
+
+
+
+
+
