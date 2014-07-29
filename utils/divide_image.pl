@@ -5,11 +5,19 @@ use Image::Magick;
 use File::Basename;
 use File::Find::Rule;
 
+#This program divides an image into 5 tiles to make sure autopano
+#generates landmarks in each corner and in the middle of an image.
+#It ensures a more even distributation and increases the accuracy 
+#of registration.
+
+#finding .jpg files to split
 my $root = '.';
 
 my @files = File::Find::Rule->new
   ->name('*.jpg')
   ->in($root);
+
+#reading in images t0 imagemagic
 for my $file(@files){
   my $i1 = Image::Magick->new;
   my $i2 = Image::Magick->new;
@@ -23,13 +31,18 @@ for my $file(@files){
   my $x4 = $i4->Read($file);
   my $x5 = $i5->Read($file);
 
+  #split filename
   my ($filename, $dir, $ext) = fileparse($file, qr/\.[^.]*/);
   my($mscript, $id, $page, $year) = split(/-/, $filename);
+  
+  #make a folder for each image
   chdir("./$year");
   mkdir "./$filename";
   chdir("./$filename");
 
-  $i1->Crop(geometry=>'33%x33%+0+0');
+  #Crop the image 5 times, into 5 tiles, setting the colorspace to 
+  #work with autopano and writing the tile
+  $i1->Crop(geometry=>'33%x33%+0+0'); 
   $i1->Quantize(colorspace=>'RGB');
   $i1->Set(type=>'TrueColor');
   $i1->Write("$filename" . "_tile1.jpg");
