@@ -12,6 +12,7 @@ my %data;
 my $root = '.';
 my @subdirs ;
 my @files;
+my @moving;
 
 my ($hd1, $wd1, $hd2, $wd2);  #height and width difference
 
@@ -31,22 +32,36 @@ my @dirs =File::Find::Rule->new
   ->maxdepth('1')
   ->in($root);
 
+my $answer = "t";
+
+while(($answer !~ 'm') and ($answer !~ 's')){
+  print("Is $dirs[1] the [m]oving set or the [s]tatic set?  ");
+  $answer = <>; 
+}
 #Split and add image data to hash
 #The key is the pagenumber-year, the value is the pages' full path
 for my $file(@files){
   (my $mainfolder, my $filename) = split(/\//, $file); 
-  my ($manuscript, $id, $page, $year) = split(/-/,$ filename);  
+  my ($manuscript, $id, $page, $year) = split(/-/, $filename);  
   ($year, my $ext) = split(/\./, $year);
   my $info = ($page. '-' . $year);
   $data{$info} = $file;
 }
 
-
 #Find all moving images, to change the moving image, change the index
-my @moving = File::Find::Rule->new
+if($answer =~ 's'){
+  @moving = File::Find::Rule->new
     ->name('*.jpg')
     ->maxdepth('1')
     ->in($dirs[2]);
+}
+elsif($answer =~ 'm'){
+  @moving = File::Find::Rule->new
+    ->name('*.jpg')
+    ->maxdepth('1')
+    ->in($dirs[1]);
+}
+else{}
 
 #Match and write data to CSV
 for my $file(@moving){
@@ -55,11 +70,15 @@ for my $file(@moving){
   my($fname, $ext) = split(/\./, $file);
   (my $mainfolder, my $filename) = split(/\//, $fname);
   my ($manuscript, $id, $page, $year) = split(/-/, $filename);
-
+  
   #Keys for both images
   my $key1 = ("$page" . '-' . $dirs[2]);
   my $key2 = ("$page" . '-' . $dirs[1]);
-
+  
+  if($answer =~ 's'){
+    $key1 = ("$page" . '-' . $dirs[1]);
+    $key2 = ("$page" . '-' . $dirs[2]);
+  }
   #If page exists in both years...
   if(exists($data{$key1})){
     if (exists($data{$key2})){
