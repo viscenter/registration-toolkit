@@ -1,11 +1,18 @@
 #!/usr/bin/perl
 use warnings;
 use strict;
+use File::Find::Rule;
 use File::Find;
 
-#setting iterations and suffix
-my $iterations = 400;
-my $reg_suffix = "_Reg2010.tif";
+my $staticyear;
+
+#finding directories
+my @dirs = File::Find::Rule->new
+  ->directory
+  ->maxdepth('1')
+  ->in('.');
+
+my $iterations = 600;
 my $tfm_suffix = ".tfm";
 
 #declaring data structures
@@ -19,7 +26,7 @@ find(\&wanted, '.');
 sub wanted {
   if (/[.]ldm$/) {
     push @landmarks, $File::Find::name
-  } 
+  }
   elsif(/\d-(.+)-(.+)[.]tif$/){
     $data{$1}->{$2} = $File::Find::name;
   }
@@ -30,7 +37,7 @@ my %folder;
 for (@landmarks) {
   /(.+)landmarks/;
   $folder{$1 . "transforms"}++;
-  $folder{$1 . "registered"}++
+  $folder{$1 . "registered"}++;
 }
 
 for (keys %folder) {
@@ -45,6 +52,15 @@ for my $ldm (@landmarks) {
   #Add appropriate images for the landmark
   my ($page, $year) = ($1, $2);
   my $output_image = $data{$page}->{$year};
+  
+  for my $dir(@dirs){
+    if ($dir !~ $year){
+      print $dir . "\n";
+      $staticyear = $dir;
+    } 
+  }
+
+  my $reg_suffix = "_Reg$staticyear" . ".tif";
 
   #create the output image name/folder
   $output_image =~ s/[.]tif$/$reg_suffix/i;
@@ -56,5 +72,5 @@ for my $ldm (@landmarks) {
   $tfm_file =~ s/landmarks/transforms/;
   
   #write file
-  print $csv "$ldm, $data{$page}->{2010}, $data{$page}->{$year}, $output_image, $tfm_file," . ' ' . "$iterations\n";
+  print $csv "$ldm, $data{$page}->{$staticyear}, $data{$page}->{$year}, $output_image, $tfm_file," . ' ' . "$iterations\n";
 }
