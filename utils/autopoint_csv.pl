@@ -102,16 +102,20 @@ for my $file(@moving){
       my $tilename = "$mainfolder/$filename/$filename". "_tile1.jpg";
       
       #get the tiles' widith and height
-      my $i2 = Image::Magick->new;
-      my $x2 = $i2->Read($tilename);
-      my $tile_height = $i2->Get('height');
-      my $tile_width = $i2->Get('width');
+      if (-e $tilename){
+        my $i2 = Image::Magick->new;
+        my $x2 = $i2->Read($tilename);
+        my $tile_height = $i2->Get('height');
+        my $tile_width = $i2->Get('width');
       
-      #print difference
-      $hd1 = $orig_height - $tile_height;
-      $wd1 = $orig_width - $tile_width;
-      print $csv $wd1, ", ", $hd1, ", ";
-
+        #print difference
+        $hd1 = $orig_height - $tile_height;
+        $wd1 = $orig_width - $tile_width;
+        print $csv $wd1, ", ", $hd1, ", ";
+      }
+      else{
+        print $csv $orig_width, ", ", $orig_height, ", ";
+      }
       #Info and name for 2nd image
       print $csv $data{$key2};
       print $csv ", ";
@@ -128,15 +132,20 @@ for my $file(@moving){
       $filename = $parts[0];
       my @folderFile = split(/\//, $filename);
       $tilename = "$filename/$folderFile[1]". "_tile1.jpg";
-      $i2 = Image::Magick->new;
-      $x2 = $i2->Read($tilename);
-      $tile_height = $i2->Get('height');
-      $tile_width = $i2->Get('width');
-      
-      #printing difference
-      $hd2 = $orig_height - $tile_height;
-      $wd2 = $orig_width - $tile_width;
-      print $csv $wd2, ", ", $hd2, "\n ";
+      if(-e $tilename){
+        my $i2 = Image::Magick->new;
+        my $x2 = $i2->Read($tilename);
+        my $tile_height = $i2->Get('height');
+        my $tile_width = $i2->Get('width');
+        
+        #printing difference
+        $hd2 = $orig_height - $tile_height;
+        $wd2 = $orig_width - $tile_width;
+        print $csv $wd2, ", ", $hd2, "\n ";
+      }
+      else{
+        print $csv $orig_width, ", ", $orig_height, "\n";
+      }
     }
   }
 }
