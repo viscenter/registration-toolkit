@@ -1,0 +1,6 @@
+
+void RedrawJavaSide();
+void JavaSetVolumeIntensity( float minimum, float maximum );
+void JavaSetCropRegion( int minx, int maxx, int miny, int maxy, int minz, int maxz );
+void JavaSetPointStructureIntensity( float minimum, float maximum );
+void JavaSetIntensityLabel( float minimum, float maximum, int data[] );

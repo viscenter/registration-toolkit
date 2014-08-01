@@ -1,0 +1,12 @@
+Educe is part of the Scroll Manipulation Toolkit.
+
+The program needs JOGL to interface in between Java and OpenGL. It can be downloaded here: https://jogamp.org/deployment/jogamp-current/archive/jogamp-all-platforms.7z
+
+The necessary .jar files can be copied from these extracted files to somewhere Java can find them (on OS X: /Library/Java/Extensions/). The following files are needed on OS X:
+
+gluegen-rt-natives-macosx-universal.jar
+gluegen-rt.jar
+jogl-all-natives-macosx-universal.jar
+jogl-all.jar
+
+The naming changes for other platforms are self explanatory.

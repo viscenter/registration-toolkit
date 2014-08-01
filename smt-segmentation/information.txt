@@ -1,0 +1,17 @@
+Arguments
+---------
+     Argument           Parameters              Description 
+   -----------         ------------            -------------
+
+ -arg                  filename             Load addition arguments from file
+ -saveArg              filename             Save following arguments to a file
+ -v, -verbose                               Output verbose messages
+ -V, -Verbose          filename             Output verbose messages to file
+ -e, -errors                                Output error messages
+ -E, -Errors           filename             Output error messages to file
+ 
+ -w, -windowSize       width height         Alter the size of the program window
+ -s, -sidePanelSize    width                Alter the general size of the side panel
+ 
+ -l, -loadProject      filename             Load a project
+ -lv, -loadVolume      filename             Load volume for creation of project
