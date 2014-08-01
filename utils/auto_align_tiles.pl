@@ -6,7 +6,6 @@
 
 use warnings;
 use strict;
-use String::Util 'trim';
 use File::Spec;
 
 #defining to clear the whitespace from the left side of a string
@@ -175,10 +174,11 @@ while (<>){
       else{}
     }
     #Close tile landmarks and change back to starting directory
-    unlink($tilelandmarks);
     chdir('..');
     chdir('..');
   }
 
   else{}
 }
+
+system("rm tilelandmarks.ldm");
