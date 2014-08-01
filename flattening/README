@@ -1,6 +1,6 @@
 These programs are used to flatten meshes and manipulate their textures based on that flattening.
 
-decimate.py is a Blender script which loads a mesh and reduces the vertex count. It was written for the Chad Gospels data set and it may not work immediately on other data (it expects a certain file format and mesh orientation).
+decimate.py is a Blender script which loads a mesh and reduces the vertex count. It was written for the Chad Gospels data set and it may not work immediately on other data (it expects the Wavefront .obj file format and a certain mesh orientation).
 
 flatten.py was developed for the same data set. It loads the decimated mesh, creates a collision plane below it, drops the mesh as a cloth, allows it to flatten, and writes the mesh to a new flattened file.
 
