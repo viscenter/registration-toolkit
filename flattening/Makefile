@@ -1,10 +1,10 @@
-SOURCES=src/redraw.cpp
+SOURCES=redraw.cpp
 OBJECTS=redraw.o
 CC=clang++
 CFLAGS=-g -Wall -Werror -Wextra -Wshadow
 LIBS=-framework OpenGL -lGLEW -lglfw3 `pkg-config --libs opencv`
 INCLUDE=-L/opt/local/lib/
-BINARY=bin/redraw
+BINARY=redraw
 
 all: $(BINARY)
 
