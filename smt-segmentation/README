@@ -1,4 +1,4 @@
-Educe is part of the Scroll Manipulation Toolkit.
+Smt-Segmentation (formerly known as Educe, not to be confused with https://github.com/viscenter/educe) is part of the Scroll Manipulation Toolkit.
 
 The program needs JOGL to interface in between Java and OpenGL. It can be downloaded here: https://jogamp.org/deployment/jogamp-current/archive/jogamp-all-platforms.7z
 
