@@ -13,7 +13,7 @@ sub ltrim { my $s = shift; $s =~ s/^\s+//;       return $s };
 
 my $floatname;
 my $fixedyear;
-
+my $floatyear;
 # CSV format:image1 width height image2 width height
 #The width and height numbers are the differences between the 
 #original image and each tile
@@ -38,7 +38,7 @@ while (<>){
     my $wholefloatimage = $commands[3];
     $wholefloatimage = ltrim($wholefloatimage);
     my ($wholefloat, $ext2) = split(/\./, $wholefloatimage);
-    (my $floatyear, $floatname) = split(/\//, $wholefloat);
+    ($floatyear, $floatname) = split(/\//, $wholefloat);
 
     my $float_wd = $commands[4];
     my $float_hd = $commands[5];
@@ -174,6 +174,7 @@ while (<>){
       else{}
     }
     #Close tile landmarks and change back to starting directory
+   
     chdir('..');
     chdir('..');
   }
@@ -181,4 +182,4 @@ while (<>){
   else{}
 }
 
-system("rm tilelandmarks.ldm");
+system("rm ./$floatyear/landmarks/tilelandmarks.ldm");
