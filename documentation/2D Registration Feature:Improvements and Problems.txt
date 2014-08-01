@@ -1,0 +1,21 @@
+2D Registration Feature/Improvements and Problems
+
+1. DPI issue
+    ~Registration gives an error (images not in same physical space) and is fixed by 
+        changing the DPI with imagemagick or photoshop 
+    ~Not sure what the underlying issue is 
+    
+2. Alpha layer
+    ~Program does not support an alpha channel 
+
+3. RBG Color
+    ~Gray scale images are not supported by autopano (not a valid image)
+    
+4. CSV issues
+    ~CSV files can not have blank lines and there has to be spaces after the 
+        commas 
+    ~Can not edit CSV files in Excel (can use textedit) 
+        
+5. Possible improvements
+    ~Add external prompt to determine number of pixels checked in registration 
+        and number of iterations 
