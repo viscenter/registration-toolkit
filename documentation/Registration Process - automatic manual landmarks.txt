@@ -1,0 +1,40 @@
+Batch Registration
+(a .ldm landmark file needs to be included for this process) 
+(add the .ldm files into a Landmarks folder and place it inside the moving imgae folder)
+
+Folder setup to run registration:
+
+-Create new folder 
+
+-NewFolder
+    -1912(movingImages)
+        ~needs .tif images for year
+        -Landmarks(contains .ldm files)
+    
+    -2010(fixedImages)
+        ~needs .tif images for year
+
+ 
+(starts registration process) 
+
+(makes a csv document to pass the arguments) 
+1. build_csv.pl 
+    ~build_csv.py is found in utils
+    ~make sure there are no extra lines at end of registration_batch.csv that is created
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/build_csv.pl
+
+(creates the registered images)  
+2. batch_pipeline.pl LandmarkRegistration registration_batch.csv
+    ~batch_pipeline.pl is found in utils
+    ~LandmarkRegistration is found in bin
+    ~registration_batch.csv is found in current directory
+    ~make "diffs" folder in "registered" folder that was created in the moving image folder
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/batch_pipeline.pl /Users/(username)/SourceControl/registration-toolkit/registration/bin/LandmarkRegistration registration_batch.csv
+
+(creates the diff images) 
+3. batch_diff.pl registration_batch.csv
+    ~batch_diff.pl is found in utils
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/batch_diff.pl

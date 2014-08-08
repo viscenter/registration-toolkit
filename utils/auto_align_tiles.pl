@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 # Usage: auto_align_tiles    CSV file
 # This program automatically generates a single landmark file for 
 #an image based on 5 tiles of the image.
@@ -9,6 +8,11 @@ use strict;
 use File::Spec;
 
 #defining to clear the whitespace from the left side of a string
+use warnings;
+use strict;
+use String::Util 'trim';
+use File::Spec;
+
 sub ltrim { my $s = shift; $s =~ s/^\s+//;       return $s };
 
 my $floatname;
@@ -56,6 +60,7 @@ while (<>){
     
     #get absolute file path for tiles
     for my $tile(1..5){
+
     chdir('..');
     chdir('..');
     my $floattemppath = "./$wholefloat/$floatname" . "_tile$tile" . ".jpg";
@@ -87,12 +92,12 @@ while (<>){
 
     open(my $alignment, "<", "alignment.pto") or die "couldn't open alignment.pto";
 
-
     #write results of autopano/alignment to file for each tile
     for(<$alignment>){
       print $tilelandmarks "$1 $2 $3 $4 tile$tile\n" if  /x(\d+) y(\d+) X(\d+) Y(\d+)/;
     }
   }
+
     close($tilelandmarks);
 
     #write landmarks from individual tile document into one document, fixing them for the original image
@@ -117,6 +122,7 @@ while (<>){
           $t1 += 1;
         }
       }
+
       #tile 2-upper right corner- add width difference to x values
       elsif($coords[4] =~ /tile2/){
         if ($t2 <= 1){
@@ -144,6 +150,7 @@ while (<>){
           $t3+=1;
         }
       }
+
       #tile 4-lower left corner-add height difference to y values
       elsif($coords[4] =~ /tile4/){
         if($t4 <= 1){
@@ -155,6 +162,7 @@ while (<>){
           $t4+=1;
         }  
       }
+
       #tile 5-center tile-add half of width to x and half of height to y values
       elsif($coords[4] =~ /tile5/){
         if($t5 <= 1){
