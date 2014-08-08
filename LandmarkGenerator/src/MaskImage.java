@@ -1,13 +1,13 @@
-import java.awt.Component;
+//import java.awt.Component;
 import java.awt.Color;
-import java.awt.Dimension;
+//import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.MediaTracker;
+//import java.awt.MediaTracker;
 import java.awt.image.BufferedImage;
-import java.io.File;
+//import java.io.File;
 
-import javax.imageio.ImageIO;
-import javax.swing.JPanel;
+//import javax.imageio.ImageIO;
+//import javax.swing.JPanel;
 
 
 public class MaskImage extends BufferedImage{

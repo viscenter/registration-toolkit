@@ -1,0 +1,56 @@
+Batch Registration
+(auto landmark picking included for full images)
+(the even distribution of landmarks is not guaranteed) 
+
+Folder setup to run registration:
+
+-Create new folder 
+
+-NewFolder
+    -1912(movingImages)
+        ~needs .tif images for year
+        ~need .jpg images for year
+    
+    -2010(fixedImages)
+        ~needs .tif images for year
+        ~needs .jpg images for year
+
+
+(starts auto landmark picking process)
+
+(Generates the csv file)
+1. autopoints_csv.pl
+    ~autopoints_csv.pl found in utils
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/autopoints_csv.pl
+
+(aligns the split images back into one full image) 
+2. auto_align.pl auto_batch.csv 
+    ~auto_align.pl found in utils
+    ~auto_batch.csv found in current directory 
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/auto_align.pl fixedImage movingImage
+ 
+(starts registration process) 
+
+(makes a csv document to pass the arguments) 
+3. build_csv.pl 
+    ~build_csv.py is found in utils
+    ~make sure there are no extra lines at end of registration_batch.csv that is created
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/build_csv.pl
+
+(creates the registered images)  
+4. batch_pipeline.pl LandmarkRegistration registration_batch.csv
+    ~batch_pipeline.pl is found in utils
+    ~LandmarkRegistration is found in bin
+    ~registration_batch.csv is found in current directory
+    ~make "diffs" folder in "registered" folder that was created in the moving image folder
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/batch_pipeline.pl /Users/(username)/SourceControl/registration-toolkit/registration/bin/LandmarkRegistration registration_batch.csv
+
+(creates the diff images) 
+5. batch_diff.pl registration_batch.csv
+    ~batch_diff.pl is found in utils
+    ~example path for use:
+        perl /Users/(username)/SourceControl/registration-toolkit/utils/batch_diff.pl
