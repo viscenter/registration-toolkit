@@ -7,13 +7,14 @@ import java.io.File;
 
 
 
+@SuppressWarnings("serial")
 public class PicturePanel extends JPanel{
 	public int w, h,maskcount; 
 	private int panelwidth, panelheight;
-	private int mask1,mask2,mask3,mask4,mask5;
+	//private int mask1,mask2,mask3,mask4; not used 
 	public BufferedImage img, original;//create the buffered image
 	private static final int TYPE = BufferedImage.TYPE_INT_ARGB;//set the type for later
-	
+
 	public PicturePanel (){
 		super();//make the outline
 		panelwidth=800;
@@ -36,9 +37,9 @@ public class PicturePanel extends JPanel{
 		catch(Exception ex){ex.printStackTrace();}
 		w = img.getWidth();
 		h = img.getHeight();
-		
+
 		maskcount = 1;
-		
+
 		//pix = imgToArray();
 		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
 	}
@@ -47,7 +48,7 @@ public class PicturePanel extends JPanel{
 		super.paint(g);
 		g.drawImage(img,0,0,null);
 	}
-	
+
 	/*public void applyMaskToAlpha()
 	{
 	    int width = img.getWidth();
@@ -65,17 +66,27 @@ public class PicturePanel extends JPanel{
 
 	    img.setRGB(0, 0, width, height, imagePixels, 0, width);
 	}
-*/
-	public void resize (double scale){
+	 */
+	public boolean isresizable (double scale,Dimension size){
 		double newwidth = original.getWidth()*scale;
 		double newheight = original.getHeight()*scale;
+		if(newwidth>size.width&&newheight>size.height&&scale<=2){
+			return true;
+		}
+		else{return false;}
+	}
+	public void resize (double scale){
+		
+		double newwidth = original.getWidth()*scale;
+		double newheight = original.getHeight()*scale;
+
 		BufferedImage resizedImage = new BufferedImage((int)newwidth, (int)newheight, original.getType());
 		Graphics2D g = resizedImage.createGraphics();
 		g.drawImage(original, 0, 0, (int)newwidth, (int)newheight, null);
 		img=resizedImage;
 		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
 		this.repaint();
-		
+
 	}
-	
+
 }
