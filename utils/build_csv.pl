@@ -55,7 +55,6 @@ for my $ldm (@landmarks) {
   
   for my $dir(@dirs){
     if ($dir !~ $year){
-      print $dir . "\n";
       $staticyear = $dir;
     } 
   }
