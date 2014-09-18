@@ -13,16 +13,6 @@ registration
 
 Programs used for actual registration of images.
 
-scalpel
--------
-
-Analysis of volumetric data sets, creates force field for use with the particle simulation.
-
-simulation
-----------
-
-Run particle simulation through force field created by scalpel.
-
 utils
 -----
 
