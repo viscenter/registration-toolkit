@@ -1,0 +1,35 @@
+LandmarkGenerator/bin/
+LandmarkGenerator/runnable.jar
+*.png
+!utils/crosshair.png
+*.jpg
+*.mhd
+*.raw
+registration/images/
+registration/bin/
+utils/bin/
+flycheck*
+*.o
+
+# Emacs
+*~
+
+# Java
+*.class
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
