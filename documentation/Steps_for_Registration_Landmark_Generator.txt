@@ -1,0 +1,26 @@
+
+Steps for how to use the Registration/Landmark Generator
+
+
+1 -Open ‘Landmark Generator’
+
+2 -Upload base image (newest image to date) to left slide ‘Open 1st Image’
+
+3 -Upload matching image from other year on right side ‘Open 2nd Image’
+
+4 -Then by clicking ‘+’ zoom in on one of the four corners on both images
+
+5 -Find a matching point on both images 
+
+6 -Click ‘Create Landmarks’ ONLY one time (Click each time before picking a new point)
+
+7 -Make sure to click the point on the left image first then the matching point on the    
+   right image
+
+8 -Now repeat steps 4 through 7 for each of the four corners of the image 
+
+9 -For your 5th and last point choose a matching point as close to the center of the 
+   image as possible 
+ 
+10 -When finished ‘Write to File’ and rename including ‘.ldm’ as the ending, not jpg or          
+    tif
