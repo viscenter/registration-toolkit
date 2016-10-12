@@ -10,6 +10,7 @@ registration/bin/
 utils/bin/
 flycheck*
 *.o
+3Dregistration/build/
 
 # Emacs
 *~

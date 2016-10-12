@@ -4,7 +4,10 @@
 #include <vtkActor.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
+#include <vtkOBBTree.h>
 #include <vtkRenderWindowInteractor.h>
+#include <math.h>
+#include <limits.h>
 
 Manipulator::Manipulator() 
 {
@@ -21,9 +24,11 @@ Manipulator::Manipulator(std::string &file)
 bool Manipulator::ReadObj()
 {
 	bool success = false;
+	// Check to see if the Manipulator has been initialized with a file path
 	if (file_path != "") 
 	{
-		reader->SetFileName(file_path.c_str());
+		// Set the file path for the reader and get the mesh (obj)
+		reader->SetFileName(file_path.c_str()); 
 		reader->Update();
 		success = true;
 	}
@@ -35,9 +40,43 @@ bool Manipulator::ManipulateObj()
 	bool success = false;
 	if (ReadObj() && reader->GetFileName() != NULL) 
 	{
+		vtkSmartPointer<vtkPolyData> poly_data = reader->GetOutput();
+		vtkSmartPointer<vtkOBBTree> obb_tree = vtkSmartPointer<vtkOBBTree>::New();
+		double corner[3]; double max[3]; double mid[3]; double min[3]; double size[3];
+		// Computes the OBB and returns the 3 axis relative to the box
+		obb_tree->ComputeOBB(poly_data, corner, max, mid, min, size);
+
+		// Convert to points of space; We assume that the min array is the "z axis"
+		for (int i = 0; i < 3; ++i) 
+		{
+			min[i] += corner[i];
+		}
+		// Normalize the vector
+		Normalize(min);
+		//AlignObj(reader-);
 		success = true;
 	}
 	return success;
+}
+
+
+
+void Manipulator::Normalize(double *values)
+{
+	double magnitude = 0.0;
+	for (int i = 0; i < 3; ++i) 
+	{
+		magnitude += (values[i] * values[i]);
+	}
+	magnitude = sqrt(magnitude);
+	if (magnitude > 0.0) 
+	{
+		for (int i = 0; i < 3; ++i) 
+		{
+			values[i] = values[i]/magnitude;
+		}
+	}
+	return;
 }
 
 void Manipulator::Visualize()

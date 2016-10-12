@@ -20,10 +20,10 @@ class Manipulator
 
 	private:
 		bool ReadObj();
+		void Normalize(double *values);
 
 		// Private data members
 		std::string file_path;
 		vtkSmartPointer<vtkOBJReader> reader;
 };
-
 #endif //MESH_MANIPULATOR_H_
