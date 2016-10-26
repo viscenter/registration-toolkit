@@ -6,14 +6,9 @@
 #include <vtkSmartPointer.h>
 #include <vtkOBJImporterInternals.h>
 #include <vtkTransformPolyDataFilter.h>
-#include <itkLandmarkBasedTransformInitializer.h>
 
 using Element = double;
 const size_t Dimension = 3;
-using Point = itk::Point<Element, Dimension>;
-using Image = itk::Image<Element, Dimension>;
-using Transform = itk::AffineTransform<Element, Dimension>;
-using ITKPointType = itk::Point<Element, Dimension>;
 
 class Manipulator 
 {

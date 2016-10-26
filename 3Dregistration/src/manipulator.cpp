@@ -6,7 +6,6 @@
 #include <vtkRenderWindow.h>
 #include <vtkOBBTree.h>
 #include <vtkRenderWindowInteractor.h>
-#include <itkTransformMeshFilter.h>
 #include <vtkLandmarkTransform.h>
 #include <vtkPLYWriter.h>
 #include <vtkMatrix4x4.h>
