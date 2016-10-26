@@ -4,7 +4,16 @@
 #include <stdbool.h>
 #include <string>
 #include <vtkSmartPointer.h>
-#include <vtkOBJReader.h>
+#include <vtkOBJImporterInternals.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <itkLandmarkBasedTransformInitializer.h>
+
+using Element = double;
+const size_t Dimension = 3;
+using Point = itk::Point<Element, Dimension>;
+using Image = itk::Image<Element, Dimension>;
+using Transform = itk::AffineTransform<Element, Dimension>;
+using ITKPointType = itk::Point<Element, Dimension>;
 
 class Manipulator 
 {
@@ -12,18 +21,18 @@ class Manipulator
 		Manipulator();
 		Manipulator(std::string &file);
 		bool ManipulateObj();
-		void Visualize();
+		void VisualizeResults(vtkSmartPointer<vtkOBJImporter> reader);
 
 		// Getters and setters
 		void SetObjFilePath(std::string &file);
 		std::string GetObjFilePath();
 
 	private:
-		bool ReadObj();
-		void Normalize(double *values);
+		bool ReadObj(vtkSmartPointer<vtkOBJPolyDataProcessor> reader);
+		vtkSmartPointer<vtkTransformPolyDataFilter> AlignObj(vtkSmartPointer<vtkPolyData> reader, vtkSmartPointer<vtkPoints> moving_points, vtkSmartPointer<vtkPoints> fixed_points);
+		void WriteObj(vtkSmartPointer<vtkTransformPolyDataFilter> mesh);
 
 		// Private data members
 		std::string file_path;
-		vtkSmartPointer<vtkOBJReader> reader;
 };
 #endif //MESH_MANIPULATOR_H_
