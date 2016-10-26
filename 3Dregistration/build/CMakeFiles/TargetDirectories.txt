@@ -1,3 +1,0 @@
-/Users/ztan222/Desktop/Project_Manipulation/build/CMakeFiles/edit_cache.dir
-/Users/ztan222/Desktop/Project_Manipulation/build/CMakeFiles/rebuild_cache.dir
-/Users/ztan222/Desktop/Project_Manipulation/build/CMakeFiles/manipulate.dir
