@@ -30,7 +30,7 @@ class Manipulator
 	private:
 		bool ReadObj(vtkSmartPointer<vtkOBJPolyDataProcessor> reader);
 		vtkSmartPointer<vtkTransformPolyDataFilter> AlignObj(vtkSmartPointer<vtkPolyData> reader, vtkSmartPointer<vtkPoints> moving_points, vtkSmartPointer<vtkPoints> fixed_points);
-		void WriteObj(vtkSmartPointer<vtkTransformPolyDataFilter> mesh);
+		void WriteObj(vtkSmartPointer<vtkOBJPolyDataProcessor> mesh);
 
 		// Private data members
 		std::string file_path;

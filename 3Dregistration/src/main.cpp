@@ -1,4 +1,4 @@
-#include "manipulator.hpp"
+#include "obj_reader.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -9,13 +9,9 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	std::string file_path = argv[1];
-	Manipulator obj_manipulator = Manipulator(file_path);
-	if (!obj_manipulator.ManipulateObj())
-	{
-		return EXIT_FAILURE;
-	}
-	
+	std::string obj_file = argv[1];
+	OBJReader reader = OBJReader(); 
+	reader.Parse(obj_file);
 	return 0;
 }
 
