@@ -89,13 +89,13 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
  
     vtkSmartPointer<vtkPoints> intersection_points = vtkSmartPointer<vtkPoints>::New();
     vtkSmartPointer<vtkPolyData> intersection_result = vtkSmartPointer<vtkPolyData>::New();
-    double samplerate = 1.0;
+    double samplerate = 0.5;
     auto rows = std::ceil((o_y[1] + 1) / samplerate);
     auto cols = std::ceil((o_x[0] + 1) / samplerate);
     cv::Mat texture_img_result = cv::Mat::zeros(rows, cols, CV_8UC3);
-    for (auto j = 0; j < rows; j += samplerate)
+    for (double j = 0; j < rows; j += samplerate)
     {
-        for (auto i = 0; i < cols; i += samplerate) 
+        for (double i = 0; i < cols; i += samplerate) 
         {
             vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
             vtkSmartPointer<vtkIdList> cellIds = vtkSmartPointer<vtkIdList>::New();
@@ -149,6 +149,10 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
                 auto pixel_color = _texture_img.at<cv::Vec3b>(y, x);
                 std::cout <<  "Pixel: " << i << "," << j << " | Cartesian Point: " << x << "," << y << " | " << pixel_color << "\r" << std::flush;
                 texture_img_result.at<cv::Vec3b>(j/samplerate, i/samplerate) = pixel_color;
+            }
+            else 
+            {
+                std::cout <<  "Pixel: " << i << "," << j << "\r" << std::flush;
             }
         }
     }
