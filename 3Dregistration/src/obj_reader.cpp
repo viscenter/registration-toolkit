@@ -9,6 +9,7 @@ OBJReader::OBJReader()
 
 void OBJReader::Parse(std::string file) 
 {
+	_map = volcart::UVMap(VC_ORIGIN_BOTTOM_LEFT);
 	std::string line;
 	std::ifstream i_file (file.c_str());
 	if (i_file.is_open())
@@ -30,6 +31,7 @@ void OBJReader::Parse(std::string file)
 		}
 		i_file.close();
 	}
+	_map.origin(VC_ORIGIN_TOP_LEFT);
 }
 
 void OBJReader::ParseVT(std::vector<std::string> &elems)
@@ -50,20 +52,27 @@ void OBJReader::ParseF(std::vector<std::string> &elems)
 	{
 		std::vector<std::string> vertex_ref;
 		Split(elems[i], '/', vertex_ref);
-		// Vertex Reference should only contain 2 items after split
-		assert(vertex_ref.size() == 2);
 		// - 1 because obj file starts at 1 and not 0
-		int p_id = stoi(vertex_ref[0]) - 1;
-		int u_id = stoi(vertex_ref[1]) - 1;
-		_map.set(p_id, _uv[u_id]);
+		if (vertex_ref.size() == 2) 
+		{
+			size_t p_id = std::stoul(vertex_ref[0]) - 1;
+			size_t u_id = std::stoul(vertex_ref[1]) - 1;
+			_map.set(p_id, _uv[u_id]);
+		}
 	}
 }
 
-void OBJReader::Split(const std::string &s, char delim, std::vector<std::string> &elems) {
+void OBJReader::Split(const std::string &s, char delim, std::vector<std::string> &elems) 
+{
     std::stringstream ss;
     ss.str(s);
     std::string item;
     while (std::getline(ss, item, delim)) {
         elems.push_back(item);
     }
+}
+
+cv::Vec2d OBJReader::GetUV(size_t p_id)
+{
+	return _map.get(p_id);
 }

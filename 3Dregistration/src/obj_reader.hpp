@@ -10,6 +10,7 @@ class OBJReader
 public:
 	OBJReader();
 	void Parse(std::string file);
+	cv::Vec2d GetUV(size_t p_id);
 
 private:
 	void Split(const std::string &s, char delim, std::vector<std::string> &elems);
