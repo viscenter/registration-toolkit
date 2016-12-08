@@ -89,19 +89,28 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
  
     vtkSmartPointer<vtkPoints> intersection_points = vtkSmartPointer<vtkPoints>::New();
     vtkSmartPointer<vtkPolyData> intersection_result = vtkSmartPointer<vtkPolyData>::New();
-    double samplerate = 0.5;
-    auto rows = std::ceil((o_y[1] + 1) / samplerate);
-    auto cols = std::ceil((o_x[0] + 1) / samplerate);
+    double samplerate = 0.1;
+    size_t rows = std::ceil((o_y[1] + 1) / samplerate);
+    size_t cols = std::ceil((o_x[0] + 1) / samplerate);
     cv::Mat texture_img_result = cv::Mat::zeros(rows, cols, CV_8UC3);
-    for (double j = 0; j < rows; j += samplerate)
+    std::cout << cols << "x" << rows << std::endl; 
+    for (auto j = 0; j < rows; j++)
     {
-        for (double i = 0; i < cols; i += samplerate) 
+        for (auto i = 0; i < cols; i++) 
         {
+            // Position in mesh's XY space
+            double n_i = i * samplerate;
+            double n_j = j * samplerate;
+
             vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
             vtkSmartPointer<vtkIdList> cellIds = vtkSmartPointer<vtkIdList>::New();
-            double a0[3] = {(double)i, (double)j, o_z[2]};
-            double a1[3] = {(double)i, (double)j, c[2]};
-            int code = obb_tree->IntersectWithLine(a0, a1, points, cellIds);
+            
+            // Origin
+            double a0[3] = { n_i, n_j, c[2]};
+            // Upper extent
+            double a1[3] = { n_i, n_j, o_z[2]};
+
+            int code = obb_tree->IntersectWithLine(a1, a0, points, cellIds);
             if (code != 0)
             {
                 vtkSmartPointer<vtkIdList> pointIds = vtkSmartPointer<vtkIdList>::New();
@@ -119,40 +128,37 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
 
                 double bounds[6];
                 points->GetBounds(bounds);
-                double intersection_point[3] = {(double)i, (double)j, bounds[5]};
+                // NOTE: This is the reason a0 and a1 can't be swapped. That puts bounds[5] in the wrong position. - SP
+                double intersection_point[3] = {n_i, n_j, bounds[5]};
                 intersection_points->InsertNextPoint(intersection_point);
 
                 // Convert each point to a Vec3d for simple conversions
-                cv::Vec3d A(p0), B(p1), C(p2), alpha(intersection_point);
+                cv::Vec3d A{p0}, B{p1}, C{p2}, alpha{intersection_point};
                 cv::Vec3d bary_point = BarycentricCoord(alpha, A, B, C);
 
-                cv::Vec2d a(_uv_reader.GetUV(p_id0)), b(_uv_reader.GetUV(p_id1)), c(_uv_reader.GetUV(p_id2));
-                A[0] = a[0];
-                A[1] = a[1];
-                A[2] = 0.0;
+                auto a = _uv_reader.GetUV(p_id0);
+                auto b = _uv_reader.GetUV(p_id1); 
+                auto c = _uv_reader.GetUV(p_id2);
 
-                B[0] = b[0];
-                B[1] = b[1];
-                B[2] = 0.0;
-
-                C[0] = c[0];
-                C[1] = c[1];
-                C[2] = 0.0;
+                A = { a[0], a[1], 0.0 };
+                B = { b[0], b[1], 0.0 };
+                C = { c[0], c[1], 0.0 };
 
                 cv::Vec3d cart_point = CartesianCoord(bary_point, A, B, C);
-                cart_point[0] *= _texture_img.size().width;
-                cart_point[1] *= _texture_img.size().height;
 
-                uint16_t x = std::round(cart_point[0]);
-                uint16_t y = std::round(cart_point[1]);
+                float x = cart_point[0] * _texture_img.size().width - 1;
+                float y = cart_point[1] * _texture_img.size().height - 1;
 
-                auto pixel_color = _texture_img.at<cv::Vec3b>(y, x);
-                std::cout <<  "Pixel: " << i << "," << j << " | Cartesian Point: " << x << "," << y << " | " << pixel_color << "\r" << std::flush;
-                texture_img_result.at<cv::Vec3b>(j/samplerate, i/samplerate) = pixel_color;
+                // Bilinear interpolate color
+                cv::Mat subRect;
+                cv::getRectSubPix(_texture_img, {1,1}, {x, y}, subRect);
+                auto pixel_color = subRect.at<cv::Vec3b>(0,0);
+                texture_img_result.at<cv::Vec3b>(j, i) = pixel_color;
+                 std::cout <<  "OP: " << i << "," << j << " | IP: " << x << "," << y << " | " << pixel_color << "\r" << std::flush;
             }
             else 
             {
-                std::cout <<  "Pixel: " << i << "," << j << "\r" << std::flush;
+                std::cout <<  "OP: " << i << "," << j << "\r" << std::flush;
             }
         }
     }
