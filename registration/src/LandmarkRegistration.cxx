@@ -1,19 +1,17 @@
 #include <fstream>
 #include <iostream>
-#include <string>
 
 #include <itkImage.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
-#include <itkLandmarkBasedTransformInitializer.h>
-#include <itkResampleImageFilter.h>
-#include <itkRigid2DTransform.h>
-#include <itkVector.h>
-#include <itkNearestNeighborInterpolateImageFunction.h>
-#include <itkMattesMutualInformationImageToImageMetric.h>
-#include <itkRegularStepGradientDescentOptimizer.h>
 #include <itkImageRegistrationMethod.h>
+#include <itkLandmarkBasedTransformInitializer.h>
+#include <itkMattesMutualInformationImageToImageMetric.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
 #include <itkRGBToLuminanceImageFilter.h>
+#include <itkRegularStepGradientDescentOptimizer.h>
+#include <itkResampleImageFilter.h>
+#include <itkTransformFileWriter.h>
 
 // Base types
 constexpr static uint8_t EmptyPixel = 0;
@@ -47,6 +45,7 @@ using BSplineParameters = BSplineTransform::ParametersType;
 // IO
 using ImageReader = itk::ImageFileReader<Image>;
 using ImageWriter = itk::ImageFileWriter<Image>;
+using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
 {
@@ -102,8 +101,6 @@ int main(int argc, char* argv[])
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);
     movingImage->SetSpacing(1.0);
-    std::cout << fixedImage->GetSpacing() << " | " << movingImage->GetSpacing() << std::endl;
-    std::cout << fixedImage->GetOrigin() << " | " << movingImage->GetOrigin() << std::endl;
 
     // Read the landmarks file
     LandmarkContainer fixedLandmarks, movingLandmarks;
@@ -132,7 +129,7 @@ int main(int argc, char* argv[])
     ///// Landmark Registration /////
     printf("Beginning landmark warping\n");
 
-    // Generate the affine transform
+    // Generate the affine deformTransform
     LandmarkTransformInitializer::Pointer ldmTransformInit =
         LandmarkTransformInitializer::New();
     ldmTransformInit->SetFixedLandmarks(fixedLandmarks);
@@ -176,13 +173,13 @@ int main(int argc, char* argv[])
     Metric::Pointer metric = Metric::New();
     Optimizer::Pointer optimizer = Optimizer::New();
     Registration::Pointer registration = Registration::New();
-    BSplineTransform::Pointer transform = BSplineTransform::New();
+    BSplineTransform::Pointer deformTransform = BSplineTransform::New();
     GrayInterpolator::Pointer grayInterpolator = GrayInterpolator::New();
 
     registration->SetMetric(metric);
     registration->SetOptimizer(optimizer);
     registration->SetInterpolator(grayInterpolator);
-    registration->SetTransform(transform);
+    registration->SetTransform(deformTransform);
     registration->SetFixedImage(fixedFilter->GetOutput());
     registration->SetMovingImage(movingFilter->GetOutput());
 
@@ -236,16 +233,17 @@ int main(int argc, char* argv[])
 
     MeshSize.Fill(transformMeshFillSize);
 
-    transform->SetTransformDomainOrigin(FixedOrigin);
-    transform->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
-    transform->SetTransformDomainMeshSize(MeshSize);
-    transform->SetTransformDomainDirection(fixedImage->GetDirection());
+    deformTransform->SetTransformDomainOrigin(FixedOrigin);
+    deformTransform->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
+    deformTransform->SetTransformDomainMeshSize(MeshSize);
+    deformTransform->SetTransformDomainDirection(fixedImage->GetDirection());
 
-    const auto numberOfParameters = transform->GetNumberOfParameters();
+    const auto numberOfParameters = deformTransform->GetNumberOfParameters();
     BSplineParameters parameters(numberOfParameters);
     parameters.Fill(0.0);
-    transform->SetParameters(parameters);
-    registration->SetInitialTransformParameters(transform->GetParameters());
+    deformTransform->SetParameters(parameters);
+    registration->SetInitialTransformParameters(
+        deformTransform->GetParameters());
 
     optimizer->MinimizeOn();
     optimizer->SetMaximumStepLength(maxStepLength);
@@ -278,11 +276,11 @@ int main(int argc, char* argv[])
     }
 
     auto finalParams = registration->GetLastTransformParameters();
-    transform->SetParameters(finalParams);
+    deformTransform->SetParameters(finalParams);
 
     ResampleFilter::Pointer resample2 = ResampleFilter::New();
     resample2->SetInput(resample->GetOutput());
-    resample2->SetTransform(transform);
+    resample2->SetTransform(deformTransform);
     resample2->SetInterpolator(interpolator);
     resample2->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
     resample2->SetOutputOrigin(fixedImage->GetOrigin());
@@ -298,90 +296,66 @@ int main(int argc, char* argv[])
     writer->Update();
 
     printf("Finished registration\n\n");
+
+    ///// Write the final transformations /////
     printf("Writing transformation to file\n");
 
-//    itk::TransformFileWriterTemplate<double>::Pointer transformWriter =
-//        itk::TransformFileWriterTemplate<double>::New();
-//    std::string strTransformFileName = transformFileName;
-//    transformWriter->SetFileName(strTransformFileName);
-//    transformWriter->SetInput(transform);
-//    transformWriter->Update();
-//
-//    std::ofstream transformFile;
-//    transformFile.open(transformFileName, std::ios::app);
-//    transformFile << std::endl;
-//
-//    transformFile << "#Fixed image: " << fixedImageFileName << std::endl;
-//    transformFile << "#Moving Image: " << movingImageFileName << std::endl
-//                  << std::endl;
-//
-//    transformFile << "#Fixed image parameters" << std::endl;
-//    transformFile << "#Size "
-//                  <<
-//                  colorFixedImage->GetLargestPossibleRegion().GetSize()[0]
-//                  << " "
-//                  <<
-//                  colorFixedImage->GetLargestPossibleRegion().GetSize()[1]
-//                  << std::endl;
-//    transformFile << "#Origin " << colorFixedImage->GetOrigin()[0] << " "
-//                  << colorFixedImage->GetOrigin()[1] << std::endl;
-//    transformFile << "#Spacing " << colorFixedImage->GetSpacing()[0] << "
-//    "
-//                  << colorFixedImage->GetSpacing()[1] << std::endl;
-//    transformFile << "#Direction " <<
-//    colorFixedImage->GetDirection()[0][0]
-//                  << " " << colorFixedImage->GetDirection()[0][1] << " "
-//                  << colorFixedImage->GetDirection()[1][0] << " "
-//                  << colorFixedImage->GetDirection()[1][1] << std::endl
-//                  << std::endl;
-//
-//    transformFile << "#Landmark warping physical points" << std::endl;
-//
-//    pointsFile.open(landmarksFileName);
-//
-//    pointsFile >> fixedX >> fixedY >> movingX >> movingY;
-//
-//    fixedIndex[0] = fixedX;
-//    fixedIndex[1] = fixedY;
-//    movingIndex[0] = movingX;
-//    movingIndex[1] = movingY;
-//
-//    grayFixedImage->TransformIndexToPhysicalPoint(fixedIndex, fixedPoint);
-//    grayMovingImage->TransformIndexToPhysicalPoint(movingIndex,
-//    movingPoint);
-//
-//    transformFile << "# " << fixedPoint[0] << " " << fixedPoint[1] << " "
-//                  << movingPoint[0] << " " << movingPoint[1] << std::endl;
-//
-//    while (!pointsFile.fail()) {
-//        pointsFile >> fixedX >> fixedY >> movingX >> movingY;
-//
-//        fixedIndex[0] = fixedX;
-//        fixedIndex[1] = fixedY;
-//        movingIndex[0] = movingX;
-//        movingIndex[1] = movingY;
-//
-//        grayFixedImage->TransformIndexToPhysicalPoint(fixedIndex,
-//        fixedPoint);
-//        grayMovingImage->TransformIndexToPhysicalPoint(
-//            movingIndex, movingPoint);
-//
-//        transformFile << "# " << fixedPoint[0] << " " << fixedPoint[1] <<
-//        " "
-//                      << movingPoint[0] << " " << movingPoint[1] <<
-//                      std::endl;
-//    }
-//
-//    pointsFile.close();
-//    transformFile.close();
-//
-//    printf("Finished writing transformation to file\n\n");
-//
-//    printf("Time and memory usage information:\n");
-//    chronometer.Stop("LandmarkRegistration");
-//    memorymeter.Stop("LandmarkRegistration");
-//    chronometer.Report(std::cout);
-//    memorymeter.Report(std::cout);
+    // Write deformable transform
+    TransformWriter::Pointer transformWriter = TransformWriter::New();
+    transformWriter->SetFileName(transformFileName);
+    transformWriter->SetInput(deformTransform);
+    transformWriter->Update();
+
+    // Write rigid transform
+    std::ofstream ofs;
+    ofs.open(transformFileName, std::ios::app);
+    ofs << std::endl;
+
+    ofs << "#Fixed image: " << fixedImageFileName << std::endl;
+    ofs << "#Moving Image: " << movingImageFileName << std::endl << std::endl;
+
+    ofs << "#Fixed image parameters" << std::endl;
+    ofs << "#Size " << fixedImage->GetLargestPossibleRegion().GetSize()[0]
+        << " " << fixedImage->GetLargestPossibleRegion().GetSize()[1]
+        << std::endl;
+    ofs << "#Origin " << fixedImage->GetOrigin()[0] << " "
+        << fixedImage->GetOrigin()[1] << std::endl;
+    ofs << "#Spacing " << fixedImage->GetSpacing()[0] << " "
+        << fixedImage->GetSpacing()[1] << std::endl;
+    ofs << "#Direction " << fixedImage->GetDirection()[0][0] << " "
+        << fixedImage->GetDirection()[0][1] << " "
+        << fixedImage->GetDirection()[1][0] << " "
+        << fixedImage->GetDirection()[1][1] << std::endl
+        << std::endl;
+
+    ofs << "#Landmark warping physical points" << std::endl;
+
+    pointsFile.open(landmarksFileName);
+    while (!pointsFile.fail()) {
+        pointsFile >> fixedX >> fixedY >> movingX >> movingY;
+
+        fixedIndex[0] = fixedX;
+        fixedIndex[1] = fixedY;
+        movingIndex[0] = movingX;
+        movingIndex[1] = movingY;
+
+        // Transform landmarks in case spacing still gets used
+        fixedImage->TransformIndexToPhysicalPoint(fixedIndex, fixedPoint);
+        movingImage->TransformIndexToPhysicalPoint(movingIndex, movingPoint);
+
+        ofs << "# " << fixedPoint[0] << " " << fixedPoint[1] << " "
+            << movingPoint[0] << " " << movingPoint[1] << std::endl;
+    }
+    pointsFile.close();
+    ofs.close();
+
+    printf("Finished writing transformation to file\n\n");
+    //
+    //    printf("Time and memory usage information:\n");
+    //    chronometer.Stop("LandmarkRegistration");
+    //    memorymeter.Stop("LandmarkRegistration");
+    //    chronometer.Report(std::cout);
+    //    memorymeter.Report(std::cout);
 
     return EXIT_SUCCESS;
 }
