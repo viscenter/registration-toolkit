@@ -9,6 +9,7 @@
 #include <itkResampleImageFilter.h>
 #include <itkRigid2DTransform.h>
 #include <itkVector.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
 
 // Base types
 constexpr static uint8_t EmptyPixel = 0;
@@ -19,6 +20,7 @@ using DeformationField = itk::Image<Vector, 2>;
 
 // Image Resampling
 using ResampleFilter = itk::ResampleImageFilter<Image, Image, double>;
+using NearestNeighborInterpolator = itk::NearestNeighborInterpolateImageFunction< Image, double>;
 
 // Landmark Transform Types
 using AffineTransform = itk::AffineTransform<double, 2>;
@@ -77,12 +79,16 @@ int main(int argc, char* argv[])
         imgReader->Update();
         movingImage = imgReader->GetOutput();
     } catch (itk::ExceptionObject& excp) {
-        std::cerr << "Exception thrown " << std::endl;
+        std::cerr << "Exceptio n thrown " << std::endl;
         std::cerr << excp << std::endl;
         return EXIT_FAILURE;
     }
 
+    // Ignore spacing information
+    fixedImage->SetSpacing(1.0);
+    movingImage->SetSpacing(1.0);
     std::cout << fixedImage->GetSpacing() << " | " << movingImage->GetSpacing() << std::endl;
+    std::cout << fixedImage->GetOrigin() << " | " << movingImage->GetOrigin() << std::endl;
 
     // Read the landmarks file
     LandmarkContainer fixedLandmarks, movingLandmarks;
@@ -99,6 +105,7 @@ int main(int argc, char* argv[])
         movingIndex[0] = movingX;
         movingIndex[1] = movingY;
 
+        // Transform landmarks in case spacing still gets used
         fixedImage->TransformIndexToPhysicalPoint( fixedIndex, fixedPoint);
         movingImage->TransformIndexToPhysicalPoint( movingIndex, movingPoint);
 
@@ -125,8 +132,10 @@ int main(int argc, char* argv[])
 
     // Apply it to the image
     ResampleFilter::Pointer resample = ResampleFilter::New();
+    NearestNeighborInterpolator::Pointer interpolator = NearestNeighborInterpolator::New();
     resample->SetInput(movingImage);
     resample->SetTransform(ldmTransform);
+    resample->SetInterpolator(interpolator);
     resample->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
     resample->SetOutputOrigin(fixedImage->GetOrigin());
     resample->SetOutputSpacing(fixedImage->GetSpacing());
