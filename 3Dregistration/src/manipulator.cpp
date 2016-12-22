@@ -16,6 +16,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core.hpp>
+#include <vc/core/types/OrderedPointSet.h>
+#include <vc/core/io/PointSetIO.h>
+#include <core/types/Point.h>
 
 Manipulator::Manipulator() 
 {
@@ -78,10 +81,10 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
     obb_tree->SetDataSet(aligned_data); 
     obb_tree->BuildLocator();
 
-    cv::Vec3d c(corner);
+    cv::Vec3d co(corner);
     cv::Vec3d o_x(max), o_y(mid), o_z(min);
 
-    std::cout << "Corner: " << c << std::endl;
+    std::cout << "Corner: " << co << std::endl;
     std::cout << "X " << o_x << std::endl;
     std::cout << "Y " << o_y << std::endl;
     std::cout << "Z " << o_z << std::endl;
@@ -93,10 +96,12 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
     size_t rows = std::ceil((o_y[1] + 1) / samplerate);
     size_t cols = std::ceil((o_x[0] + 1) / samplerate);
     cv::Mat texture_img_result = cv::Mat::zeros(rows, cols, CV_8UC3);
+    volcart::OrderedPointSet<volcart::Point3d> ps(cols);
     std::cout << cols << "x" << rows << std::endl; 
     for (auto j = 0; j < rows; j++)
     {
-        for (auto i = 0; i < cols; i++) 
+        std::vector<volcart::Point3d> row;
+        for (auto i = 0; i < cols; i++)
         {
             // Position in mesh's XY space
             double n_i = i * samplerate;
@@ -106,7 +111,7 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
             vtkSmartPointer<vtkIdList> cellIds = vtkSmartPointer<vtkIdList>::New();
             
             // Origin
-            double a0[3] = { n_i, n_j, c[2]};
+            double a0[3] = { n_i, n_j, co[2]};
             // Upper extent
             double a1[3] = { n_i, n_j, o_z[2]};
 
@@ -132,6 +137,8 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
                 double intersection_point[3] = {n_i, n_j, bounds[5]};
                 intersection_points->InsertNextPoint(intersection_point);
 
+                row.push_back({n_i, n_j, bounds[5]});
+
                 // Convert each point to a Vec3d for simple conversions
                 cv::Vec3d A{p0}, B{p1}, C{p2}, alpha{intersection_point};
                 cv::Vec3d bary_point = BarycentricCoord(alpha, A, B, C);
@@ -146,24 +153,27 @@ vtkSmartPointer<vtkPolyData> Manipulator::FindIntersections(vtkSmartPointer<vtkP
 
                 cv::Vec3d cart_point = CartesianCoord(bary_point, A, B, C);
 
-                float x = cart_point[0] * _texture_img.size().width - 1;
-                float y = cart_point[1] * _texture_img.size().height - 1;
+                float x = cart_point[0] * (_texture_img.size().width - 1);
+                float y = cart_point[1] * (_texture_img.size().height - 1);
 
                 // Bilinear interpolate color
                 cv::Mat subRect;
                 cv::getRectSubPix(_texture_img, {1,1}, {x, y}, subRect);
                 auto pixel_color = subRect.at<cv::Vec3b>(0,0);
                 texture_img_result.at<cv::Vec3b>(j, i) = pixel_color;
-                 std::cout <<  "OP: " << i << "," << j << " | IP: " << x << "," << y << " | " << pixel_color << "\r" << std::flush;
+                std::cout <<  "OP: " << i << "," << j << " | IP: " << x << "," << y << " | " << pixel_color << "\r" << std::flush;
             }
             else 
             {
                 std::cout <<  "OP: " << i << "," << j << "\r" << std::flush;
+                row.push_back({n_i, n_j, 0});
             }
         }
+        ps.pushRow(row);
     }
-    std::cout << std::endl;    
+    std::cout << std::endl;
     cv::imwrite(_file_path + "-New-Textured.png", texture_img_result);
+    volcart::PointSetIO<volcart::Point3d>::WriteOrderedPointSet(_file_path + "-PointSet.vcps", ps);
     intersection_result->SetPoints(intersection_points);
     return intersection_result;
 

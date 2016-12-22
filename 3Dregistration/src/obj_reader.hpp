@@ -3,22 +3,23 @@
 
 #include <vector>
 #include <string>
-#include "UVMapMod.h"
+#include <opencv2/core.hpp>
+#include <vc/core/types/UVMap.h>
 
 class OBJReader
 {
 public:
-	OBJReader();
-	void Parse(std::string file);
-	cv::Vec2d GetUV(size_t p_id);
+    OBJReader();
+    void Parse(std::string file);
+    cv::Vec2d GetUV(size_t p_id);
 
 private:
-	void Split(const std::string &s, char delim, std::vector<std::string> &elems);
-	void ParseVT(std::vector<std::string> &elems);
-	void ParseF(std::vector<std::string> &elems);
+    void Split(const std::string &s, char delim, std::vector<std::string> &elems);
+    void ParseVT(std::vector<std::string> &elems);
+    void ParseF(std::vector<std::string> &elems);
 
-	volcart::UVMap _map;
-	std::vector<cv::Vec2d> _uv;
+    volcart::UVMap _map;
+    std::vector<cv::Vec2d> _uv;
 };
 
 #endif //OBJ_READER_H_

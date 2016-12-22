@@ -1,6 +1,6 @@
 LandmarkGenerator/bin/
 LandmarkGenerator/runnable.jar
-3Dregistration/build/
+*build/
 *.png
 !utils/crosshair.png
 *.jpg
@@ -11,6 +11,7 @@ registration/bin/
 utils/bin/
 flycheck*
 *.o
+*.app/
 
 # Emacs
 *~
