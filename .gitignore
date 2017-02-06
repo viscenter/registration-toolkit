@@ -1,6 +1,7 @@
 LandmarkGenerator/bin/
 LandmarkGenerator/runnable.jar
 *build/
+*cmake-build-debug/
 *.png
 !utils/crosshair.png
 *.jpg
