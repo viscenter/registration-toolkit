@@ -33,13 +33,27 @@ find_package(OpenCV REQUIRED)
 
 find_package(VC REQUIRED)
 
-add_executable(manipulate src/main.cpp src/manipulator.cpp src/obj_reader.cpp)
-target_include_directories(manipulate
+add_executable(rt_reorder_texture
+        src/ReorderTexture.cpp
+        src/ReorderUnorganizedTexture.cpp)
+target_include_directories(rt_reorder_texture
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(manipulate ITKTransform opencv_core opencv_imgproc opencv_highgui ${VTK_LIBRARIES} vtkIOImport VC::core)
+target_link_libraries(rt_reorder_texture
+        opencv_core
+        opencv_imgproc
+        opencv_highgui
+        ${VTK_LIBRARIES}
+        VC::core
+        VC::meshing)
 
 add_executable(retexture src/retexture.cpp)
-target_link_libraries(retexture Boost::filesystem opencv_core VC::core VC::meshing VC::texturing)
+target_link_libraries(retexture
+        Boost::filesystem
+        opencv_core
+        opencv_imgcodecs
+        VC::core
+        VC::meshing
+        VC::texturing)
