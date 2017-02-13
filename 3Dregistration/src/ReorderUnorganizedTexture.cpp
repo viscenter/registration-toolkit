@@ -102,8 +102,8 @@ void ReorderUnorganizedTexture::create_texture_()
             auto n_j = j * sampleRate_;
 
             // Position at ground plane and above mesh
-            double a0[3] = {n_i, n_j, corner[2]};
-            double a1[3] = {n_i, n_j, min[2]};
+            double a0[3] = {n_i, n_j, 0};
+            double a1[3] = {n_i, n_j, std::ceil(corner[2])};
 
             auto res = obbTree->IntersectWithLine(a0, a1, interPts, interCells);
             if (res != 0) {

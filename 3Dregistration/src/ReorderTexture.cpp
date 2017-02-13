@@ -21,6 +21,7 @@ int main(int argc, char* argv[])
     // Parse command line arguments
     fs::path objPath = argv[1];
     fs::path outPath = argv[2];
+    auto sampleRate = std::stof(argv[3]);
 
     // Load the mesh
     std::cerr << "Reading mesh..." << std::endl;
@@ -37,6 +38,7 @@ int main(int argc, char* argv[])
     r.setMesh(vtkMesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
+    r.setSampleRate(sampleRate);
     r.compute();
 
     // Write to file
