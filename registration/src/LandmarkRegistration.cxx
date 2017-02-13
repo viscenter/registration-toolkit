@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 
+#include <itkCompositeTransform.h>
 #include <itkImage.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
@@ -41,6 +42,9 @@ using Optimizer = itk::RegularStepGradientDescentOptimizer;
 using Registration = itk::ImageRegistrationMethod<GrayImage, GrayImage>;
 using BSplineTransform = itk::BSplineTransform< double, 2, 3 >;
 using BSplineParameters = BSplineTransform::ParametersType;
+
+// Composite Transform
+using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
 using ImageReader = itk::ImageFileReader<Image>;
@@ -93,7 +97,7 @@ int main(int argc, char* argv[])
         imgReader->Update();
         movingImage = imgReader->GetOutput();
     } catch (itk::ExceptionObject& excp) {
-        std::cerr << "Exceptio n thrown " << std::endl;
+        std::cerr << "Exception thrown " << std::endl;
         std::cerr << excp << std::endl;
         return EXIT_FAILURE;
     }
@@ -278,9 +282,13 @@ int main(int argc, char* argv[])
     auto finalParams = registration->GetLastTransformParameters();
     deformTransform->SetParameters(finalParams);
 
+    auto compositeTrans = CompositeTransform::New();
+    compositeTrans->AddTransform(ldmTransform);
+    compositeTrans->AddTransform(deformTransform);
+
     ResampleFilter::Pointer resample2 = ResampleFilter::New();
-    resample2->SetInput(resample->GetOutput());
-    resample2->SetTransform(deformTransform);
+    resample2->SetInput(movingImage);
+    resample2->SetTransform(compositeTrans);
     resample2->SetInterpolator(interpolator);
     resample2->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
     resample2->SetOutputOrigin(fixedImage->GetOrigin());
@@ -303,51 +311,8 @@ int main(int argc, char* argv[])
     // Write deformable transform
     TransformWriter::Pointer transformWriter = TransformWriter::New();
     transformWriter->SetFileName(transformFileName);
-    transformWriter->SetInput(deformTransform);
+    transformWriter->SetInput(compositeTrans);
     transformWriter->Update();
-
-    // Write rigid transform
-    std::ofstream ofs;
-    ofs.open(transformFileName, std::ios::app);
-    ofs << std::endl;
-
-    ofs << "#Fixed image: " << fixedImageFileName << std::endl;
-    ofs << "#Moving Image: " << movingImageFileName << std::endl << std::endl;
-
-    ofs << "#Fixed image parameters" << std::endl;
-    ofs << "#Size " << fixedImage->GetLargestPossibleRegion().GetSize()[0]
-        << " " << fixedImage->GetLargestPossibleRegion().GetSize()[1]
-        << std::endl;
-    ofs << "#Origin " << fixedImage->GetOrigin()[0] << " "
-        << fixedImage->GetOrigin()[1] << std::endl;
-    ofs << "#Spacing " << fixedImage->GetSpacing()[0] << " "
-        << fixedImage->GetSpacing()[1] << std::endl;
-    ofs << "#Direction " << fixedImage->GetDirection()[0][0] << " "
-        << fixedImage->GetDirection()[0][1] << " "
-        << fixedImage->GetDirection()[1][0] << " "
-        << fixedImage->GetDirection()[1][1] << std::endl
-        << std::endl;
-
-    ofs << "#Landmark warping physical points" << std::endl;
-
-    pointsFile.open(landmarksFileName);
-    while (!pointsFile.fail()) {
-        pointsFile >> fixedX >> fixedY >> movingX >> movingY;
-
-        fixedIndex[0] = fixedX;
-        fixedIndex[1] = fixedY;
-        movingIndex[0] = movingX;
-        movingIndex[1] = movingY;
-
-        // Transform landmarks in case spacing still gets used
-        fixedImage->TransformIndexToPhysicalPoint(fixedIndex, fixedPoint);
-        movingImage->TransformIndexToPhysicalPoint(movingIndex, movingPoint);
-
-        ofs << "# " << fixedPoint[0] << " " << fixedPoint[1] << " "
-            << movingPoint[0] << " " << movingPoint[1] << std::endl;
-    }
-    pointsFile.close();
-    ofs.close();
 
     printf("Finished writing transformation to file\n\n");
     //
