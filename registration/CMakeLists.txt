@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.8)
 
 project(Registration)
 
+# Use modern C++ for everything
+set(CMAKE_CXX_STANDARD 11)
+set(CXX_STANDARD_REQUIRED on)
+
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 

@@ -1,513 +1,326 @@
-#include "LandmarkRegistration.h"
+#include <fstream>
+#include <iostream>
 
-BSplineTransformType::Pointer transform;
-ResampleFilterType::Pointer   resample;
-CastFilterType::Pointer       caster;
-RegistrationType::Pointer     registration;
+#include <itkCompositeTransform.h>
+#include <itkImage.h>
+#include <itkImageFileReader.h>
+#include <itkImageFileWriter.h>
+#include <itkImageRegistrationMethod.h>
+#include <itkLandmarkBasedTransformInitializer.h>
+#include <itkMattesMutualInformationImageToImageMetric.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
+#include <itkRGBToLuminanceImageFilter.h>
+#include <itkRegularStepGradientDescentOptimizer.h>
+#include <itkResampleImageFilter.h>
+#include <itkTransformFileWriter.h>
 
-ColorWriterType::Pointer colorMovingWriter;
-ColorReaderType::Pointer colorMovingReader;
+// Base types
+constexpr static uint8_t EmptyPixel = 0;
+using ColorPixel = itk::RGBPixel<uint8_t>;
+using Image = itk::Image<ColorPixel, 2>;
+using Vector = itk::Vector<double, 2>;
+using DeformationField = itk::Image<Vector, 2>;
+using GrayPixel = unsigned char;
+using GrayImage = itk::Image< GrayPixel, 2 >;
 
-ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
-ColorImageType::ConstPointer colorFixedImage;
+// Image Resampling and Filtering
+using ResampleFilter = itk::ResampleImageFilter<Image, Image, double>;
+using ColorInterpolator = itk::NearestNeighborInterpolateImageFunction< Image, double>;
+using GrayInterpolator = itk::NearestNeighborInterpolateImageFunction< GrayImage, double>;
+using GrayscaleFilter = itk::RGBToLuminanceImageFilter< Image, GrayImage >;
 
-bool createVideoFrames;
+// Landmark Transform Types
+using AffineTransform = itk::AffineTransform<double, 2>;
+using LandmarkTransformInitializer =
+    itk::LandmarkBasedTransformInitializer<AffineTransform, Image, Image>;
+using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
+using Landmark = LandmarkTransformInitializer::LandmarkPointType;
 
-class CommandIterationUpdate : public itk::Command
-{
-public:
-  typedef CommandIterationUpdate    Self;
-  typedef itk::Command              Superclass;
-  typedef itk::SmartPointer<Self>   Pointer;
-  itkNewMacro( Self );
+// Deformable Registration Types
+using Metric = itk::MattesMutualInformationImageToImageMetric<GrayImage, GrayImage>;
+using Optimizer = itk::RegularStepGradientDescentOptimizer;
+using Registration = itk::ImageRegistrationMethod<GrayImage, GrayImage>;
+using BSplineTransform = itk::BSplineTransform< double, 2, 3 >;
+using BSplineParameters = BSplineTransform::ParametersType;
 
-protected:
-  CommandIterationUpdate() {};
+// Composite Transform
+using CompositeTransform = itk::CompositeTransform<double, 2>;
 
-public:
-  typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
-  typedef const OptimizerType *                    OptimizerPointer;
-
-  void Execute(itk::Object *caller, const itk::EventObject & event)
-    {
-    Execute( (const itk::Object *)caller, event);
-    }
-
-  void Execute(const itk::Object * object, const itk::EventObject & event)
-    {
-    OptimizerPointer optimizer =
-      dynamic_cast< OptimizerPointer >( object );
-    if( !(itk::IterationEvent().CheckEvent( &event )) )
-      {
-      return;
-      }
-    std::cout << "Iteration : ";
-    std::cout << optimizer->GetCurrentIteration() << "   ";
-    std::cout << optimizer->GetValue() << "   ";
-    std::cout << std::endl;
-
-    if(createVideoFrames)
-      {
-      BSplineParametersType registrationParameters =
-                      optimizer->GetCurrentPosition();
-      transform->SetParameters( registrationParameters );
-
-      ResampleFilterType::Pointer resample = ResampleFilterType::New();
-
-      ColorPixelType defaultPixel;
-      defaultPixel[0] = 0;
-      defaultPixel[1] = 0;
-      defaultPixel[2] = 0;
-
-      resample->SetTransform(         transform                                             );
-      resample->SetInput(             colorMovingWriter->GetInput()                         );
-      resample->SetSize(              colorFixedImage->GetLargestPossibleRegion().GetSize() );
-      resample->SetOutputOrigin(      colorFixedImage->GetOrigin()                          );
-      resample->SetOutputSpacing(     colorFixedImage->GetSpacing()                         );
-      resample->SetOutputDirection(   colorFixedImage->GetDirection()                       );
-      resample->SetDefaultPixelValue( defaultPixel                                          );
-
-      ColorWriterType::Pointer videoFrameWriter = ColorWriterType::New();
-
-      CastFilterType::Pointer caster =  CastFilterType::New();
-
-      char outfilename[128];
-      // TODO change this to use the output image name with numbering (same name as transforms etc)
-      sprintf(outfilename,"registered-%03d.jpg",optimizer->GetCurrentIteration());
-
-      caster->SetInput(              resample->GetOutput() );
-      videoFrameWriter->SetFileName( outfilename );
-      videoFrameWriter->SetInput(    caster->GetOutput() );
-
-      try
-        {
-        videoFrameWriter->Update();
-        }
-      catch( itk::ExceptionObject & err )
-        {
-        std::cerr << "ExceptionObject caught !" << std::endl;
-        std::cerr << err << std::endl;
-        }
-      }
-    }
-};
+// IO
+using ImageReader = itk::ImageFileReader<Image>;
+using ImageWriter = itk::ImageFileWriter<Image>;
+using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
 {
-  if( argc < 7 )
-    {
-    std::cerr << "Missing Parameters " << std::endl;
-    std::cerr << "Usage: " << argv[0];
-    std::cerr << " landmarksFile fixedImage ";
-    std::cerr << "movingImage outputImageFile ";
-    std::cerr << "transformDestination ";
-    std::cerr << "numberOfIterations ";
-    std::cerr << "[createVideoFrames]" << std::endl;
-    return EXIT_FAILURE;
+    if (argc < 7) {
+        std::cerr << "Missing Parameters " << std::endl;
+        std::cerr << "Usage: " << argv[0];
+        std::cerr << " landmarksFile fixedImage ";
+        std::cerr << "movingImage outputImageFile ";
+        std::cerr << "transformDestination ";
+        std::cerr << "numberOfIterations " << std::endl;
+        return EXIT_FAILURE;
     }
 
-  // Add time and memory probes for entire program
-  itk::TimeProbesCollectorBase chronometer;
-  itk::MemoryProbesCollectorBase memorymeter;
-  memorymeter.Start( "LandmarkRegistration" );
-  chronometer.Start( "LandmarkRegistration" );
+    auto landmarksFileName = argv[1];
+    auto fixedImageFileName = argv[2];
+    auto movingImageFileName = argv[3];
+    auto outputImageFileName = argv[4];
+    auto transformFileName = argv[5];
+    auto iterationsIn = argv[6];
 
-  char* landmarksFileName   = argv[1];
-  char* fixedImageFileName  = argv[2];
-  char* movingImageFileName = argv[3];
-  char* outputImageFileName = argv[4];
-  char* transformFileName   = argv[5];
-  char* iterationsIn        = argv[6];
+    printf("%-17s\n\n", "Registration Parameters");
+    printf("%-17s %s\n", "Landmarks file: ", landmarksFileName);
+    printf("%-17s %s\n", "Fixed image: ", fixedImageFileName);
+    printf("%-17s %s\n", "Moving image: ", movingImageFileName);
+    printf("%-17s %s\n", "Output image: ", outputImageFileName);
+    printf("%-17s %s\n", "Transform file:", transformFileName);
+    printf("%-17s %s\n", "Iterations: ", iterationsIn);
 
-  printf("%-17s\n\n",  "Landmark Registration");
-  printf("%-17s %s\n", "Landmarks file: ", landmarksFileName);
-  printf("%-17s %s\n", "Fixed image: ", fixedImageFileName);
-  printf("%-17s %s\n", "Moving image: ", movingImageFileName);
-  printf("%-17s %s\n", "Output image: ", outputImageFileName);
-  printf("%-17s %s\n", "Transform file:", transformFileName);
-  printf("%-17s %s\n", "Iterations: ", iterationsIn);
-  if(argc > 7)
-  {
-    printf("%-17s %s\n", "Video frames: ", "Yes");
-    createVideoFrames = true;
-  }
-  else
-  {
-    printf("%-17s %s\n", "Video frames: ", "No");
-    createVideoFrames = false;
-  }
+    ///// Setup input files /////
+    ImageReader::Pointer imgReader;
+    Image::Pointer fixedImage;
+    Image::Pointer movingImage;
 
-  printf("\nStarting landmark warping\n");
+    // Read the two images
+    try {
+        // Read the fixed image
+        imgReader = ImageReader::New();
+        imgReader->SetFileName(fixedImageFileName);
+        imgReader->Update();
+        fixedImage = imgReader->GetOutput();
 
-  GrayReaderType::Pointer  grayFixedReader  = GrayReaderType::New();
-  ColorReaderType::Pointer colorFixedReader = ColorReaderType::New();
-  GrayReaderType::Pointer  grayMovingReader = GrayReaderType::New();
-  GrayWriterType::Pointer  grayMovingWriter = GrayWriterType::New();
-  colorMovingReader                         = ColorReaderType::New();
-  colorMovingWriter                         = ColorWriterType::New();
-
-  grayFixedReader->SetFileName(   fixedImageFileName );
-  colorFixedReader->SetFileName(  fixedImageFileName );
-  grayMovingReader->SetFileName(  movingImageFileName );
-  colorMovingReader->SetFileName( movingImageFileName );
-  colorMovingWriter->SetFileName( outputImageFileName );
-
-  try
-    {
-    grayFixedReader->Update();
-    colorFixedReader->Update();
-    grayMovingReader->Update();
-    colorMovingReader->Update();
-    }
-  catch( itk::ExceptionObject & excp )
-    {
-    std::cerr << "Exception thrown " << std::endl;
-    std::cerr << excp << std::endl;
-    return EXIT_FAILURE;
+        // Read the moving image
+        imgReader = ImageReader::New();
+        imgReader->SetFileName(movingImageFileName);
+        imgReader->Update();
+        movingImage = imgReader->GetOutput();
+    } catch (itk::ExceptionObject& excp) {
+        std::cerr << "Exception thrown " << std::endl;
+        std::cerr << excp << std::endl;
+        return EXIT_FAILURE;
     }
 
-  GrayImageType::ConstPointer  grayFixedImage   = grayFixedReader->GetOutput();
-  GrayImageType::ConstPointer  grayMovingImage  = grayMovingReader->GetOutput();
-  colorFixedImage                               = colorFixedReader->GetOutput();
-  ColorImageType::ConstPointer colorMovingImage = colorMovingReader->GetOutput();
+    // Ignore spacing information
+    fixedImage->SetSpacing(1.0);
+    movingImage->SetSpacing(1.0);
 
-  DisplacementSourceType::Pointer deformer = DisplacementSourceType::New();
+    // Read the landmarks file
+    LandmarkContainer fixedLandmarks, movingLandmarks;
+    Landmark fixedPoint, movingPoint;
+    Image::IndexType fixedIndex, movingIndex;
+    size_t fixedX, fixedY, movingX, movingY;
 
-  deformer->SetOutputSpacing(   grayFixedImage->GetSpacing()               );
-  deformer->SetOutputOrigin(    grayFixedImage->GetOrigin()                );
-  deformer->SetOutputRegion(    grayFixedImage->GetLargestPossibleRegion() );
-  deformer->SetOutputDirection( grayFixedImage->GetDirection()             );
+    std::ifstream pointsFile(landmarksFileName);
+    while (!pointsFile.fail()) {
+        pointsFile >> fixedX >> fixedY >> movingX >> movingY;
 
-  //  Create source and target landmarks.
-  LandmarkContainerType::Pointer sourceLandmarks = LandmarkContainerType::New();
-  LandmarkContainerType::Pointer targetLandmarks = LandmarkContainerType::New();
+        fixedIndex[0] = fixedX;
+        fixedIndex[1] = fixedY;
+        movingIndex[0] = movingX;
+        movingIndex[1] = movingY;
 
-  GrayImageType::IndexType sourceIndex, targetIndex;
-  LandmarkPointType        sourcePoint, targetPoint;
+        // Transform landmarks in case spacing still gets used
+        fixedImage->TransformIndexToPhysicalPoint( fixedIndex, fixedPoint);
+        movingImage->TransformIndexToPhysicalPoint( movingIndex, movingPoint);
 
-  std::ifstream pointsFile;
-  pointsFile.open( landmarksFileName );
-
-  unsigned int pointId = 0;
-  unsigned int sourceX, sourceY, targetX, targetY;
-
-  pointsFile >> sourceX >> sourceY >> targetX >> targetY;
-  sourceIndex[0] = sourceX;
-  sourceIndex[1] = sourceY;
-  targetIndex[0] = targetX;
-  targetIndex[1] = targetY;
-
-  while( !pointsFile.fail() )
-    {
-    grayFixedImage->TransformIndexToPhysicalPoint(  sourceIndex, sourcePoint );
-    grayMovingImage->TransformIndexToPhysicalPoint( targetIndex, targetPoint );
-
-    sourceLandmarks->InsertElement( pointId, sourcePoint );
-    targetLandmarks->InsertElement( pointId, targetPoint );
-    pointId++;
-
-    pointsFile >> sourceX >> sourceY >> targetX >> targetY;
-    sourceIndex[0] = sourceX;
-    sourceIndex[1] = sourceY;
-    targetIndex[0] = targetX;
-    targetIndex[1] = targetY;
+        fixedLandmarks.push_back(fixedPoint);
+        movingLandmarks.push_back(movingPoint);
     }
-  pointsFile.close();
+    pointsFile.close();
 
-  deformer->SetSourceLandmarks( sourceLandmarks.GetPointer() );
-  deformer->SetTargetLandmarks( targetLandmarks.GetPointer() );
+    ///// Landmark Registration /////
+    printf("Beginning landmark warping\n");
 
-  try
-    {
-    deformer->UpdateLargestPossibleRegion();
-    }
-  catch( itk::ExceptionObject & excp )
-    {
-    std::cerr << "Exception thrown " << std::endl;
-    std::cerr << excp << std::endl;
-    return EXIT_FAILURE;
-    }
+    // Generate the affine deformTransform
+    LandmarkTransformInitializer::Pointer ldmTransformInit =
+        LandmarkTransformInitializer::New();
+    ldmTransformInit->SetFixedLandmarks(fixedLandmarks);
+    ldmTransformInit->SetMovingLandmarks(movingLandmarks);
 
-  KernelTransformType::Pointer        kernelTransform   = deformer->GetModifiableKernelTransform();
-  DisplacementFieldType::ConstPointer displacementField = deformer->GetOutput();
-  GrayFilterType::Pointer             grayWarper        = GrayFilterType::New();
-  GrayInterpolatorType::Pointer       grayInterpolator  = GrayInterpolatorType::New();
+    AffineTransform::Pointer ldmTransform = AffineTransform::New();
+    ldmTransform->SetIdentity();
+    ldmTransformInit->SetTransform(ldmTransform);
+    ldmTransformInit->InitializeTransform();
 
-  grayWarper->SetInterpolator(      grayInterpolator                );
-  grayWarper->SetOutputSpacing(     displacementField->GetSpacing() );
-  grayWarper->SetOutputOrigin(      displacementField->GetOrigin()  );
-  grayWarper->SetDisplacementField( displacementField               );
-  grayWarper->SetInput(             grayMovingReader->GetOutput()   );
+    // Apply it to the image
+    ResampleFilter::Pointer resample = ResampleFilter::New();
+    ColorInterpolator::Pointer interpolator = ColorInterpolator::New();
+    resample->SetInput(movingImage);
+    resample->SetTransform(ldmTransform);
+    resample->SetInterpolator(interpolator);
+    resample->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
+    resample->SetOutputOrigin(fixedImage->GetOrigin());
+    resample->SetOutputSpacing(fixedImage->GetSpacing());
+    resample->SetOutputDirection(fixedImage->GetDirection());
+    resample->SetDefaultPixelValue(EmptyPixel);
+    resample->GetOutput();
 
-  grayMovingWriter->SetInput( grayWarper->GetOutput() );
+    // Write the image
+    ImageWriter::Pointer writer = ImageWriter::New();
+    writer->SetInput(resample->GetOutput());
+    writer->SetFileName(outputImageFileName);
+    writer->Update();
 
-  ColorFilterType::Pointer       colorWarper       = ColorFilterType::New();
-  ColorInterpolatorType::Pointer colorInterpolator = ColorInterpolatorType::New();
+    printf("Finished landmark warping\n");
 
-  // necessary to avoid "input images do not occupy the same physical space" error
-  // not necessary in gray image for some reason
-  // with color images this gives the desired output colored image
-  //
-  colorWarper->SetCoordinateTolerance( 10.0                            );
-  //
-  colorWarper->SetInterpolator(        colorInterpolator               );
-  colorWarper->SetOutputSpacing(       displacementField->GetSpacing() );
-  colorWarper->SetOutputOrigin(        displacementField->GetOrigin()  );
-  colorWarper->SetDisplacementField(   displacementField               );
-  colorWarper->SetInput(               colorMovingReader->GetOutput()  );
+    ///// Deformable Registration /////
+    // Create grayscale images
+    GrayscaleFilter::Pointer fixedFilter = GrayscaleFilter::New();
+    fixedFilter->SetInput( fixedImage );
 
-  colorMovingWriter->SetInput( colorWarper->GetOutput() );
+    GrayscaleFilter::Pointer movingFilter = GrayscaleFilter::New();
+    movingFilter->SetInput( resample->GetOutput() );
 
-  try
-    {
-    colorMovingWriter->Update();
-    }
-  catch( itk::ExceptionObject & excp )
-    {
-    std::cerr << "Exception thrown " << std::endl;
-    std::cerr << excp << std::endl;
-    return EXIT_FAILURE;
-    }
+    // Setup
+    Metric::Pointer metric = Metric::New();
+    Optimizer::Pointer optimizer = Optimizer::New();
+    Registration::Pointer registration = Registration::New();
+    BSplineTransform::Pointer deformTransform = BSplineTransform::New();
+    GrayInterpolator::Pointer grayInterpolator = GrayInterpolator::New();
 
-  printf("Finished landmark warping\n");
+    registration->SetMetric(metric);
+    registration->SetOptimizer(optimizer);
+    registration->SetInterpolator(grayInterpolator);
+    registration->SetTransform(deformTransform);
+    registration->SetFixedImage(fixedFilter->GetOutput());
+    registration->SetMovingImage(movingFilter->GetOutput());
 
-  // proceed to registration
-  MetricType::Pointer         metric        = MetricType::New();
-  OptimizerType::Pointer      optimizer     = OptimizerType::New();
-  registration                              = RegistrationType::New();
-  transform                                 = BSplineTransformType::New();
+    Image::RegionType fixedRegion = fixedImage->GetBufferedRegion();
+    registration->SetFixedImageRegion(fixedRegion);
 
-  grayMovingReader->SetFileName(outputImageFileName);
-  grayMovingReader->Update();
-  grayFixedReader->Update();
+    ///// Deformable parameters /////
+    uint16_t transformMeshFillSize = 12;
 
-  registration->SetMetric(       metric           );
-  registration->SetOptimizer(    optimizer        );
-  registration->SetInterpolator( grayInterpolator );
-  registration->SetTransform(    transform        );
-  registration->SetFixedImage(   grayFixedImage   );
-  registration->SetMovingImage(  grayMovingReader->GetOutput() );
+    // The maximum step length when the optimizer starts moving around
+    double maxStepLength = fixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
+    // Registration will stop if the step length drops below this value
+    double minStepLength =
+        fixedImage->GetLargestPossibleRegion().GetSize()[0] /
+        500000.0;
 
+    // Optimizer step length is reduced by this factor each iteration
+    double relaxationFactor = 0.85;
 
-  GrayImageType::RegionType grayFixedRegion = grayFixedImage->GetBufferedRegion();
-  registration->SetFixedImageRegion( grayFixedRegion );
+    // Hard iteration limit
+    int numberOfIterations = atoi(iterationsIn);
 
-  unsigned int numberOfGridNodesInOneDimension = 7;
+    // The registration process will stop if the metric starts changing less
+    // than this
+    double gradientMagnitudeTolerance = 0.0001;
 
-  //////////////////////////////////////////////////////////////////////////////////////////
+    /* The metric requires two parameters to be selected: the number
+       of bins used to compute the entropy and the number of spatial samples
+       used to compute the density estimates. In typical application, 50
+       histogram bins are sufficient and the metric is relatively insensitive
+       to changes in the number of bins. The number of spatial samples
+       to be used depends on the content of the image. If the images are
+       smooth and do not contain much detail, then using approximately
+       1 percent of the pixels will do. On the other hand, if the images
+       are detailed, it may be necessary to use a much higher proportion,
+       such as 20 percent. */
+    int numberOfHistogramBins = 50;
+    auto numberOfSamples = static_cast<unsigned int>( fixedRegion.GetNumberOfPixels() / 80.0 );
 
-  // Adjust these values to modify the registration process
+    /////////////////////////////////
 
-  // Initially numberOfGridNodesInOneDimension - SplineOrder = 7 - 3 = 4
-  // Increased to improve transform flexibility
-  int transformMeshFillSize = 12;
+    BSplineTransform::PhysicalDimensionsType FixedPhysicalDims;
+    BSplineTransform::MeshSizeType MeshSize;
+    BSplineTransform::OriginType FixedOrigin;
 
-  // The maximum step length when the optimizer starts moving around
-  double maximumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
-  // double maximumStepLength = 0.1;
-  // Registration will stop if the step length drops below this value
-  double minimumStepLength = grayFixedImage->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
-  // double minimumStepLength = 0.001;
-
-  // Optimizer step length is reduced by this factor each iteration
-  double relaxationFactor = 0.85;
-  // The registration process will stop by this many iterations if it has not already
-  int numberOfIterations = atoi(iterationsIn);
-  // The registration process will stop if the metric starts changing less than this
-  double gradientMagnitudeTolerance = 0.0001;
-
-  int numberOfHistogramBins = 50;
-
-  unsigned int numberOfSamples =
-    // original value in example (very slow and source of much frustration)
-    // static_cast<unsigned int>( grayFixedRegion.GetNumberOfPixels() * 60.0 / 100.0 );
-
-    //  http://www.itk.org/Insight/Doxygen/html/Registration_2ImageRegistration16_8cxx-example.html
-    //  The metric requires two parameters to be selected: the number
-    //  of bins used to compute the entropy and the number of spatial samples
-    //  used to compute the density estimates. In typical application, 50
-    //  histogram bins are sufficient and the metric is relatively insensitive
-    //  to changes in the number of bins. The number of spatial samples
-    //  to be used depends on the content of the image. If the images are
-    //  smooth and do not contain much detail, then using approximately
-    //  1 percent of the pixels will do. On the other hand, if the images
-    //  are detailed, it may be necessary to use a much higher proportion,
-    //  such as 20 percent.
-    static_cast<unsigned int>(grayFixedRegion.GetNumberOfPixels() / 80.0);
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-
-  BSplineTransformType::PhysicalDimensionsType   grayFixedPhysicalDimensions;
-  BSplineTransformType::MeshSizeType             grayMeshSize;
-  BSplineTransformType::OriginType               grayFixedOrigin;
-
-  for( unsigned int i=0; i< SpaceDimension; i++ )
-    {
-    grayFixedOrigin[i] = grayFixedImage->GetOrigin()[i];
-    grayFixedPhysicalDimensions[i] = grayFixedImage->GetSpacing()[i] *
-      static_cast<double>(
-      grayFixedImage->GetLargestPossibleRegion().GetSize()[i] - 1 );
+    for (unsigned int i = 0; i < 2; i++) {
+        FixedOrigin[i] = fixedImage->GetOrigin()[i];
+        FixedPhysicalDims[i] = fixedImage->GetSpacing()[i] *
+            static_cast<double>(fixedImage->GetLargestPossibleRegion().GetSize()[i] - 1);
     }
 
-  grayMeshSize.Fill( transformMeshFillSize );
+    MeshSize.Fill(transformMeshFillSize);
 
-  transform->SetTransformDomainOrigin(             grayFixedOrigin                );
-  transform->SetTransformDomainPhysicalDimensions( grayFixedPhysicalDimensions    );
-  transform->SetTransformDomainMeshSize(           grayMeshSize                   );
-  transform->SetTransformDomainDirection(          grayFixedImage->GetDirection() );
+    deformTransform->SetTransformDomainOrigin(FixedOrigin);
+    deformTransform->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
+    deformTransform->SetTransformDomainMeshSize(MeshSize);
+    deformTransform->SetTransformDomainDirection(fixedImage->GetDirection());
 
-  const unsigned int numberOfParameters = transform->GetNumberOfParameters();
-  BSplineParametersType parameters( numberOfParameters );
-  parameters.Fill( 0.0 );
-  transform->SetParameters( parameters );
-  registration->SetInitialTransformParameters( transform->GetParameters() );
+    const auto numberOfParameters = deformTransform->GetNumberOfParameters();
+    BSplineParameters parameters(numberOfParameters);
+    parameters.Fill(0.0);
+    deformTransform->SetParameters(parameters);
+    registration->SetInitialTransformParameters(
+        deformTransform->GetParameters());
 
-  optimizer->MinimizeOn();
-  optimizer->SetMaximumStepLength(          maximumStepLength          );
-  optimizer->SetMinimumStepLength(          minimumStepLength          );
-  optimizer->SetRelaxationFactor(           relaxationFactor           );
-  optimizer->SetNumberOfIterations(         numberOfIterations         );
-  optimizer->SetGradientMagnitudeTolerance( gradientMagnitudeTolerance );
+    optimizer->MinimizeOn();
+    optimizer->SetMaximumStepLength(maxStepLength);
+    optimizer->SetMinimumStepLength(minStepLength);
+    optimizer->SetRelaxationFactor(relaxationFactor);
+    optimizer->SetNumberOfIterations(numberOfIterations);
+    optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance);
 
-  // Create the Command observer and register it with the optimizer.
-  CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
-  optimizer->AddObserver( itk::IterationEvent(), observer );
+    // Create the Command observer and register it with the optimizer.
+//    CommandIterationUpdate::Pointer observer =
+//    CommandIterationUpdate::New();
+//    optimizer->AddObserver(itk::IterationEvent(), observer);
 
-  metric->SetNumberOfHistogramBins( numberOfHistogramBins );
-  metric->SetNumberOfSpatialSamples( numberOfSamples );
+    metric->SetNumberOfHistogramBins(numberOfHistogramBins);
+    metric->SetNumberOfSpatialSamples(numberOfSamples);
 
-  printf("\nStarting registration\n");
+    printf("\nStarting registration\n");
 
-  try
-    {
-    registration->Update();
+    try {
+        registration->Update();
 
-    std::cout << "Optimizer stop condition = "
-              << registration->GetOptimizer()->GetStopConditionDescription()
-              << std::endl;
-    }
-  catch( itk::ExceptionObject & err )
-    {
-    std::cerr << "ExceptionObject caught !" << std::endl;
-    std::cerr << err << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  BSplineParametersType registrationParameters =
-                    registration->GetLastTransformParameters();
-  transform->SetParameters( registrationParameters );
-
-  resample = ResampleFilterType::New();
-
-  ColorPixelType defaultPixel;
-  defaultPixel[0] = 0;
-  defaultPixel[1] = 0;
-  defaultPixel[2] = 0;
-
-  resample->SetTransform(         transform                                             );
-  resample->SetInput(             colorMovingWriter->GetInput()                         );
-  resample->SetSize(              colorFixedImage->GetLargestPossibleRegion().GetSize() );
-  resample->SetOutputOrigin(      colorFixedImage->GetOrigin()                          );
-  resample->SetOutputSpacing(     colorFixedImage->GetSpacing()                         );
-  resample->SetOutputDirection(   colorFixedImage->GetDirection()                       );
-  resample->SetDefaultPixelValue( defaultPixel                                          );
-
-  caster =  CastFilterType::New();
-
-  caster->SetInput( resample->GetOutput() );
-  colorMovingWriter->SetInput( caster->GetOutput()   );
-
-  try
-    {
-    colorMovingWriter->Update();
-    }
-  catch( itk::ExceptionObject & err )
-    {
-    std::cerr << "ExceptionObject caught !" << std::endl;
-    std::cerr << err << std::endl;
-    return EXIT_FAILURE;
+        std::cout << "Optimizer stop condition = "
+                  <<
+                  registration->GetOptimizer()->GetStopConditionDescription()
+                  << std::endl;
+    } catch (itk::ExceptionObject& err) {
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        return EXIT_FAILURE;
     }
 
-  printf("Finished registration\n\n");
-  printf("Writing transformation to file\n");
+    auto finalParams = registration->GetLastTransformParameters();
+    deformTransform->SetParameters(finalParams);
 
-  itk::TransformFileWriterTemplate<double>::Pointer transformWriter = itk::TransformFileWriterTemplate<double>::New();
-  std::string strTransformFileName = transformFileName;
-  transformWriter->SetFileName(strTransformFileName);
-  transformWriter->SetInput(transform);
-  transformWriter->Update();
+    auto compositeTrans = CompositeTransform::New();
+    compositeTrans->AddTransform(ldmTransform);
+    compositeTrans->AddTransform(deformTransform);
 
-  std::ofstream transformFile;
-  transformFile.open(transformFileName, std::ios::app);
-  transformFile << std::endl;
+    ResampleFilter::Pointer resample2 = ResampleFilter::New();
+    resample2->SetInput(movingImage);
+    resample2->SetTransform(compositeTrans);
+    resample2->SetInterpolator(interpolator);
+    resample2->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
+    resample2->SetOutputOrigin(fixedImage->GetOrigin());
+    resample2->SetOutputSpacing(fixedImage->GetSpacing());
+    resample2->SetOutputDirection(fixedImage->GetDirection());
+    resample2->SetDefaultPixelValue(EmptyPixel);
+    resample2->GetOutput();
 
-  transformFile << "#Fixed image: "
-		<< fixedImageFileName << std::endl;
-  transformFile << "#Moving Image: "
-		<< movingImageFileName << std::endl << std::endl;
+    // Write the image
+    writer = ImageWriter::New();
+    writer->SetInput(resample2->GetOutput());
+    writer->SetFileName(outputImageFileName);
+    writer->Update();
 
-  transformFile << "#Fixed image parameters"
-    << std::endl;
-  transformFile << "#Size "
-    << colorFixedImage->GetLargestPossibleRegion().GetSize()[0]
-    << " " << colorFixedImage->GetLargestPossibleRegion().GetSize()[1]
-    << std::endl;
-  transformFile << "#Origin "
-    << colorFixedImage->GetOrigin()[0]
-    << " " << colorFixedImage->GetOrigin()[1]
-    << std::endl;
-  transformFile << "#Spacing "
-    << colorFixedImage->GetSpacing()[0]
-    << " " << colorFixedImage->GetSpacing()[1]
-    << std::endl;
-  transformFile << "#Direction "
-    << colorFixedImage->GetDirection()[0][0]
-    << " " << colorFixedImage->GetDirection()[0][1]
-    << " " << colorFixedImage->GetDirection()[1][0]
-    << " " << colorFixedImage->GetDirection()[1][1]
-    << std::endl << std::endl;
+    printf("Finished registration\n\n");
 
-  transformFile << "#Landmark warping physical points" << std::endl;
+    ///// Write the final transformations /////
+    printf("Writing transformation to file\n");
 
-  pointsFile.open( landmarksFileName );
+    // Write deformable transform
+    TransformWriter::Pointer transformWriter = TransformWriter::New();
+    transformWriter->SetFileName(transformFileName);
+    transformWriter->SetInput(compositeTrans);
+    transformWriter->Update();
 
-  pointsFile >> sourceX >> sourceY >> targetX >> targetY;
+    printf("Finished writing transformation to file\n\n");
+    //
+    //    printf("Time and memory usage information:\n");
+    //    chronometer.Stop("LandmarkRegistration");
+    //    memorymeter.Stop("LandmarkRegistration");
+    //    chronometer.Report(std::cout);
+    //    memorymeter.Report(std::cout);
 
-  sourceIndex[0] = sourceX;
-  sourceIndex[1] = sourceY;
-  targetIndex[0] = targetX;
-  targetIndex[1] = targetY;
-
-  grayFixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
-  grayMovingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
-
-  transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[1] << std::endl;
-
-  while( !pointsFile.fail() )
-    {
-    pointsFile >> sourceX >> sourceY >> targetX >> targetY;
-
-    sourceIndex[0] = sourceX;
-    sourceIndex[1] = sourceY;
-    targetIndex[0] = targetX;
-    targetIndex[1] = targetY;
-
-    grayFixedImage->TransformIndexToPhysicalPoint(sourceIndex, sourcePoint);
-    grayMovingImage->TransformIndexToPhysicalPoint(targetIndex, targetPoint);
-
-    transformFile << "# " << sourcePoint[0] << " " << sourcePoint[1] << " " << targetPoint[0] << " " << targetPoint[1] << std::endl;
-    }
-
-  pointsFile.close();
-  transformFile.close();
-
-  printf("Finished writing transformation to file\n\n");
-
-  printf("Time and memory usage information:\n");
-  chronometer.Stop( "LandmarkRegistration" );
-  memorymeter.Stop( "LandmarkRegistration" );
-  chronometer.Report( std::cout );
-  memorymeter.Report( std::cout );
-
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
