@@ -7,23 +7,15 @@ LandmarkGenerator/runnable.jar
 *.jpg
 *.mhd
 *.raw
-registration/images/
-registration/bin/
-utils/bin/
+
+*.iconset/
+*bin/
 flycheck*
 *.o
-*.app/
+*.gch
 
 # Emacs
 *~
-
-# Java
-*.class
-
-# Eclipse
-.classpath
-.project
-.settings/
 
 # Intellij
 .idea/
@@ -36,3 +28,25 @@ flycheck*
 # Maven
 log/
 target/
+
+# CMake
+*CMakeCache.txt
+*CMakeFiles
+*Makefile
+*cmake_install.cmake
+*install_manifest.txt
+*build/
+deps/
+
+# Vim
+tags
+.ycm_extra_conf.py
+.ycm_extra_conf.pyc
+
+# Python
+__pycache__
+.ropeproject
+
+#Doxygen
+doc/latex/
+doc/html/

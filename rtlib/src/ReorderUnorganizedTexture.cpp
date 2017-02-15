@@ -1,4 +1,4 @@
-#include "ReorderUnorganizedTexture.hpp"
+#include "rt/ReorderUnorganizedTexture.hpp"
 
 #include <vtkLandmarkTransform.h>
 #include <vtkOBBTree.h>
