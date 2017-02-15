@@ -17,6 +17,11 @@ include(${ITK_USE_FILE})
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
+# VTK does not mark its headers as system headers with -isystem, which makes
+# warnings from those headers show up in builds. This marks them as "system"
+# headers.
+include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
+
 find_package(OpenCV REQUIRED)
 
 find_package(Eigen3 REQUIRED)

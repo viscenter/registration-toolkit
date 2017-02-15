@@ -13,10 +13,10 @@ namespace rt
 class ReorderUnorganizedTexture
 {
 public:
-    constexpr static float DEFAULT_SAMPLE_RATE = 0.1;
+    constexpr static double DEFAULT_SAMPLE_RATE = 0.1;
 
     // Constructors
-    ReorderUnorganizedTexture() : sampleRate_(0.1){};
+    ReorderUnorganizedTexture() : sampleRate_(DEFAULT_SAMPLE_RATE){}
     ReorderUnorganizedTexture(
         const vtkSmartPointer<vtkPolyData>& mesh,
         const volcart::UVMap& uv,
@@ -24,7 +24,7 @@ public:
         : inputMesh_(mesh)
         , inputUV_(uv)
         , inputTexture_(img)
-        , sampleRate_(DEFAULT_SAMPLE_RATE){};
+        , sampleRate_(DEFAULT_SAMPLE_RATE){}
 
     // Inputs
     void setMesh(const vtkSmartPointer<vtkPolyData>& mesh)
@@ -59,7 +59,7 @@ private:
     cv::Mat inputTexture_;
 
     // Intermediate and parameters
-    float sampleRate_;
+    double sampleRate_;
     vtkSmartPointer<vtkPolyData> alignedMesh_;
     double alignedMeshMaxX_;
     double alignedMeshMaxY_;
