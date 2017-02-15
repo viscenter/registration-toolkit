@@ -16,7 +16,8 @@
 namespace fs = boost::filesystem;
 namespace vc = volcart;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
 
     // Parse args
     fs::path ps_path = argv[1];
