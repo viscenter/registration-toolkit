@@ -5,7 +5,7 @@
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 
-#include <core/types/UVMap.hpp>
+#include <vc/core/types/UVMap.hpp>
 
 namespace rt
 {

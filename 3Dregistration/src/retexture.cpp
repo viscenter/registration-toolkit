@@ -3,15 +3,15 @@
 //
 
 #include <boost/filesystem.hpp>
-#include <core/io/PointSetIO.hpp>
-#include <core/io/objWriter.hpp>
-#include <core/types/OrderedPointSet.hpp>
-#include <core/types/UVMap.hpp>
-#include <core/vc_defines.hpp>
-#include <meshing/OrderedPointSetMesher.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <texturing/SimpleUV.hpp>
+#include <vc/core/io/PointSetIO.hpp>
+#include <vc/core/io/objWriter.hpp>
+#include <vc/core/types/OrderedPointSet.hpp>
+#include <vc/core/types/UVMap.hpp>
+#include <vc/core/vc_defines.hpp>
+#include <vc/meshing/OrderedPointSetMesher.hpp>
+#include <vc/texturing/SimpleUV.hpp>
 
 namespace fs = boost::filesystem;
 namespace vc = volcart;
