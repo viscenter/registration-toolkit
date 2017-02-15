@@ -21,13 +21,15 @@ using Image = itk::Image<ColorPixel, 2>;
 using Vector = itk::Vector<double, 2>;
 using DeformationField = itk::Image<Vector, 2>;
 using GrayPixel = unsigned char;
-using GrayImage = itk::Image< GrayPixel, 2 >;
+using GrayImage = itk::Image<GrayPixel, 2>;
 
 // Image Resampling and Filtering
 using ResampleFilter = itk::ResampleImageFilter<Image, Image, double>;
-using ColorInterpolator = itk::NearestNeighborInterpolateImageFunction< Image, double>;
-using GrayInterpolator = itk::NearestNeighborInterpolateImageFunction< GrayImage, double>;
-using GrayscaleFilter = itk::RGBToLuminanceImageFilter< Image, GrayImage >;
+using ColorInterpolator =
+    itk::NearestNeighborInterpolateImageFunction<Image, double>;
+using GrayInterpolator =
+    itk::NearestNeighborInterpolateImageFunction<GrayImage, double>;
+using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image, GrayImage>;
 
 // Landmark Transform Types
 using AffineTransform = itk::AffineTransform<double, 2>;
@@ -37,10 +39,11 @@ using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
 using Landmark = LandmarkTransformInitializer::LandmarkPointType;
 
 // Deformable Registration Types
-using Metric = itk::MattesMutualInformationImageToImageMetric<GrayImage, GrayImage>;
+using Metric =
+    itk::MattesMutualInformationImageToImageMetric<GrayImage, GrayImage>;
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
 using Registration = itk::ImageRegistrationMethod<GrayImage, GrayImage>;
-using BSplineTransform = itk::BSplineTransform< double, 2, 3 >;
+using BSplineTransform = itk::BSplineTransform<double, 2, 3>;
 using BSplineParameters = BSplineTransform::ParametersType;
 
 // Composite Transform
@@ -122,8 +125,8 @@ int main(int argc, char* argv[])
         movingIndex[1] = movingY;
 
         // Transform landmarks in case spacing still gets used
-        fixedImage->TransformIndexToPhysicalPoint( fixedIndex, fixedPoint);
-        movingImage->TransformIndexToPhysicalPoint( movingIndex, movingPoint);
+        fixedImage->TransformIndexToPhysicalPoint(fixedIndex, fixedPoint);
+        movingImage->TransformIndexToPhysicalPoint(movingIndex, movingPoint);
 
         fixedLandmarks.push_back(fixedPoint);
         movingLandmarks.push_back(movingPoint);
@@ -168,10 +171,10 @@ int main(int argc, char* argv[])
     ///// Deformable Registration /////
     // Create grayscale images
     GrayscaleFilter::Pointer fixedFilter = GrayscaleFilter::New();
-    fixedFilter->SetInput( fixedImage );
+    fixedFilter->SetInput(fixedImage);
 
     GrayscaleFilter::Pointer movingFilter = GrayscaleFilter::New();
-    movingFilter->SetInput( resample->GetOutput() );
+    movingFilter->SetInput(resample->GetOutput());
 
     // Setup
     Metric::Pointer metric = Metric::New();
@@ -194,11 +197,11 @@ int main(int argc, char* argv[])
     uint16_t transformMeshFillSize = 12;
 
     // The maximum step length when the optimizer starts moving around
-    double maxStepLength = fixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
+    double maxStepLength =
+        fixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
     // Registration will stop if the step length drops below this value
     double minStepLength =
-        fixedImage->GetLargestPossibleRegion().GetSize()[0] /
-        500000.0;
+        fixedImage->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
 
     // Optimizer step length is reduced by this factor each iteration
     double relaxationFactor = 0.85;
@@ -221,7 +224,8 @@ int main(int argc, char* argv[])
        are detailed, it may be necessary to use a much higher proportion,
        such as 20 percent. */
     int numberOfHistogramBins = 50;
-    auto numberOfSamples = static_cast<unsigned int>( fixedRegion.GetNumberOfPixels() / 80.0 );
+    auto numberOfSamples =
+        static_cast<unsigned int>(fixedRegion.GetNumberOfPixels() / 80.0);
 
     /////////////////////////////////
 
@@ -231,8 +235,10 @@ int main(int argc, char* argv[])
 
     for (unsigned int i = 0; i < 2; i++) {
         FixedOrigin[i] = fixedImage->GetOrigin()[i];
-        FixedPhysicalDims[i] = fixedImage->GetSpacing()[i] *
-            static_cast<double>(fixedImage->GetLargestPossibleRegion().GetSize()[i] - 1);
+        FixedPhysicalDims[i] =
+            fixedImage->GetSpacing()[i] *
+            static_cast<double>(
+                fixedImage->GetLargestPossibleRegion().GetSize()[i] - 1);
     }
 
     MeshSize.Fill(transformMeshFillSize);
@@ -257,9 +263,9 @@ int main(int argc, char* argv[])
     optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance);
 
     // Create the Command observer and register it with the optimizer.
-//    CommandIterationUpdate::Pointer observer =
-//    CommandIterationUpdate::New();
-//    optimizer->AddObserver(itk::IterationEvent(), observer);
+    //    CommandIterationUpdate::Pointer observer =
+    //    CommandIterationUpdate::New();
+    //    optimizer->AddObserver(itk::IterationEvent(), observer);
 
     metric->SetNumberOfHistogramBins(numberOfHistogramBins);
     metric->SetNumberOfSpatialSamples(numberOfSamples);
@@ -270,8 +276,7 @@ int main(int argc, char* argv[])
         registration->Update();
 
         std::cout << "Optimizer stop condition = "
-                  <<
-                  registration->GetOptimizer()->GetStopConditionDescription()
+                  << registration->GetOptimizer()->GetStopConditionDescription()
                   << std::endl;
     } catch (itk::ExceptionObject& err) {
         std::cerr << "ExceptionObject caught !" << std::endl;

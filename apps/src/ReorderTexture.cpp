@@ -6,7 +6,7 @@
 #include <vc/core/vc_defines.hpp>
 #include <vc/meshing/ITK2VTK.hpp>
 
-#include "ReorderUnorganizedTexture.hpp"
+#include "rt/ReorderUnorganizedTexture.hpp"
 
 namespace vc = volcart;
 namespace fs = boost::filesystem;
