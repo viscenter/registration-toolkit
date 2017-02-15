@@ -6,6 +6,7 @@
 
 using namespace rt;
 
+// Compute the result
 cv::Mat ReorderUnorganizedTexture::compute()
 {
     align_mesh_();
@@ -15,6 +16,8 @@ cv::Mat ReorderUnorganizedTexture::compute()
     return outputTexture_;
 }
 
+// Uses landmark registration to align the input mesh to be parallel to the XY
+// plane and near the origin
 void ReorderUnorganizedTexture::align_mesh_()
 {
     std::cerr << "Aligning mesh..." << std::endl;
@@ -70,7 +73,7 @@ void ReorderUnorganizedTexture::align_mesh_()
 
 void ReorderUnorganizedTexture::create_texture_()
 {
-    // Computes the OBB and returns the 3 axis relative to the box
+    // Computes the OBB and returns the 3 axes relative to the box
     double corner[3], min[3], mid[3], max[3], size[3];
     auto obbTree = vtkSmartPointer<vtkOBBTree>::New();
     obbTree->ComputeOBB(alignedMesh_, corner, max, mid, min, size);
@@ -78,6 +81,8 @@ void ReorderUnorganizedTexture::create_texture_()
     obbTree->BuildLocator();
 
     // Setup the output image
+    // After alignment, dimensions go from [0, dimension max], therefore
+    // dimension max / sample rate == # of pixels in dimension
     alignedMeshMaxX_ = max[0];
     alignedMeshMaxY_ = mid[1];
     int cols = static_cast<int>(std::ceil(alignedMeshMaxX_ / sampleRate_));
@@ -97,7 +102,7 @@ void ReorderUnorganizedTexture::create_texture_()
             interPts->Reset();
             interCells->Reset();
 
-            // Position in mesh's XY space
+            // Convert pixel position to position in mesh's XY space
             auto n_i = i * sampleRate_;
             auto n_j = j * sampleRate_;
 
@@ -105,6 +110,7 @@ void ReorderUnorganizedTexture::create_texture_()
             double a0[3] = {n_i, n_j, 0};
             double a1[3] = {n_i, n_j, std::ceil(corner[2])};
 
+            // Calculate mesh intersection
             auto res = obbTree->IntersectWithLine(a0, a1, interPts, interCells);
             if (res != 0) {
                 // Get the three vertices of the last intersected cell
@@ -136,6 +142,7 @@ void ReorderUnorganizedTexture::create_texture_()
                 auto c = inputUV_.get(v_id2);
 
                 // Setup some temp variables
+                // Drop the third dimension because UV is 2D
                 A = {a[0], a[1], 0.0};
                 B = {b[0], b[1], 0.0};
                 C = {c[0], c[1], 0.0};
@@ -143,7 +150,7 @@ void ReorderUnorganizedTexture::create_texture_()
                 // Get the UV position of the intersection point
                 cv::Vec3d cart_point = cartesian_coord_(bary_point, A, B, C);
 
-                // Convert the UV position to pixel coordinates
+                // Convert the UV position to pixel coordinates (in orig image)
                 float x = static_cast<float>(cart_point[0]) *
                           (inputTexture_.cols - 1);
                 float y = static_cast<float>(
@@ -160,6 +167,8 @@ void ReorderUnorganizedTexture::create_texture_()
     std::cerr << std::endl;
 }
 
+// Generate a new UV map using the aligned mesh
+// This is simple after alignment u = pos.x / max.x, v = pos.y / max.y
 void ReorderUnorganizedTexture::create_uv_()
 {
     std::cerr << "Creating UV map..." << std::endl;
@@ -173,12 +182,13 @@ void ReorderUnorganizedTexture::create_uv_()
     }
 }
 
+// Calculate the barycentric coordinate of cartesian XYZ in triangle ABC
 cv::Vec3d ReorderUnorganizedTexture::barycentric_coord_(
-    cv::Vec3d nXYZ, cv::Vec3d nA, cv::Vec3d nB, cv::Vec3d nC)
+    cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
 {
-    auto v0 = nB - nA;
-    auto v1 = nC - nA;
-    auto v2 = nXYZ - nA;
+    auto v0 = B - A;
+    auto v1 = C - A;
+    auto v2 = XYZ - A;
     auto dot00 = v0.dot(v0);
     auto dot01 = v0.dot(v1);
     auto dot11 = v1.dot(v1);
@@ -191,9 +201,9 @@ cv::Vec3d ReorderUnorganizedTexture::barycentric_coord_(
     output[0] = 1.0 - output[1] - output[2];
     return output;
 }
-// Find Cartesian coordinates of point in triangle given barycentric coordinate
+// Calculate the cartesian coordinate of barycentric UVW in triangle ABC
 cv::Vec3d ReorderUnorganizedTexture::cartesian_coord_(
-    cv::Vec3d nUVW, cv::Vec3d nA, cv::Vec3d nB, cv::Vec3d nC)
+    cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
 {
-    return nUVW[0] * nA + nUVW[1] * nB + nUVW[2] * nC;
+    return UVW[0] * A + UVW[1] * B + UVW[2] * C;
 }
