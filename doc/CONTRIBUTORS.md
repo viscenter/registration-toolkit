@@ -1,3 +1,8 @@
 Project Contributors
 -----------------------
-* [Names Go Here]
+* Zack Anderson
+* Nikki Bentley
+* Lula Hogg
+* Seth Parker
+* Stephen Parsons
+* Mike Roup
