@@ -14,35 +14,31 @@
 #include <itkResampleImageFilter.h>
 #include <itkTransformFileWriter.h>
 
-// Base types
+#include "rt/ImageTypes.hpp"
+
+// Defines
 constexpr static uint8_t EmptyPixel = 0;
-using ColorPixel = itk::RGBPixel<uint8_t>;
-using Image = itk::Image<ColorPixel, 2>;
-using Vector = itk::Vector<double, 2>;
-using DeformationField = itk::Image<Vector, 2>;
-using GrayPixel = unsigned char;
-using GrayImage = itk::Image<GrayPixel, 2>;
 
 // Image Resampling and Filtering
-using ResampleFilter = itk::ResampleImageFilter<Image, Image, double>;
+using ResampleFilter = itk::ResampleImageFilter<Image8UC3, Image8UC3, double>;
 using ColorInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<Image, double>;
+    itk::NearestNeighborInterpolateImageFunction<Image8UC3, double>;
 using GrayInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<GrayImage, double>;
-using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image, GrayImage>;
+    itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
+using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image8UC3, Image8UC1>;
 
 // Landmark Transform Types
 using AffineTransform = itk::AffineTransform<double, 2>;
 using LandmarkTransformInitializer =
-    itk::LandmarkBasedTransformInitializer<AffineTransform, Image, Image>;
+    itk::LandmarkBasedTransformInitializer<AffineTransform, Image8UC3, Image8UC3>;
 using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
 using Landmark = LandmarkTransformInitializer::LandmarkPointType;
 
 // Deformable Registration Types
 using Metric =
-    itk::MattesMutualInformationImageToImageMetric<GrayImage, GrayImage>;
+    itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
-using Registration = itk::ImageRegistrationMethod<GrayImage, GrayImage>;
+using Registration = itk::ImageRegistrationMethod<Image8UC1, Image8UC1>;
 using BSplineTransform = itk::BSplineTransform<double, 2, 3>;
 using BSplineParameters = BSplineTransform::ParametersType;
 
@@ -50,8 +46,8 @@ using BSplineParameters = BSplineTransform::ParametersType;
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
-using ImageReader = itk::ImageFileReader<Image>;
-using ImageWriter = itk::ImageFileWriter<Image>;
+using ImageReader = itk::ImageFileReader<Image8UC3>;
+using ImageWriter = itk::ImageFileWriter<Image8UC3>;
 using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
@@ -83,8 +79,8 @@ int main(int argc, char* argv[])
 
     ///// Setup input files /////
     ImageReader::Pointer imgReader;
-    Image::Pointer fixedImage;
-    Image::Pointer movingImage;
+    Image8UC3::Pointer fixedImage;
+    Image8UC3::Pointer movingImage;
 
     // Read the two images
     try {
@@ -112,7 +108,7 @@ int main(int argc, char* argv[])
     // Read the landmarks file
     LandmarkContainer fixedLandmarks, movingLandmarks;
     Landmark fixedPoint, movingPoint;
-    Image::IndexType fixedIndex, movingIndex;
+    Image8UC3::IndexType fixedIndex, movingIndex;
     size_t fixedX, fixedY, movingX, movingY;
 
     std::ifstream pointsFile(landmarksFileName);
@@ -190,7 +186,7 @@ int main(int argc, char* argv[])
     registration->SetFixedImage(fixedFilter->GetOutput());
     registration->SetMovingImage(movingFilter->GetOutput());
 
-    Image::RegionType fixedRegion = fixedImage->GetBufferedRegion();
+    Image8UC3::RegionType fixedRegion = fixedImage->GetBufferedRegion();
     registration->SetFixedImageRegion(fixedRegion);
 
     ///// Deformable parameters /////

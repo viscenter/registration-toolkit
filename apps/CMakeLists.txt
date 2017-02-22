@@ -3,7 +3,10 @@ add_executable(ApplyTransform src/ApplyTransform.cxx)
 target_link_libraries(ApplyTransform ${ITK_LIBRARIES})
 
 add_executable(LandmarkRegistration src/LandmarkRegistration.cxx)
-target_link_libraries(LandmarkRegistration ${ITK_LIBRARIES})
+target_link_libraries(LandmarkRegistration
+    rt::rtlib
+    ${ITK_LIBRARIES}
+    )
 
 # 3D Registration Apps
 add_executable(rt_reorder_texture src/ReorderTexture.cpp)
