@@ -19,6 +19,7 @@ target_link_libraries(${target}
         opencv_core
         VC::core
         ${VTK_LIBRARIES}
+        ${ITK_LIBRARIES}
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"
