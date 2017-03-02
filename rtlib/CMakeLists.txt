@@ -4,6 +4,7 @@ set(target "${module}")
 
 set(srcs
     src/ReorderUnorganizedTexture.cpp
+    src/ReadRawTIFF.cpp
 )
 
 add_library(${target} ${srcs})

@@ -1,0 +1,26 @@
+#include <iostream>
+
+#include <boost/filesystem.hpp>
+#include <opencv2/imgcodecs.hpp>
+
+#include "rt/ReadRawTIFF.hpp"
+
+namespace fs = boost::filesystem;
+
+int main(int argc, char* argv[])
+{
+    if (argc < 3) {
+        std::cerr << argv[0] << "Usage: input.tif output.tif" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Get inputs
+    fs::path input = argv[1];
+    fs::path output = argv[2];
+
+    // Load image
+    auto img = rt::io::ReadRawTIFF(input, 10);
+
+    // Save image
+    cv::imwrite(output.string(), img);
+}
