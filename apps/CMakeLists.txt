@@ -6,26 +6,31 @@ add_executable(LandmarkRegistration src/LandmarkRegistration.cxx)
 target_link_libraries(LandmarkRegistration
     rt::rtlib
     ${ITK_LIBRARIES}
-    )
+)
 
 # 3D Registration Apps
 add_executable(rt_reorder_texture src/ReorderTexture.cpp)
 target_link_libraries(rt_reorder_texture
-        rt::rtlib
-        opencv_core
-        opencv_imgproc
-        opencv_highgui
-        ${VTK_LIBRARIES}
-        VC::core
-        VC::meshing
+    rt::rtlib
+    opencv_core
+    opencv_imgproc
+    opencv_highgui
+    ${VTK_LIBRARIES}
+    VC::core
+    VC::meshing
 )
 
 add_executable(rt_retexture src/retexture.cpp)
 target_link_libraries(rt_retexture
-        Boost::filesystem
-        opencv_core
-        opencv_imgcodecs
-        VC::core
-        VC::meshing
-        VC::texturing
+    Boost::filesystem
+    opencv_core
+    opencv_imgcodecs
+    VC::core
+    VC::meshing
+    VC::texturing
+)
+
+add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
+target_link_libraries(rt_raw_tiff_converter
+    rt::rtlib
 )

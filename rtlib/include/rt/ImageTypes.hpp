@@ -1,6 +1,7 @@
 #pragma once
 
 #include <itkImage.h>
+#include <itkRGBPixel.h>
 
 // 8bpc
 using Pixel8UC1 = uint8_t;
