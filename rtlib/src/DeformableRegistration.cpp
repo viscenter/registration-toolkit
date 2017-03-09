@@ -5,12 +5,16 @@
 #include <itkNearestNeighborInterpolateImageFunction.h>
 #include <itkRGBToLuminanceImageFilter.h>
 #include <itkRegularStepGradientDescentOptimizer.h>
+#include <itkResampleImageFilter.h>
 
 using namespace rt;
 
 using GrayInterpolator =
     itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
 using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image8UC3, Image8UC1>;
+using ResampleFilter = itk::ResampleImageFilter<Image8UC3, Image8UC3, double>;
+using ColorInterpolator =
+    itk::NearestNeighborInterpolateImageFunction<Image8UC3, double>;
 using Metric =
     itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
@@ -20,6 +24,7 @@ using BSplineParameters = DeformableRegistration::Transform::ParametersType;
 static constexpr double DEFAULT_MAX_STEP_FACTOR = 1.0 / 500.0;
 static constexpr double DEFAULT_MIN_STEP_FACTOR = 1.0 / 500000.0;
 static constexpr unsigned DEFAULT_MESH_FILL_SIZE = 12;
+static constexpr uint8_t EMPTY_PIXEL = 0;
 
 /* The metric requires two parameters to be selected: the number
 of bins used to compute the entropy and the number of spatial samples
@@ -106,4 +111,21 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
 
     output_->SetParameters(registration->GetLastTransformParameters());
     return output_;
+}
+
+Image8UC3::Pointer DeformableRegistration::getTransformedImage()
+{
+    auto interpolator = ColorInterpolator::New();
+    auto resample = ResampleFilter::New();
+    resample->SetInput(movingImage_);
+    resample->SetTransform(output_);
+    resample->SetInterpolator(interpolator);
+    resample->SetSize(fixedImage_->GetLargestPossibleRegion().GetSize());
+    resample->SetOutputOrigin(fixedImage_->GetOrigin());
+    resample->SetOutputSpacing(fixedImage_->GetSpacing());
+    resample->SetOutputDirection(fixedImage_->GetDirection());
+    resample->SetDefaultPixelValue(EMPTY_PIXEL);
+    resample->Update();
+
+    return resample->GetOutput();
 }

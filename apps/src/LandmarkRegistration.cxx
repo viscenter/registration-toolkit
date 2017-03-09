@@ -14,6 +14,8 @@
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTypes.hpp"
 
+using namespace rt;
+
 // Defines
 constexpr static uint8_t EmptyPixel = 0;
 
