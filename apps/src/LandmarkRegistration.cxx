@@ -7,13 +7,11 @@
 #include <itkImageFileWriter.h>
 #include <itkImageRegistrationMethod.h>
 #include <itkLandmarkBasedTransformInitializer.h>
-#include <itkMattesMutualInformationImageToImageMetric.h>
 #include <itkNearestNeighborInterpolateImageFunction.h>
-#include <itkRGBToLuminanceImageFilter.h>
-#include <itkRegularStepGradientDescentOptimizer.h>
 #include <itkResampleImageFilter.h>
 #include <itkTransformFileWriter.h>
 
+#include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTypes.hpp"
 
 // Defines
@@ -23,9 +21,6 @@ constexpr static uint8_t EmptyPixel = 0;
 using ResampleFilter = itk::ResampleImageFilter<Image8UC3, Image8UC3, double>;
 using ColorInterpolator =
     itk::NearestNeighborInterpolateImageFunction<Image8UC3, double>;
-using GrayInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
-using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image8UC3, Image8UC1>;
 
 // Landmark Transform Types
 using AffineTransform = itk::AffineTransform<double, 2>;
@@ -33,14 +28,6 @@ using LandmarkTransformInitializer =
     itk::LandmarkBasedTransformInitializer<AffineTransform, Image8UC3, Image8UC3>;
 using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
 using Landmark = LandmarkTransformInitializer::LandmarkPointType;
-
-// Deformable Registration Types
-using Metric =
-    itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
-using Optimizer = itk::RegularStepGradientDescentOptimizer;
-using Registration = itk::ImageRegistrationMethod<Image8UC1, Image8UC1>;
-using BSplineTransform = itk::BSplineTransform<double, 2, 3>;
-using BSplineParameters = BSplineTransform::ParametersType;
 
 // Composite Transform
 using CompositeTransform = itk::CompositeTransform<double, 2>;
@@ -165,123 +152,10 @@ int main(int argc, char* argv[])
     printf("Finished landmark warping\n");
 
     ///// Deformable Registration /////
-    // Create grayscale images
-    GrayscaleFilter::Pointer fixedFilter = GrayscaleFilter::New();
-    fixedFilter->SetInput(fixedImage);
-
-    GrayscaleFilter::Pointer movingFilter = GrayscaleFilter::New();
-    movingFilter->SetInput(resample->GetOutput());
-
-    // Setup
-    Metric::Pointer metric = Metric::New();
-    Optimizer::Pointer optimizer = Optimizer::New();
-    Registration::Pointer registration = Registration::New();
-    BSplineTransform::Pointer deformTransform = BSplineTransform::New();
-    GrayInterpolator::Pointer grayInterpolator = GrayInterpolator::New();
-
-    registration->SetMetric(metric);
-    registration->SetOptimizer(optimizer);
-    registration->SetInterpolator(grayInterpolator);
-    registration->SetTransform(deformTransform);
-    registration->SetFixedImage(fixedFilter->GetOutput());
-    registration->SetMovingImage(movingFilter->GetOutput());
-
-    Image8UC3::RegionType fixedRegion = fixedImage->GetBufferedRegion();
-    registration->SetFixedImageRegion(fixedRegion);
-
-    ///// Deformable parameters /////
-    uint16_t transformMeshFillSize = 12;
-
-    // The maximum step length when the optimizer starts moving around
-    double maxStepLength =
-        fixedImage->GetLargestPossibleRegion().GetSize()[0] / 500.0;
-    // Registration will stop if the step length drops below this value
-    double minStepLength =
-        fixedImage->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
-
-    // Optimizer step length is reduced by this factor each iteration
-    double relaxationFactor = 0.85;
-
-    // Hard iteration limit
-    int numberOfIterations = atoi(iterationsIn);
-
-    // The registration process will stop if the metric starts changing less
-    // than this
-    double gradientMagnitudeTolerance = 0.0001;
-
-    /* The metric requires two parameters to be selected: the number
-       of bins used to compute the entropy and the number of spatial samples
-       used to compute the density estimates. In typical application, 50
-       histogram bins are sufficient and the metric is relatively insensitive
-       to changes in the number of bins. The number of spatial samples
-       to be used depends on the content of the image. If the images are
-       smooth and do not contain much detail, then using approximately
-       1 percent of the pixels will do. On the other hand, if the images
-       are detailed, it may be necessary to use a much higher proportion,
-       such as 20 percent. */
-    int numberOfHistogramBins = 50;
-    auto numberOfSamples =
-        static_cast<unsigned int>(fixedRegion.GetNumberOfPixels() / 80.0);
-
-    /////////////////////////////////
-
-    BSplineTransform::PhysicalDimensionsType FixedPhysicalDims;
-    BSplineTransform::MeshSizeType MeshSize;
-    BSplineTransform::OriginType FixedOrigin;
-
-    for (unsigned int i = 0; i < 2; i++) {
-        FixedOrigin[i] = fixedImage->GetOrigin()[i];
-        FixedPhysicalDims[i] =
-            fixedImage->GetSpacing()[i] *
-            static_cast<double>(
-                fixedImage->GetLargestPossibleRegion().GetSize()[i] - 1);
-    }
-
-    MeshSize.Fill(transformMeshFillSize);
-
-    deformTransform->SetTransformDomainOrigin(FixedOrigin);
-    deformTransform->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
-    deformTransform->SetTransformDomainMeshSize(MeshSize);
-    deformTransform->SetTransformDomainDirection(fixedImage->GetDirection());
-
-    const auto numberOfParameters = deformTransform->GetNumberOfParameters();
-    BSplineParameters parameters(numberOfParameters);
-    parameters.Fill(0.0);
-    deformTransform->SetParameters(parameters);
-    registration->SetInitialTransformParameters(
-        deformTransform->GetParameters());
-
-    optimizer->MinimizeOn();
-    optimizer->SetMaximumStepLength(maxStepLength);
-    optimizer->SetMinimumStepLength(minStepLength);
-    optimizer->SetRelaxationFactor(relaxationFactor);
-    optimizer->SetNumberOfIterations(numberOfIterations);
-    optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance);
-
-    // Create the Command observer and register it with the optimizer.
-    //    CommandIterationUpdate::Pointer observer =
-    //    CommandIterationUpdate::New();
-    //    optimizer->AddObserver(itk::IterationEvent(), observer);
-
-    metric->SetNumberOfHistogramBins(numberOfHistogramBins);
-    metric->SetNumberOfSpatialSamples(numberOfSamples);
-
-    printf("\nStarting registration\n");
-
-    try {
-        registration->Update();
-
-        std::cout << "Optimizer stop condition = "
-                  << registration->GetOptimizer()->GetStopConditionDescription()
-                  << std::endl;
-    } catch (itk::ExceptionObject& err) {
-        std::cerr << "ExceptionObject caught !" << std::endl;
-        std::cerr << err << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    auto finalParams = registration->GetLastTransformParameters();
-    deformTransform->SetParameters(finalParams);
+    rt::DeformableRegistration deformable;
+    deformable.setFixedImage(fixedImage);
+    deformable.setMovingImage(resample->GetOutput());
+    auto deformTransform = deformable.compute();
 
     auto compositeTrans = CompositeTransform::New();
     compositeTrans->AddTransform(ldmTransform);
