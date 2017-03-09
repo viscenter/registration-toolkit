@@ -5,6 +5,7 @@ set(target "${module}")
 set(srcs
     src/ReorderUnorganizedTexture.cpp
     src/ReadRawTIFF.cpp
+    src/LandmarkDetector.cpp
     src/DeformableRegistration.cpp
     src/LandmarkRegistration.cpp
     src/LandmarkIO.cpp
@@ -22,6 +23,8 @@ target_link_libraries(${target}
     PUBLIC
         Boost::filesystem
         opencv_core
+        opencv_features2d
+        opencv_highgui
         ITKCommon
         ITKTransform
         ITKOptimizers
