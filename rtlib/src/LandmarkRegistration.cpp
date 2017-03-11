@@ -1,23 +1,27 @@
 // LandmarkRegistration.cpp
 #include "LandmarkRegistration.hpp"
 
-ResampleFilter::Pointer LandmarkRegistration::getTransform() {
-    return generate_affine_transform_();
+ResampleFilter::Pointer LandmarkRegistration::getAffineTransform() {
+    return landmarkTransform_;
 }
 
-//TODO: What to return here?
- LandmarkRegistration::generate_affine_transform_() {
+void LandmarkRegistration::compute_() {
+    clear_();
+    generate_affine_transform_();
+}
+
+void LandmarkRegistration::generate_affine_transform_() {
     // Generate the affine deformTransform
-    io_.computeLandmarks();
-
     LandmarkTransformInitializer::Pointer landmarkTransformInit =
-        LandmarkTransformInitializer::New();
-    landmarkTransformInit->SetFixedLandmarks(io_.getFixedLandmarks());
-    landmarkTransformInit->SetMovingLandmarks(io_.getMovingLandmarks());
+    LandmarkTransformInitializer::New();
+    landmarkTransformInit->SetFixedLandmarks(fixedLandmarks);
+    landmarkTransformInit->SetMovingLandmarks(movingLandmarks);
 
-    AffineTransform::Pointer landmark = AffineTransform::New();
-    landmarkTransform->SetIdentity();
-    landmarkTransformInit->SetTransform(landmarkTransform);
+    landmarkTransform_->SetIdentity();
+    landmarkTransformInit->SetTransform(landmarkTransform_);
     landmarkTransformInit->InitializeTransform();
-    return landmarkTransformInit;
+}
+
+void LandmarkRegistration::clear_() {
+    landmarkTransform_ = AffineTransform::New();
 }

@@ -6,6 +6,7 @@ void LandmarkIO::read() {
 }
 
 void LandmarkIO::read_landmarks_file_() {
+    assert(fixedImage_ != NULL && movingImage_ != NULL);
     Landmark fixedPoint, movingPoint;
     Image::IndexType fixedIndex, movingIndex;
     size_t fixedX, fixedY, movingX, movingY;
@@ -31,5 +32,7 @@ void LandmarkIO::read_landmarks_file_() {
 
 void LandmarkIO::clear_() {
     /** TODO: Figure out clearing mechanism for ITK::LandmarkPointContainer */
+    fixedLandmarks_ = LandmarkContainer::New();
+    movingLandmarks_ = LandmarkContainer::New();
     return;
 }
