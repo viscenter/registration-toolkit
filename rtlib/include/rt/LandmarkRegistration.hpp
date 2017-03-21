@@ -2,24 +2,27 @@
 
 #include "ImageTypes.hpp"
 
-using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
-
 namespace rt
 {
 class LandmarkRegistration {
 public:
-    LandmarkRegistration(
-        const Image8UC3& fixedImage, 
-        const Image8UC3& movingImage,
-        const LandmarkContainer& fixedLandmarks, LandmarkContainer& movingLandmarks)
-        : fixedImage_(fixedImage), movingImage_(movingImage), fixedLandmarks_(fixedLandmarks),
-        movingLandmarks_(movingLandmarks)
-    {
-    }
+    using Transform = itk::AffineTransform<double, 2>;
+    using LandmarkTransformInitializer =
+        itk::LandmarkBasedTransformInitializer<Transform, Image8UC3, Image8UC3>;
+    using LandmarkContainer =
+        LandmarkTransformInitializer::LandmarkPointContainer;
 
-    AffineTransform::Pointer getTransform();
-    void setFixedImage(const Image8UC3& fixedImage) { fixedImage_ = fixedImage; }
-    void setMovingImage(const Image8UC3& movingImage) { movingImage_ = movingImage; }
+    LandmarkRegistration() {}
+
+    Transform::Pointer getTransform();
+    void setFixedImage(const Image8UC3::Pointer fixedImage)
+    {
+        fixedImage_ = fixedImage;
+    }
+    void setMovingImage(const Image8UC3::Pointer movingImage)
+    {
+        movingImage_ = movingImage;
+    }
     void setFixedLandmarkContainer(const LandmarkContainer& fixedLandmarks) { fixedLandmarks_ = fixedLandmarks; }
     void setMovingLandmarkContainer(const LandmarkContainer& fixedLandmarks) { fixedLandmarks_ = fixedLandmarks; }
 
@@ -29,10 +32,10 @@ private:
     void clear_();
     void generate_affine_transform_();
 
-    AffineTransform::Pointer landmarkTransform_;
-    Image8UC3 fixedImage_;
-    Image8UC3 movingImage_;
+    Transform::Pointer landmarkTransform_;
+    Image8UC3::Pointer fixedImage_;
+    Image8UC3::Pointer movingImage_;
     LandmarkContainer fixedLandmarks_;
     LandmarkContainer movingLandmarks_;
-}
+};
 }

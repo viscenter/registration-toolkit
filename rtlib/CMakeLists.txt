@@ -6,6 +6,7 @@ set(srcs
     src/ReorderUnorganizedTexture.cpp
     src/ReadRawTIFF.cpp
     src/DeformableRegistration.cpp
+    src/LandmarkIO.cpp
 )
 
 add_library(${target} ${srcs})

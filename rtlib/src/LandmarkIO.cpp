@@ -1,14 +1,19 @@
-#include "LandmarkIO.hpp"
+#include "rt/LandmarkIO.hpp"
+
+using namespace rt;
 
 void LandmarkIO::read() {
-    clear_(); 
-    read_landmark_files_();
-}
+    fixedLandmarks_ = LandmarkRegistration::LandmarkTransformInitializer::
+        New()::LandmarkPointContainer;
+    movingLandmarks_ = LandmarkRegistration::LandmarkTransformInitializer::
+        New()::LandmarkPointContainer;
 
-void LandmarkIO::read_landmarks_file_() {
-    assert(fixedImage_ != NULL && movingImage_ != NULL);
+    if (!fs::exists(landmarksPath_) || fixedImage_ == nullptr ||
+        movingImage_ == nullptr) {
+        throw std::runtime_error("Missing input image");
+    }
     Landmark fixedPoint, movingPoint;
-    Image::IndexType fixedIndex, movingIndex;
+    Image8UC3::IndexType fixedIndex, movingIndex;
     size_t fixedX, fixedY, movingX, movingY;
 
     std::ifstream landmarksFile(landmarksPath_.string());
@@ -28,11 +33,4 @@ void LandmarkIO::read_landmarks_file_() {
         movingLandmarks_.push_back(movingPoint);
     }
     landmarksFile.close();
-}
-
-void LandmarkIO::clear_() {
-    /** TODO: Figure out clearing mechanism for ITK::LandmarkPointContainer */
-    fixedLandmarks_ = LandmarkContainer::New();
-    movingLandmarks_ = LandmarkContainer::New();
-    return;
 }

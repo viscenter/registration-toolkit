@@ -1,6 +1,7 @@
 #pragma once
 
 #include <itkImage.h>
+#include <itkLandmarkBasedTransformInitializer.h>
 #include <itkRGBPixel.h>
 
 namespace rt

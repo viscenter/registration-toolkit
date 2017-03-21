@@ -1,34 +1,46 @@
 #pragma once
 
-using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
+#include <boost/filesystem.hpp>
+
+#include "rt/ImageTypes.hpp"
+#include "rt/LandmarkRegistration.hpp"
 
 namespace rt
 {
 class LandmarkIO {
 public:
-    LandmarkIO(const boost::filesystem::path& landmarksPath) 
-        : landmarksPath_(landmarksPath) {
-            fixedImage_ = NULL; 
-            movingImage_ = NULL;
-        }
+    LandmarkIO() {}
 
-        void setFixedImage(const Image::Pointer image) { fixedImage_ = image; }
-        void setMovingImage(const Image::Pointer image) { movingImage_ = image; }
-        void setLandmarksPath(const boost::filesystem::path& path) { landmarksPath_ = path; }
-        void read();
+    LandmarkIO(const boost::filesystem::path& landmarksPath)
+        : landmarksPath_(landmarksPath)
+    {
+    }
 
-        LandmarkContainer getFixedLandmarks() { return fixedLandmarks_; }
-        LandmarkContainer getMovingLandmarks() { return movingLandmarks_; }
+    void setFixedImage(const Image8UC3::Pointer image) { fixedImage_ = image; }
+    void setMovingImage(const Image8UC3::Pointer image)
+    {
+        movingImage_ = image;
+    }
+    void setLandmarksPath(const boost::filesystem::path& path)
+    {
+        landmarksPath_ = path;
+    }
+    void read();
+
+    LandmarkRegistration::LandmarkContainer getFixedLandmarks()
+    {
+        return fixedLandmarks_;
+    }
+    LandmarkRegistration::LandmarkContainer getMovingLandmarks()
+    {
+        return movingLandmarks_;
+    }
 
 private:
-    void clear_();
-    void read_landmarks_file_();
-
-    Image::Pointer fixedImage_;
-    Image::Pointer movingImage_;
+    Image8UC3::Pointer fixedImage_;
+    Image8UC3::Pointer movingImage_;
     boost::filesystem::path landmarksPath_;
-    LandmarkContainer fixedLandmarks_;
-    LandmarkContainer movingLandmarks_;
-
+    rt::LandmarkRegistration::LandmarkContainer fixedLandmarks_;
+    rt::LandmarkRegistration::LandmarkContainer movingLandmarks_;
 };
 }
