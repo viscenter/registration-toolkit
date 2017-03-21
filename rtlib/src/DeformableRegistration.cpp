@@ -1,94 +1,131 @@
-#include "DeformableRegistration.hpp"
+#include "rt/DeformableRegistration.hpp"
 
-BSplineTransform DeformableRegistration::getAffineTransform() {
-    return deformTransform_;
-}
+#include <itkImageRegistrationMethod.h>
+#include <itkMattesMutualInformationImageToImageMetric.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
+#include <itkRGBToLuminanceImageFilter.h>
+#include <itkRegularStepGradientDescentOptimizer.h>
+#include <itkResampleImageFilter.h>
 
-void DeformableRegistration::compute_() {
-    clear_();
-    generate_bspline_transform_();
-}
+using namespace rt;
 
-void DeformableRegistration::generate_bspline_transform_() {
-    // Generate the affine deformTransform_
+using GrayInterpolator =
+    itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
+using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image8UC3, Image8UC1>;
+using ResampleFilter = itk::ResampleImageFilter<Image8UC3, Image8UC3, double>;
+using ColorInterpolator =
+    itk::NearestNeighborInterpolateImageFunction<Image8UC3, double>;
+using Metric =
+    itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
+using Optimizer = itk::RegularStepGradientDescentOptimizer;
+using Registration = itk::ImageRegistrationMethod<Image8UC1, Image8UC1>;
+using BSplineParameters = DeformableRegistration::Transform::ParametersType;
+
+static constexpr double DEFAULT_MAX_STEP_FACTOR = 1.0 / 500.0;
+static constexpr double DEFAULT_MIN_STEP_FACTOR = 1.0 / 500000.0;
+static constexpr unsigned DEFAULT_MESH_FILL_SIZE = 12;
+static constexpr uint8_t EMPTY_PIXEL = 0;
+
+/* The metric requires two parameters to be selected: the number
+of bins used to compute the entropy and the number of spatial samples
+used to compute the density estimates. In typical application, 50
+histogram bins are sufficient and the metric is relatively insensitive
+to changes in the number of bins. The number of spatial samples
+to be used depends on the content of the image. If the images are
+smooth and do not contain much detail, then using approximately
+1 percent of the pixels will do. On the other hand, if the images
+are detailed, it may be necessary to use a much higher proportion,
+such as 20 percent. */
+static constexpr size_t DEFAULT_HISTOGRAM_BINS = 50;
+static constexpr double DEFAULT_SAMPLE_FACTOR = 1.0 / 80.0;
+
+DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
+{
+    ///// Create grayscale images /////
     GrayscaleFilter::Pointer fixedFilter = GrayscaleFilter::New();
-    fixedFilter->SetInput(fixedImage__);
+    fixedFilter->SetInput(fixedImage_);
 
     GrayscaleFilter::Pointer movingFilter = GrayscaleFilter::New();
-    movingFilter->SetInput(resampleFilter_->GetOutput());
+    movingFilter->SetInput(movingImage_);
 
-    // Setup
+    ///// Setup the BSpline Transform /////
+    output_ = Transform::New();
+    Transform::PhysicalDimensionsType FixedPhysicalDims;
+    Transform::MeshSizeType MeshSize;
+    Transform::OriginType FixedOrigin;
+
+    for (auto i = 0; i < 2; i++) {
+        FixedOrigin[i] = fixedImage_->GetOrigin()[i];
+        FixedPhysicalDims[i] =
+            fixedImage_->GetSpacing()[i] *
+            (fixedImage_->GetLargestPossibleRegion().GetSize()[i] - 1);
+    }
+    MeshSize.Fill(DEFAULT_MESH_FILL_SIZE);
+
+    output_->SetTransformDomainOrigin(FixedOrigin);
+    output_->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
+    output_->SetTransformDomainMeshSize(MeshSize);
+    output_->SetTransformDomainDirection(fixedImage_->GetDirection());
+
+    const auto numParams = output_->GetNumberOfParameters();
+    BSplineParameters parameters(numParams);
+    parameters.Fill(0.0);
+    output_->SetParameters(parameters);
+
+    ///// Setup Registration and Metrics/////
     Metric::Pointer metric = Metric::New();
     Optimizer::Pointer optimizer = Optimizer::New();
     Registration::Pointer registration = Registration::New();
     GrayInterpolator::Pointer grayInterpolator = GrayInterpolator::New();
 
+    registration->SetFixedImage(fixedFilter->GetOutput());
+    registration->SetMovingImage(movingFilter->GetOutput());
     registration->SetMetric(metric);
     registration->SetOptimizer(optimizer);
     registration->SetInterpolator(grayInterpolator);
-    registration->SetTransform(deformTransform_);
-    registration->SetfixedImage_(fixedFilter->GetOutput());
-    registration->SetMovingImage(movingFilter->GetOutput());
+    registration->SetTransform(output_);
+    registration->SetInitialTransformParameters(output_->GetParameters());
 
-    Image::RegionType fixedRegion = fixedImage_->GetBufferedRegion();
-    registration->SetfixedImage_Region(fixedRegion);
+    Image8UC3::RegionType fixedRegion = fixedImage_->GetBufferedRegion();
+    registration->SetFixedImageRegion(fixedRegion);
 
-    ///// Deformable parameters /////
-    uint16_t transformMeshFillSize = 12;
+    metric->SetNumberOfHistogramBins(DEFAULT_HISTOGRAM_BINS);
+    auto numSamples = static_cast<size_t>(
+        fixedRegion.GetNumberOfPixels() * DEFAULT_SAMPLE_FACTOR);
+    metric->SetNumberOfSpatialSamples(numSamples);
 
-    // The maximum step length when the optimizer starts moving around
-    double maxStepLength =
-        fixedImage_->GetLargestPossibleRegion().GetSize()[0] / 500.0;
-    // Registration will stop if the step length drops below this value
-    double minStepLength =
-        fixedImage_->GetLargestPossibleRegion().GetSize()[0] / 500000.0;
+    ///// Setup Optimizer /////
+    auto regionWidth = fixedImage_->GetLargestPossibleRegion().GetSize()[0];
+    auto maxStepLength = regionWidth * DEFAULT_MAX_STEP_FACTOR;
+    auto minStepLength = regionWidth * DEFAULT_MIN_STEP_FACTOR;
 
-    // Optimizer step length is reduced by this factor each iteration
-    double relaxationFactor = 0.85;
+    optimizer->MinimizeOn();
+    optimizer->SetMaximumStepLength(maxStepLength);
+    optimizer->SetMinimumStepLength(minStepLength);
+    optimizer->SetRelaxationFactor(relaxationFactor_);
+    optimizer->SetNumberOfIterations(iterations_);
+    optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance_);
 
-    // Hard iteration limit
-    int numberOfIterations = atoi(iterationsIn);
+    ///// Run Registration /////
+    registration->Update();
 
-    // The registration process will stop if the metric starts changing less
-    // than this
-    double gradientMagnitudeTolerance = 0.0001;
-
-    /* The metric requires two parameters to be selected: the number
-       of bins used to compute the entropy and the number of spatial samples
-       used to compute the density estimates. In typical application, 50
-       histogram bins are sufficient and the metric is relatively insensitive
-       to changes in the number of bins. The number of spatial samples
-       to be used depends on the content of the image. If the images are
-       smooth and do not contain much detail, then using approximately
-       1 percent of the pixels will do. On the other hand, if the images
-       are detailed, it may be necessary to use a much higher proportion,
-       such as 20 percent. */
-    int numberOfHistogramBins = 50;
-    auto numberOfSamples =
-        static_cast<unsigned int>(fixedRegion.GetNumberOfPixels() / 80.0);
-
-    /////////////////////////////////
-
-    BSplineTransform::PhysicalDimensionsType FixedPhysicalDims;
-    BSplineTransform::MeshSizeType MeshSize;
-    BSplineTransform::OriginType FixedOrigin;
-
-    for (unsigned int i = 0; i < 2; i++) {
-        FixedOrigin[i] = fixedImage_->GetOrigin()[i];
-        FixedPhysicalDims[i] =
-            fixedImage_->GetSpacing()[i] *
-            static_cast<double>(
-                fixedImage_->GetLargestPossibleRegion().GetSize()[i] - 1);
-    }
-
-    MeshSize.Fill(transformMeshFillSize);
-
-    deformTransform_->SetTransformDomainOrigin(FixedOrigin);
-    deformTransform_->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
-    deformTransform_->SetTransformDomainMeshSize(MeshSize);
-    deformTransform_->SetTransformDomainDirection(fixedImage_->GetDirection());
+    output_->SetParameters(registration->GetLastTransformParameters());
+    return output_;
 }
 
-void DeformableRegistration::clear_() {
-    deformTransform_ = BSplineTransform::New();
+Image8UC3::Pointer DeformableRegistration::getTransformedImage()
+{
+    auto interpolator = ColorInterpolator::New();
+    auto resample = ResampleFilter::New();
+    resample->SetInput(movingImage_);
+    resample->SetTransform(output_);
+    resample->SetInterpolator(interpolator);
+    resample->SetSize(fixedImage_->GetLargestPossibleRegion().GetSize());
+    resample->SetOutputOrigin(fixedImage_->GetOrigin());
+    resample->SetOutputSpacing(fixedImage_->GetSpacing());
+    resample->SetOutputDirection(fixedImage_->GetDirection());
+    resample->SetDefaultPixelValue(EMPTY_PIXEL);
+    resample->Update();
+
+    return resample->GetOutput();
 }

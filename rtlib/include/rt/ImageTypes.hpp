@@ -3,6 +3,8 @@
 #include <itkImage.h>
 #include <itkRGBPixel.h>
 
+namespace rt
+{
 // 8bpc
 using Pixel8UC1 = uint8_t;
 using Image8UC1 = itk::Image<Pixel8UC1, 2>;
@@ -24,3 +26,4 @@ using Image32UC3 = itk::Image<Pixel32UC3, 2>;
 // Deformation Field
 using Vector = itk::Vector<double, 2>;
 using DeformationField = itk::Image<Vector, 2>;
+}
