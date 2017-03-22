@@ -2,35 +2,17 @@
 #include <iostream>
 
 #include <itkCompositeTransform.h>
-#include <itkImage.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
-#include <itkImageRegistrationMethod.h>
-#include <itkNearestNeighborInterpolateImageFunction.h>
-#include <itkResampleImageFilter.h>
 #include <itkTransformFileWriter.h>
 
 #include "rt/DeformableRegistration.hpp"
+#include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkIO.hpp"
 #include "rt/LandmarkRegistration.hpp"
 
 using namespace rt;
-
-// Defines
-constexpr static uint8_t EmptyPixel = 0;
-
-// Image Resampling and Filtering
-using ResampleFilter = itk::ResampleImageFilter<Image8UC3, Image8UC3, double>;
-using ColorInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<Image8UC3, double>;
-
-// Landmark Transform Types
-using AffineTransform = itk::AffineTransform<double, 2>;
-using LandmarkTransformInitializer =
-    itk::LandmarkBasedTransformInitializer<AffineTransform, Image8UC3, Image8UC3>;
-using LandmarkContainer = LandmarkTransformInitializer::LandmarkPointContainer;
-using Landmark = LandmarkTransformInitializer::LandmarkPointType;
 
 // Composite Transform
 using CompositeTransform = itk::CompositeTransform<double, 2>;
@@ -104,7 +86,7 @@ int main(int argc, char* argv[])
     auto movingLandmarks = landmarkReader.getMovingLandmarks();
 
     ///// Landmark Registration /////
-    printf("Beginning landmark warping\n");
+    printf("Running landmark registration...\n");
 
     // Generate the landmark transform
     LandmarkRegistration landmark;
@@ -113,57 +95,40 @@ int main(int argc, char* argv[])
     auto ldmTransform = landmark.compute();
 
     // Apply it to the image
-    ResampleFilter::Pointer resample = ResampleFilter::New();
-    ColorInterpolator::Pointer interpolator = ColorInterpolator::New();
-    resample->SetInput(movingImage);
-    resample->SetTransform(ldmTransform);
-    resample->SetInterpolator(interpolator);
-    resample->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
-    resample->SetOutputOrigin(fixedImage->GetOrigin());
-    resample->SetOutputSpacing(fixedImage->GetSpacing());
-    resample->SetOutputDirection(fixedImage->GetDirection());
-    resample->SetDefaultPixelValue(EmptyPixel);
-    resample->GetOutput();
+    auto tmpMovingImage =
+        ImageTransformResampler(fixedImage, movingImage, ldmTransform);
 
     // Write the image
     ImageWriter::Pointer writer = ImageWriter::New();
-    writer->SetInput(resample->GetOutput());
+    writer->SetInput(tmpMovingImage);
     writer->SetFileName(outputImageFileName);
     writer->Update();
 
-    printf("Finished landmark warping\n");
-
     ///// Deformable Registration /////
+    printf("Running deformable registration...\n");
     rt::DeformableRegistration deformable;
     deformable.setFixedImage(fixedImage);
-    deformable.setMovingImage(resample->GetOutput());
+    deformable.setMovingImage(tmpMovingImage);
     auto deformTransform = deformable.compute();
 
+    ///// Combine transforms /////
     auto compositeTrans = CompositeTransform::New();
     compositeTrans->AddTransform(ldmTransform);
     compositeTrans->AddTransform(deformTransform);
 
-    ResampleFilter::Pointer resample2 = ResampleFilter::New();
-    resample2->SetInput(movingImage);
-    resample2->SetTransform(compositeTrans);
-    resample2->SetInterpolator(interpolator);
-    resample2->SetSize(fixedImage->GetLargestPossibleRegion().GetSize());
-    resample2->SetOutputOrigin(fixedImage->GetOrigin());
-    resample2->SetOutputSpacing(fixedImage->GetSpacing());
-    resample2->SetOutputDirection(fixedImage->GetDirection());
-    resample2->SetDefaultPixelValue(EmptyPixel);
-    resample2->GetOutput();
-
-    // Write the image
+    ///// Write the output image /////
+    printf("Writing output image to file...\n");
+    auto finalImage =
+        ImageTransformResampler(fixedImage, movingImage, compositeTrans);
     writer = ImageWriter::New();
-    writer->SetInput(resample2->GetOutput());
+    writer->SetInput(finalImage);
     writer->SetFileName(outputImageFileName);
     writer->Update();
 
     printf("Finished registration\n\n");
 
     ///// Write the final transformations /////
-    printf("Writing transformation to file\n");
+    printf("Writing transformation to file...\n");
 
     // Write deformable transform
     TransformWriter::Pointer transformWriter = TransformWriter::New();
@@ -171,13 +136,7 @@ int main(int argc, char* argv[])
     transformWriter->SetInput(compositeTrans);
     transformWriter->Update();
 
-    printf("Finished writing transformation to file\n\n");
-    //
-    //    printf("Time and memory usage information:\n");
-    //    chronometer.Stop("LandmarkRegistration");
-    //    memorymeter.Stop("LandmarkRegistration");
-    //    chronometer.Report(std::cout);
-    //    memorymeter.Report(std::cout);
+    printf("Registration complete!\n\n");
 
     return EXIT_SUCCESS;
 }
