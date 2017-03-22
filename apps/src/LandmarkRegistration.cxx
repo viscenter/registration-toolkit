@@ -6,13 +6,14 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkImageRegistrationMethod.h>
-#include <itkLandmarkBasedTransformInitializer.h>
 #include <itkNearestNeighborInterpolateImageFunction.h>
 #include <itkResampleImageFilter.h>
 #include <itkTransformFileWriter.h>
 
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTypes.hpp"
+#include "rt/LandmarkIO.hpp"
+#include "rt/LandmarkRegistration.hpp"
 
 using namespace rt;
 
@@ -95,42 +96,21 @@ int main(int argc, char* argv[])
     movingImage->SetSpacing(1.0);
 
     // Read the landmarks file
-    LandmarkContainer fixedLandmarks, movingLandmarks;
-    Landmark fixedPoint, movingPoint;
-    Image8UC3::IndexType fixedIndex, movingIndex;
-    size_t fixedX, fixedY, movingX, movingY;
-
-    std::ifstream pointsFile(landmarksFileName);
-    while (!pointsFile.fail()) {
-        pointsFile >> fixedX >> fixedY >> movingX >> movingY;
-
-        fixedIndex[0] = fixedX;
-        fixedIndex[1] = fixedY;
-        movingIndex[0] = movingX;
-        movingIndex[1] = movingY;
-
-        // Transform landmarks in case spacing still gets used
-        fixedImage->TransformIndexToPhysicalPoint(fixedIndex, fixedPoint);
-        movingImage->TransformIndexToPhysicalPoint(movingIndex, movingPoint);
-
-        fixedLandmarks.push_back(fixedPoint);
-        movingLandmarks.push_back(movingPoint);
-    }
-    pointsFile.close();
+    LandmarkIO landmarkReader(landmarksFileName);
+    landmarkReader.setFixedImage(fixedImage);
+    landmarkReader.setMovingImage(movingImage);
+    landmarkReader.read();
+    auto fixedLandmarks = landmarkReader.getFixedLandmarks();
+    auto movingLandmarks = landmarkReader.getMovingLandmarks();
 
     ///// Landmark Registration /////
     printf("Beginning landmark warping\n");
 
-    // Generate the affine deformTransform
-    LandmarkTransformInitializer::Pointer ldmTransformInit =
-        LandmarkTransformInitializer::New();
-    ldmTransformInit->SetFixedLandmarks(fixedLandmarks);
-    ldmTransformInit->SetMovingLandmarks(movingLandmarks);
-
-    AffineTransform::Pointer ldmTransform = AffineTransform::New();
-    ldmTransform->SetIdentity();
-    ldmTransformInit->SetTransform(ldmTransform);
-    ldmTransformInit->InitializeTransform();
+    // Generate the landmark transform
+    LandmarkRegistration landmark;
+    landmark.setFixedLandmarks(fixedLandmarks);
+    landmark.setMovingLandmarks(movingLandmarks);
+    auto ldmTransform = landmark.compute();
 
     // Apply it to the image
     ResampleFilter::Pointer resample = ResampleFilter::New();
