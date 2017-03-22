@@ -61,8 +61,6 @@ public:
     /**@{*/
     /** @brief Return the computed transform */
     Transform::Pointer getTransform() { return output_; }
-    /** @brief Interpolate the moving image through the computed transform */
-    Image8UC3::Pointer getTransformedImage();
     /**@}*/
 
 private:

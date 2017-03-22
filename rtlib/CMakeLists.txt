@@ -8,6 +8,7 @@ set(srcs
     src/DeformableRegistration.cpp
     src/LandmarkRegistration.cpp
     src/LandmarkIO.cpp
+    src/ImageTransformResampler.cpp
 )
 
 add_library(${target} ${srcs})
