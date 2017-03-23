@@ -4,7 +4,8 @@
 
 namespace rt
 {
-class LandmarkRegistration {
+class LandmarkRegistration
+{
 public:
     using Transform = itk::AffineTransform<double, 2>;
     using TransformInitializer =

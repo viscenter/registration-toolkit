@@ -1,6 +1,7 @@
 #include "rt/LandmarkIO.hpp"
 
 using namespace rt;
+namespace fs = boost::filesystem;
 
 void LandmarkIO::read()
 {
