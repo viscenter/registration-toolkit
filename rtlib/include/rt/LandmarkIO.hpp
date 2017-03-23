@@ -35,7 +35,7 @@ public:
     }
 
 private:
-    boost::filesystem landmarksPath_;
+    boost::filesystem::path landmarksPath_;
     Image8UC3::Pointer fixedImage_;
     Image8UC3::Pointer movingImage_;
 
