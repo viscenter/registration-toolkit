@@ -5,6 +5,10 @@ set(target "${module}")
 set(srcs
     src/ReorderUnorganizedTexture.cpp
     src/ReadRawTIFF.cpp
+    src/DeformableRegistration.cpp
+    src/LandmarkRegistration.cpp
+    src/LandmarkIO.cpp
+    src/ImageTransformResampler.cpp
 )
 
 add_library(${target} ${srcs})

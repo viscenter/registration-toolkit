@@ -1,27 +1,27 @@
 #pragma once
-#include "LandmarkIO.hpp"
+
+#include "ImageTypes.hpp"
 
 namespace rt
 {
-class LandmarkRegistration {
+class LandmarkRegistration
+{
 public:
-    LandmarkRegistration(
-        const Image::Pointer fixedImage, 
-        const Image::Pointer movingImage,
-        const boost::filesystem::path& landmarksPath)
-        : io_(fixedImage, movingImage, landmarksPath)
-    {
-    }
+    using Transform = itk::AffineTransform<double, 2>;
+    using TransformInitializer =
+        itk::LandmarkBasedTransformInitializer<Transform, Image8UC3, Image8UC3>;
+    using LandmarkContainer = TransformInitializer::LandmarkPointContainer;
+    using Landmark = TransformInitializer::LandmarkPointType;
 
-    AffineTransform::Pointer getTransform();
+    Transform::Pointer compute();
+
+    Transform::Pointer getTransform() { return output_; }
+    void setFixedLandmarks(const LandmarkContainer& l) { fixedLdmks_ = l; }
+    void setMovingLandmarks(const LandmarkContainer& l) { movingLdmks_ = l; }
 
 private:
-    /** Gets the Affine Transform from the given fixed and moving landmarks */ 
-    AffineTransform::Pointer generate_affine_transform_();
-    ResampleFilter::Pointer resample_();
-
-    LandmarkIO io_;
-
-    /** Transform applied to the resampling image */
-}
+    Transform::Pointer output_;
+    LandmarkContainer fixedLdmks_;
+    LandmarkContainer movingLdmks_;
+};
 }

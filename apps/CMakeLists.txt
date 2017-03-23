@@ -2,8 +2,8 @@
 add_executable(ApplyTransform src/ApplyTransform.cxx)
 target_link_libraries(ApplyTransform ${ITK_LIBRARIES})
 
-add_executable(LandmarkRegistration src/LandmarkRegistration.cxx)
-target_link_libraries(LandmarkRegistration
+add_executable(rt_register2d src/Register2D.cpp)
+target_link_libraries(rt_register2d
     rt::rtlib
     ${ITK_LIBRARIES}
 )

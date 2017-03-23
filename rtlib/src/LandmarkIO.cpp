@@ -1,18 +1,28 @@
-#include "LandmarkIO.hpp"
+#include "rt/LandmarkIO.hpp"
 
-void LandmarkIO::read() {
-    clear_(); 
-    read_landmark_files_();
-}
+using namespace rt;
+namespace fs = boost::filesystem;
 
-void LandmarkIO::read_landmarks_file_() {
-    Landmark fixedPoint, movingPoint;
-    Image::IndexType fixedIndex, movingIndex;
+void LandmarkIO::read()
+{
+    // Check that input is set
+    if (!fs::exists(landmarksPath_) || fixedImage_ == nullptr ||
+        movingImage_ == nullptr) {
+        throw std::runtime_error("Invalid input. Unable to read.");
+    }
+
+    // Reset landmark containers
+    fixedLandmarks_.clear();
+    movingLandmarks_.clear();
+
+    // Read the landmarks file
+    LandmarkRegistration::Landmark fixedPoint, movingPoint;
+    Image8UC3::IndexType fixedIndex, movingIndex;
     size_t fixedX, fixedY, movingX, movingY;
 
-    std::ifstream landmarksFile(landmarksPath_.string());
-    while (!landmarksFile.fail()) {
-        landmarksFile >> fixedX >> fixedY >> movingX >> movingY;
+    std::ifstream ifs(landmarksPath_.string());
+    while (ifs.good()) {
+        ifs >> fixedX >> fixedY >> movingX >> movingY;
 
         fixedIndex[0] = fixedX;
         fixedIndex[1] = fixedY;
@@ -26,10 +36,5 @@ void LandmarkIO::read_landmarks_file_() {
         fixedLandmarks_.push_back(fixedPoint);
         movingLandmarks_.push_back(movingPoint);
     }
-    landmarksFile.close();
-}
-
-void LandmarkIO::clear_() {
-    /** TODO: Figure out clearing mechanism for ITK::LandmarkPointContainer */
-    return;
+    ifs.close();
 }
