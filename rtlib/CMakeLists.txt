@@ -22,9 +22,10 @@ target_link_libraries(${target}
     PUBLIC
         Boost::filesystem
         opencv_core
+        ITKCommon
+        ITKTransform
+        ITKOptimizers
         VC::core
-        ${VTK_LIBRARIES}
-        ${ITK_LIBRARIES}
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"

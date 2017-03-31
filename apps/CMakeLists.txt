@@ -34,3 +34,9 @@ add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
 target_link_libraries(rt_raw_tiff_converter
     rt::rtlib
 )
+
+add_executable(rt_register3d src/Register3D.cpp)
+target_link_libraries(rt_register3d
+    rt::rtlib
+    ${ITKIOTransformLibs}
+)
