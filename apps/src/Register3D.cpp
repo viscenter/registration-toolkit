@@ -1,19 +1,21 @@
 #include <fstream>
 #include <iostream>
-#include <boost/filesystem.hpp>
 
+#include <boost/filesystem.hpp>
 #include <itkCompositeTransform.h>
 #include <itkTransformFileWriter.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <vc/core/io/OBJReader.hpp>
+#include <vc/core/types/Exceptions.hpp>
+#include <vc/core/types/UVMap.hpp>
 
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkIO.hpp"
 #include "rt/LandmarkRegistration.hpp"
-
-#include "vc/core/io/OBJReader.hpp"
-#include "vc/core/types/Exceptions.hpp"
-#include "vc/core/types/UVMap.hpp"
+#include "rt/itk/itkOpenCVImageBridge.h"
 
 using namespace rt;
 namespace fs = boost::filesystem;
@@ -49,44 +51,25 @@ int main(int argc, char* argv[])
     printf("%-17s %s\n", "Iterations: ", iterationsIn);
 
     ///// Setup input files /////
-    /*ImageReader::Pointer imgReader;*/
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
     // Read the OBJ file
     volcart::io::OBJReader reader;
-    cv::Mat textureMat;
-
-
-    reader.setPath(fs::path(objFileName));
-    reader.read();
-   /* try {
-        textureMat = reader.getTextureMat();
+    reader.setPath(objFileName);
+    try {
+        reader.read();
+        fixedImage = itk::OpenCVImageBridge::CVMatToITKImage<Image8UC3>(
+            reader.getTextureMat());
     } catch (volcart::IOException& excp) {
         std::cerr << "Exception thrown " << std::endl;
         std::cerr << excp.what() << std::endl;
         return EXIT_FAILURE;
-    }*/
+    }
 
     // Read the two images
-    /*try {
-        // Read the fixed image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(fixedImageFileName);
-        imgReader->Update();
-        fixedImage = imgReader->GetOutput();
-
-        // Read the moving image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(movingImageFileName);
-        imgReader->Update();
-        movingImage = imgReader->GetOutput();
-    } catch (itk::ExceptionObject& excp) {
-        std::cerr << "Exception thrown " << std::endl;
-        std::cerr << excp << std::endl;
-        return EXIT_FAILURE;
-    }*/
-
+    movingImage = itk::OpenCVImageBridge::CVMatToITKImage<Image8UC3>(
+        cv::imread(movingImageFileName));
 
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);
