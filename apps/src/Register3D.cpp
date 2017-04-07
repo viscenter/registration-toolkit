@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 
 #include <boost/filesystem.hpp>
@@ -7,6 +6,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <vc/core/io/OBJReader.hpp>
+#include <vc/core/io/OBJWriter.hpp>
 #include <vc/core/types/Exceptions.hpp>
 #include <vc/core/types/UVMap.hpp>
 
@@ -17,8 +17,8 @@
 #include "rt/LandmarkRegistration.hpp"
 #include "rt/itk/itkOpenCVImageBridge.h"
 
-using namespace rt;
 namespace fs = boost::filesystem;
+namespace vc = volcart;
 
 // Composite Transform
 using CompositeTransform = itk::CompositeTransform<double, 2>;
@@ -31,52 +31,56 @@ int main(int argc, char* argv[])
     if (argc < 7) {
         std::cerr << "Missing Parameters " << std::endl;
         std::cerr << "Usage: " << argv[0];
-        std::cerr << "objFile landmarksFile ";
-        std::cerr << "movingImage ";
-        std::cerr << "transformDestination ";
-        std::cerr << "numberOfIterations " << std::endl;
+        std::cerr << " objPath landmarksPath ";
+        std::cerr << "movingImagePath iterations ";
+        std::cerr << "objOutPath  ";
+        std::cerr << "transformOutPath " << std::endl;
         return EXIT_FAILURE;
     }
 
-    auto landmarksFileName = argv[1];
-    auto objFileName = argv[2];
-    auto movingImageFileName = argv[3];
-    auto transformFileName = argv[4];
-    auto iterationsIn = argv[5];
+    fs::path objPath(argv[1]);
+    fs::path landmarksPath(argv[2]);
+    fs::path movingImagePath(argv[3]);
+    size_t iterations = std::stoull(argv[4]);
+    fs::path outPath(argv[5]);
+    fs::path transformOutPath(argv[6]);
 
     printf("%-17s\n\n", "Registration Parameters");
-    printf("%-17s %s\n", "Obj file: ", objFileName);
-    printf("%-17s %s\n", "Landmarks file: ", landmarksFileName);
-    printf("%-17s %s\n", "Moving image: ", movingImageFileName);
-    printf("%-17s %s\n", "Iterations: ", iterationsIn);
+    printf("%-17s %s\n", "Obj path: ", objPath.c_str());
+    printf("%-17s %s\n", "Landmarks path: ", landmarksPath.c_str());
+    printf("%-17s %s\n", "Moving image path: ", movingImagePath.c_str());
+    printf("%-17s %zu\n", "Iterations: ", iterations);
 
     ///// Setup input files /////
-    Image8UC3::Pointer fixedImage;
-    Image8UC3::Pointer movingImage;
+    rt::Image8UC3::Pointer fixedImage;
+    rt::Image8UC3::Pointer movingImage;
 
-    // Read the OBJ file
-    volcart::io::OBJReader reader;
-    reader.setPath(objFileName);
+    // Read the OBJ file and static image
+    vc::io::OBJReader reader;
+    reader.setPath(objPath);
+    vc::ITKMesh::Pointer origMesh;
+    cv::Mat cvFixedImage;
     try {
-        reader.read();
-        fixedImage = itk::OpenCVImageBridge::CVMatToITKImage<Image8UC3>(
-            reader.getTextureMat());
-    } catch (volcart::IOException& excp) {
-        std::cerr << "Exception thrown " << std::endl;
-        std::cerr << excp.what() << std::endl;
+        origMesh = reader.read();
+        cvFixedImage = reader.getTextureMat();
+        fixedImage = itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(
+            cvFixedImage);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 
-    // Read the two images
-    movingImage = itk::OpenCVImageBridge::CVMatToITKImage<Image8UC3>(
-        cv::imread(movingImageFileName));
+    // Read the moving image
+    auto cvMovingImage = cv::imread(movingImagePath.string());
+    movingImage =
+        itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(cvMovingImage);
 
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);
     movingImage->SetSpacing(1.0);
 
     // Read the landmarks file
-    LandmarkIO landmarkReader(landmarksFileName);
+    rt::LandmarkIO landmarkReader(landmarksPath);
     landmarkReader.setFixedImage(fixedImage);
     landmarkReader.setMovingImage(movingImage);
     landmarkReader.read();
@@ -87,20 +91,21 @@ int main(int argc, char* argv[])
     printf("Running landmark registration...\n");
 
     // Generate the landmark transform
-    LandmarkRegistration landmark;
+    rt::LandmarkRegistration landmark;
     landmark.setFixedLandmarks(fixedLandmarks);
     landmark.setMovingLandmarks(movingLandmarks);
     auto ldmTransform = landmark.compute();
 
     // Apply it to the image
     auto tmpMovingImage =
-        ImageTransformResampler(fixedImage, movingImage, ldmTransform);
+        rt::ImageTransformResampler(fixedImage, movingImage, ldmTransform);
 
     ///// Deformable Registration /////
     printf("Running deformable registration...\n");
     rt::DeformableRegistration deformable;
     deformable.setFixedImage(fixedImage);
     deformable.setMovingImage(tmpMovingImage);
+    deformable.setNumberOfIterations(iterations);
     auto deformTransform = deformable.compute();
 
     ///// Combine transforms /////
@@ -108,19 +113,41 @@ int main(int argc, char* argv[])
     compositeTrans->AddTransform(ldmTransform);
     compositeTrans->AddTransform(deformTransform);
 
-    ///// Write the output image /////
-    printf("Writing output image to file...\n");
-    auto finalImage =
-        ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-
+    ///// Apply the transformation to the UV map /////
     printf("Finished registration\n\n");
+    auto uvMap = reader.getUVMap();
+    for (auto point = origMesh->GetPoints()->Begin();
+         point != origMesh->GetPoints()->End(); ++point) {
+
+        // Get the UV mapping
+        auto origUV = uvMap.get(point->Index());
+        if (origUV == VC_UVMAP_NULL_MAPPING) {
+            continue;
+        }
+
+        // Transform through the final transformation
+        auto in = origUV.mul({cvFixedImage.cols, cvFixedImage.rows});
+        auto out = compositeTrans->TransformPoint(in.val);
+        cv::Vec2d newUV{out[0] / (cvMovingImage.cols - 1),
+                        out[1] / (cvMovingImage.rows - 1)};
+
+        // Reassign to UV map
+        uvMap.set(point->Index(), newUV);
+    }
+
+    ///// Write output mesh /////
+    printf("Writing OBJ file...\n");
+    vc::io::OBJWriter writer;
+    writer.setPath(outPath);
+    writer.setMesh(origMesh);
+    writer.setUVMap(uvMap);
+    writer.setTexture(cvMovingImage);
+    writer.write();
 
     ///// Write the final transformations /////
     printf("Writing transformation to file...\n");
-
-    // Write deformable transform
-    TransformWriter::Pointer transformWriter = TransformWriter::New();
-    transformWriter->SetFileName(transformFileName);
+    auto transformWriter = TransformWriter::New();
+    transformWriter->SetFileName(transformOutPath.string());
     transformWriter->SetInput(compositeTrans);
     transformWriter->Update();
 

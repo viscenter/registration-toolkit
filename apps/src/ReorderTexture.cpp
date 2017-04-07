@@ -14,7 +14,8 @@ namespace fs = boost::filesystem;
 int main(int argc, char* argv[])
 {
     if (argc < 3) {
-        std::cout << "Usage: " << argv[0] << " in.obj out.obj" << std::endl;
+        std::cout << "Usage: " << argv[0] << " in.obj out.obj step-size"
+                  << std::endl;
         return EXIT_FAILURE;
     }
 
