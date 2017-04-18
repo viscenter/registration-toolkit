@@ -20,16 +20,6 @@ target_link_libraries(rt_reorder_texture
     VC::meshing
 )
 
-add_executable(rt_retexture src/retexture.cpp)
-target_link_libraries(rt_retexture
-    Boost::filesystem
-    opencv_core
-    opencv_imgcodecs
-    VC::core
-    VC::meshing
-    VC::texturing
-)
-
 add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
 target_link_libraries(rt_raw_tiff_converter
     rt::rtlib
