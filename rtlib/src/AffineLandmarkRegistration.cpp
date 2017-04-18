@@ -1,8 +1,9 @@
-#include "rt/LandmarkRegistration.hpp"
+#include "rt/AffineLandmarkRegistration.hpp"
 
 using namespace rt;
 
-LandmarkRegistration::Transform::Pointer LandmarkRegistration::compute()
+AffineLandmarkRegistration::Transform::Pointer
+AffineLandmarkRegistration::compute()
 {
     // Setup new transform
     output_ = Transform::New();

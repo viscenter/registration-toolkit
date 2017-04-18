@@ -3,7 +3,7 @@
 #include <boost/filesystem.hpp>
 
 #include "rt/ImageTypes.hpp"
-#include "rt/LandmarkRegistration.hpp"
+#include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt
 {
@@ -24,22 +24,16 @@ public:
 
     void read();
 
-    LandmarkRegistration::LandmarkContainer getFixedLandmarks()
-    {
-        return fixedLandmarks_;
-    }
+    rt::LandmarkContainer getFixedLandmarks() { return fixedLandmarks_; }
 
-    LandmarkRegistration::LandmarkContainer getMovingLandmarks()
-    {
-        return movingLandmarks_;
-    }
+    rt::LandmarkContainer getMovingLandmarks() { return movingLandmarks_; }
 
 private:
     boost::filesystem::path landmarksPath_;
     Image8UC3::Pointer fixedImage_;
     Image8UC3::Pointer movingImage_;
 
-    LandmarkRegistration::LandmarkContainer fixedLandmarks_;
-    LandmarkRegistration::LandmarkContainer movingLandmarks_;
+    rt::LandmarkContainer fixedLandmarks_;
+    rt::LandmarkContainer movingLandmarks_;
 };
 }

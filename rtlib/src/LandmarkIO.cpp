@@ -16,7 +16,7 @@ void LandmarkIO::read()
     movingLandmarks_.clear();
 
     // Read the landmarks file
-    LandmarkRegistration::Landmark fixedPoint, movingPoint;
+    rt::Landmark fixedPoint, movingPoint;
     Image8UC3::IndexType fixedIndex, movingIndex;
     size_t fixedX, fixedY, movingX, movingY;
 

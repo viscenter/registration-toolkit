@@ -6,11 +6,11 @@
 #include <itkImageFileWriter.h>
 #include <itkTransformFileWriter.h>
 
+#include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkIO.hpp"
-#include "rt/LandmarkRegistration.hpp"
 
 using namespace rt;
 
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     auto movingImageFileName = argv[3];
     auto outputImageFileName = argv[4];
     auto transformFileName = argv[5];
-    auto iterationsIn = argv[6];
+    size_t iterationsIn = std::stoull(argv[6]);
 
     printf("%-17s\n\n", "Registration Parameters");
     printf("%-17s %s\n", "Landmarks file: ", landmarksFileName);
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     printf("%-17s %s\n", "Moving image: ", movingImageFileName);
     printf("%-17s %s\n", "Output image: ", outputImageFileName);
     printf("%-17s %s\n", "Transform file:", transformFileName);
-    printf("%-17s %s\n", "Iterations: ", iterationsIn);
+    printf("%-17s %zu\n", "Iterations: ", iterationsIn);
 
     ///// Setup input files /////
     ImageReader::Pointer imgReader;
@@ -89,7 +89,8 @@ int main(int argc, char* argv[])
     printf("Running landmark registration...\n");
 
     // Generate the landmark transform
-    LandmarkRegistration landmark;
+    BSplineLandmarkWarping landmark;
+    landmark.setFixedImage(fixedImage);
     landmark.setFixedLandmarks(fixedLandmarks);
     landmark.setMovingLandmarks(movingLandmarks);
     auto ldmTransform = landmark.compute();
@@ -109,6 +110,7 @@ int main(int argc, char* argv[])
     rt::DeformableRegistration deformable;
     deformable.setFixedImage(fixedImage);
     deformable.setMovingImage(tmpMovingImage);
+    deformable.setNumberOfIterations(iterationsIn);
     auto deformTransform = deformable.compute();
 
     ///// Combine transforms /////
