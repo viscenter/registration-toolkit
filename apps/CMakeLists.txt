@@ -32,3 +32,12 @@ target_link_libraries(rt_register3d
     opencv_imgcodecs
     ${ITKIOTransformLibs}
 )
+
+add_executable(rt_brisk_match src/BriskMatch.cpp)
+target_link_libraries(rt_brisk_match
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    opencv_features2d
+    opencv_highgui
+)
