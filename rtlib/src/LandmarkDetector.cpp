@@ -24,9 +24,9 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     std::vector<cv::KeyPoint> fixedKeyPts, movingKeyPts;
     cv::Mat fixedDesc, movingDesc;
     brisk->detectAndCompute(
-        fixedImg_, cv::Mat(), fixedKeyPts, fixedDesc, false);
+        fixedImg_, fixedMask_, fixedKeyPts, fixedDesc, false);
     brisk->detectAndCompute(
-        movingImg_, cv::Mat(), movingKeyPts, movingDesc, false);
+        movingImg_, movingMask_, movingKeyPts, movingDesc, false);
 
     // Compute matches from descriptors
     auto matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");

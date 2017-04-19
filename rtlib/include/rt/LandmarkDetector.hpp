@@ -17,7 +17,8 @@ using LandmarkPair = std::pair<cv::Point2f, cv::Point2f>;
  * @author Ali Bertelsman
  *
  * Uses BRISK feature descriptors to generate pairs of matching key points
- * between two images.
+ * between two images. To create key points bounded by a region of interest,
+ * set the mask for either the static or moving image.
  *
  * @ingroup rtlib
  */
@@ -26,28 +27,40 @@ class LandmarkDetector
 public:
     /** @brief Set the fixed image */
     void setFixedImage(const cv::Mat& img) { fixedImg_ = img; }
+    /** @brief Set the fixed image mask */
+    void setFixedMask(const cv::Mat& img) { fixedMask_ = img; }
     /** @brief Set the moving image */
     void setMovingImage(const cv::Mat& img) { movingImg_ = img; }
+    /** @brief Set the fixed image mask */
+    void setMovingMask(const cv::Mat& img) { movingMask_ = img; }
 
-    /** @brief Compute keypoint matches between the fixed and moving images
+    /** @brief Compute key point matches between the fixed and moving images
      *
-     * Returns up to the number of matches specified by numMatches. If
-     * numMatches = -1 (default), then all matches are returned.
+     * Returns a list of matches, sorted by strength of match. The size of the
+     * returned vector is guaranteed to be less than or equal to the number
+     * specified by numMatches. If numMatches = -1 (default), then all matches
+     * are returned.
      */
     std::vector<LandmarkPair> compute(int numMatches = -1);
 
     /** @brief Get the computed matches
      *
-     * Returns up to the number of matches specified by numMatches. If
-     * numMatches = -1, then all matches are returned.
+     * Returns a list of matches, sorted by strength of match. The size of the
+     * returned vector is guaranteed to be less than or equal to the number
+     * specified by numMatches. If numMatches = -1, then all matches are
+     * returned.
      */
     std::vector<LandmarkPair> getLandmarkPairs(int numMatches);
 
 private:
     /** Fixed image */
     cv::Mat fixedImg_;
+    /** Fixed image mask */
+    cv::Mat fixedMask_;
     /** Moving image */
     cv::Mat movingImg_;
+    /** Moving image mask */
+    cv::Mat movingMask_;
     /** Matched pairs */
     std::vector<LandmarkPair> output_;
 };
