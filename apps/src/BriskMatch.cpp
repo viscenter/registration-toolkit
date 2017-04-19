@@ -28,8 +28,8 @@ int main(int argc, const char* argv[])
     fs::path outputPath = argv[3];
 
     // Load images
-    auto fixedImg = cv::imread(fixedPath.string(), cv::IMREAD_GRAYSCALE);
-    auto movingImg = cv::imread(movingPath.string(), cv::IMREAD_GRAYSCALE);
+    auto fixedImg = cv::imread(fixedPath.string());
+    auto movingImg = cv::imread(movingPath.string());
 
     // Check that images opened correctly
     if (fixedImg.empty() || movingImg.empty()) {
