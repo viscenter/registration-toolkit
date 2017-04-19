@@ -38,7 +38,7 @@ int main(int argc, const char* argv[])
     }
 
     // Run matcher
-    std::cout << "Matching: " << argv[1] << ", " << argv[2] << std::endl;
+    std::cout << "Matching: " << movingPath << " >> " << fixedPath << std::endl;
     rt::LandmarkDetector detector;
     detector.setFixedImage(fixedImg);
     detector.setMovingImage(movingImg);

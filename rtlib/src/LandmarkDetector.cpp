@@ -29,7 +29,7 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
         movingImg_, cv::Mat(), movingKeyPts, movingDesc, false);
 
     // Compute matches from descriptors
-    auto matcher = cv::DescriptorMatcher::create("BruteForce");
+    auto matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
     std::vector<cv::DMatch> matches;
     matcher->match(fixedDesc, movingDesc, matches, cv::Mat());
 
@@ -39,9 +39,9 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     });
 
     // Transfer to the output vector
-    for (int i = 0; i < static_cast<int>(matches.size()); i++) {
-        auto fixIdx = matches[i].queryIdx;
-        auto movIdx = matches[i].trainIdx;
+    for (auto& m : matches) {
+        auto fixIdx = m.queryIdx;
+        auto movIdx = m.trainIdx;
         output_.push_back({fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt});
     }
 
