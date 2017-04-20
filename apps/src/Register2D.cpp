@@ -5,12 +5,18 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkTransformFileWriter.h>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/core.hpp>
 
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkIO.hpp"
 #include "rt/LandmarkRegistration.hpp"
+#include "rt/LandmarkDetector.hpp"
+#include "rt/itk/itkOpenCVImageBridge.h"
+
+static constexpr int NUM_BEST_MATCHES = 30;
 
 using namespace rt;
 
@@ -53,20 +59,19 @@ int main(int argc, char* argv[])
     ImageReader::Pointer imgReader;
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
+    cv::Mat cvFixedImage, cvMovingImage;
 
     // Read the two images
     try {
         // Read the fixed image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(fixedImageFileName);
-        imgReader->Update();
-        fixedImage = imgReader->GetOutput();
+        cvFixedImage = cv::imread(fixedImageFileName);
+        fixedImage =
+                itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(cvFixedImage);
 
         // Read the moving image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(movingImageFileName);
-        imgReader->Update();
-        movingImage = imgReader->GetOutput();
+        cvMovingImage = cv::imread(movingImageFileName);
+        movingImage =
+                itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(cvMovingImage);
     } catch (itk::ExceptionObject& excp) {
         std::cerr << "Exception thrown " << std::endl;
         std::cerr << excp << std::endl;
@@ -78,6 +83,20 @@ int main(int argc, char* argv[])
     movingImage->SetSpacing(1.0);
 
     // Read the landmarks file
+    LandmarkDetector detector;
+    detector.setFixedImage(cvFixedImage);
+    detector.setMovingImage(cvMovingImage);
+
+    auto matchedpairs = detector.compute(NUM_BEST_MATCHES);
+
+    rt::LandmarkRegistration::LandmarkContainer fixedPts, movingPts;
+    // Write the data
+    for (auto& p : matchedpairs) {
+        // Fixed
+        fixedPts.push_back((itk::Point<double, 2> &&) p.first);
+        movingPts.push_back((itk::Point<double, 2> &&) p.second);
+    }
+
     LandmarkIO landmarkReader(landmarksFileName);
     landmarkReader.setFixedImage(fixedImage);
     landmarkReader.setMovingImage(movingImage);
