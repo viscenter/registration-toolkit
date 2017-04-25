@@ -5,15 +5,15 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkTransformFileWriter.h>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
+#include "rt/LandmarkDetector.hpp"
 #include "rt/LandmarkIO.hpp"
 #include "rt/LandmarkRegistration.hpp"
-#include "rt/LandmarkDetector.hpp"
 #include "rt/itk/itkOpenCVImageBridge.h"
 
 static constexpr int NUM_BEST_MATCHES = 30;
@@ -65,13 +65,13 @@ int main(int argc, char* argv[])
     try {
         // Read the fixed image
         cvFixedImage = cv::imread(fixedImageFileName);
-        fixedImage =
-                itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(cvFixedImage);
+        fixedImage = itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(
+            cvFixedImage);
 
         // Read the moving image
         cvMovingImage = cv::imread(movingImageFileName);
-        movingImage =
-                itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(cvMovingImage);
+        movingImage = itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(
+            cvMovingImage);
     } catch (itk::ExceptionObject& excp) {
         std::cerr << "Exception thrown " << std::endl;
         std::cerr << excp << std::endl;
