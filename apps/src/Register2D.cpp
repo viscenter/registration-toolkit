@@ -89,12 +89,18 @@ int main(int argc, char* argv[])
 
     auto matchedpairs = detector.compute(NUM_BEST_MATCHES);
 
-    rt::LandmarkRegistration::LandmarkContainer fixedPts, movingPts;
+    LandmarkRegistration::LandmarkContainer fixedPts, movingPts;
     // Write the data
     for (auto& p : matchedpairs) {
         // Fixed
-        fixedPts.push_back((itk::Point<double, 2> &&) p.first);
-        movingPts.push_back((itk::Point<double, 2> &&) p.second);
+        LandmarkRegistration::Landmark fixed, moving;
+        fixed[0] = p.first.x;
+        fixed[1] = p.first.y;
+        moving[0] = p.second.x;
+        moving[1] = p.second.y;
+        fixedPts.push_back(fixed);
+        //Moving
+        movingPts.push_back(moving);
     }
 
     LandmarkIO landmarkReader(landmarksFileName);
