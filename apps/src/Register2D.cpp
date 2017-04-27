@@ -2,15 +2,19 @@
 #include <iostream>
 
 #include <itkCompositeTransform.h>
-#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
 #include <itkTransformFileWriter.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
+#include "rt/LandmarkDetector.hpp"
 #include "rt/LandmarkIO.hpp"
 #include "rt/LandmarkRegistration.hpp"
+#include "rt/itk/itkOpenCVImageBridge.h"
+
+static constexpr int NUM_BEST_MATCHES = 30;
 
 using namespace rt;
 
@@ -18,8 +22,6 @@ using namespace rt;
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
-using ImageReader = itk::ImageFileReader<Image8UC3>;
-using ImageWriter = itk::ImageFileWriter<Image8UC3>;
 using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
@@ -50,23 +52,21 @@ int main(int argc, char* argv[])
     printf("%-17s %s\n", "Iterations: ", iterationsIn);
 
     ///// Setup input files /////
-    ImageReader::Pointer imgReader;
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
+    cv::Mat cvFixedImage, cvMovingImage;
 
     // Read the two images
     try {
         // Read the fixed image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(fixedImageFileName);
-        imgReader->Update();
-        fixedImage = imgReader->GetOutput();
+        cvFixedImage = cv::imread(fixedImageFileName);
+        fixedImage = itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(
+            cvFixedImage);
 
         // Read the moving image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(movingImageFileName);
-        imgReader->Update();
-        movingImage = imgReader->GetOutput();
+        cvMovingImage = cv::imread(movingImageFileName);
+        movingImage = itk::OpenCVImageBridge::CVMatToITKImage<rt::Image8UC3>(
+            cvMovingImage);
     } catch (itk::ExceptionObject& excp) {
         std::cerr << "Exception thrown " << std::endl;
         std::cerr << excp << std::endl;
@@ -78,31 +78,39 @@ int main(int argc, char* argv[])
     movingImage->SetSpacing(1.0);
 
     // Read the landmarks file
-    LandmarkIO landmarkReader(landmarksFileName);
-    landmarkReader.setFixedImage(fixedImage);
-    landmarkReader.setMovingImage(movingImage);
-    landmarkReader.read();
-    auto fixedLandmarks = landmarkReader.getFixedLandmarks();
-    auto movingLandmarks = landmarkReader.getMovingLandmarks();
+    LandmarkDetector detector;
+    detector.setFixedImage(cvFixedImage);
+    detector.setMovingImage(cvMovingImage);
+
+    auto matchedpairs = detector.compute(NUM_BEST_MATCHES);
+
+    LandmarkRegistration::LandmarkContainer fixedPts, movingPts;
+    // Write the data
+    for (auto& p : matchedpairs) {
+        // Fixed
+        LandmarkRegistration::Landmark fixed, moving;
+        fixed[0] = p.first.x;
+        fixed[1] = p.first.y;
+        moving[0] = p.second.x;
+        moving[1] = p.second.y;
+        fixedPts.push_back(fixed);
+        //Moving
+        movingPts.push_back(moving);
+    }
+
 
     ///// Landmark Registration /////
     printf("Running landmark registration...\n");
 
     // Generate the landmark transform
     LandmarkRegistration landmark;
-    landmark.setFixedLandmarks(fixedLandmarks);
-    landmark.setMovingLandmarks(movingLandmarks);
+    landmark.setFixedLandmarks(fixedPts);
+    landmark.setMovingLandmarks(movingPts);
     auto ldmTransform = landmark.compute();
 
     // Apply it to the image
     auto tmpMovingImage =
         ImageTransformResampler(fixedImage, movingImage, ldmTransform);
-
-    // Write the image
-    ImageWriter::Pointer writer = ImageWriter::New();
-    writer->SetInput(tmpMovingImage);
-    writer->SetFileName(outputImageFileName);
-    writer->Update();
 
     ///// Deformable Registration /////
     printf("Running deformable registration...\n");
@@ -120,10 +128,8 @@ int main(int argc, char* argv[])
     printf("Writing output image to file...\n");
     auto finalImage =
         ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-    writer = ImageWriter::New();
-    writer->SetInput(finalImage);
-    writer->SetFileName(outputImageFileName);
-    writer->Update();
+    auto cvFinalImage = itk::OpenCVImageBridge::ITKImageToCVMat<rt::Image8UC3>(finalImage);
+    cv::imwrite(outputImageFileName, cvFinalImage);
 
     printf("Finished registration\n\n");
 
