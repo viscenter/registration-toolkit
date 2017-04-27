@@ -2,8 +2,6 @@
 #include <iostream>
 
 #include <itkCompositeTransform.h>
-#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
 #include <itkTransformFileWriter.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -24,8 +22,6 @@ using namespace rt;
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
-using ImageReader = itk::ImageFileReader<Image8UC3>;
-using ImageWriter = itk::ImageFileWriter<Image8UC3>;
 using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
@@ -56,7 +52,6 @@ int main(int argc, char* argv[])
     printf("%-17s %s\n", "Iterations: ", iterationsIn);
 
     ///// Setup input files /////
-    ImageReader::Pointer imgReader;
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
     cv::Mat cvFixedImage, cvMovingImage;
@@ -103,31 +98,19 @@ int main(int argc, char* argv[])
         movingPts.push_back(moving);
     }
 
-    LandmarkIO landmarkReader(landmarksFileName);
-    landmarkReader.setFixedImage(fixedImage);
-    landmarkReader.setMovingImage(movingImage);
-    landmarkReader.read();
-    auto fixedLandmarks = landmarkReader.getFixedLandmarks();
-    auto movingLandmarks = landmarkReader.getMovingLandmarks();
 
     ///// Landmark Registration /////
     printf("Running landmark registration...\n");
 
     // Generate the landmark transform
     LandmarkRegistration landmark;
-    landmark.setFixedLandmarks(fixedLandmarks);
-    landmark.setMovingLandmarks(movingLandmarks);
+    landmark.setFixedLandmarks(fixedPts);
+    landmark.setMovingLandmarks(movingPts);
     auto ldmTransform = landmark.compute();
 
     // Apply it to the image
     auto tmpMovingImage =
         ImageTransformResampler(fixedImage, movingImage, ldmTransform);
-
-    // Write the image
-    ImageWriter::Pointer writer = ImageWriter::New();
-    writer->SetInput(tmpMovingImage);
-    writer->SetFileName(outputImageFileName);
-    writer->Update();
 
     ///// Deformable Registration /////
     printf("Running deformable registration...\n");
@@ -145,10 +128,8 @@ int main(int argc, char* argv[])
     printf("Writing output image to file...\n");
     auto finalImage =
         ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-    writer = ImageWriter::New();
-    writer->SetInput(finalImage);
-    writer->SetFileName(outputImageFileName);
-    writer->Update();
+    auto cvFinalImage = itk::OpenCVImageBridge::ITKImageToCVMat<rt::Image8UC3>(finalImage);
+    cv::imwrite(outputImageFileName, cvFinalImage);
 
     printf("Finished registration\n\n");
 
