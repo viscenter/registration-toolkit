@@ -7,9 +7,10 @@ set(srcs
     src/ReadRawTIFF.cpp
     src/LandmarkDetector.cpp
     src/DeformableRegistration.cpp
-    src/LandmarkRegistration.cpp
-    src/LandmarkIO.cpp
+    src/AffineLandmarkRegistration.cpp
+    src/LandmarkReader.cpp
     src/ImageTransformResampler.cpp
+    src/BSplineLandmarkWarping.cpp
 )
 
 add_library(${target} ${srcs})

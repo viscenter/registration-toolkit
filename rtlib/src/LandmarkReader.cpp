@@ -1,9 +1,9 @@
-#include "rt/LandmarkIO.hpp"
+#include "rt/LandmarkReader.hpp"
 
 using namespace rt;
 namespace fs = boost::filesystem;
 
-void LandmarkIO::read()
+void LandmarkReader::read()
 {
     // Check that input is set
     if (!fs::exists(landmarksPath_) || fixedImage_ == nullptr ||
@@ -16,7 +16,7 @@ void LandmarkIO::read()
     movingLandmarks_.clear();
 
     // Read the landmarks file
-    LandmarkRegistration::Landmark fixedPoint, movingPoint;
+    rt::Landmark fixedPoint, movingPoint;
     Image8UC3::IndexType fixedIndex, movingIndex;
     size_t fixedX, fixedY, movingX, movingY;
 

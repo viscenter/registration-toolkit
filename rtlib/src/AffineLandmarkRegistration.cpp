@@ -1,9 +1,13 @@
-#include "rt/LandmarkRegistration.hpp"
+#include "rt/AffineLandmarkRegistration.hpp"
 
 using namespace rt;
 
-LandmarkRegistration::Transform::Pointer LandmarkRegistration::compute()
+AffineLandmarkRegistration::Transform::Pointer
+AffineLandmarkRegistration::compute()
 {
+    using TransformInitializer =
+        itk::LandmarkBasedTransformInitializer<Transform, Image8UC3, Image8UC3>;
+
     // Setup new transform
     output_ = Transform::New();
 
@@ -15,5 +19,11 @@ LandmarkRegistration::Transform::Pointer LandmarkRegistration::compute()
     landmarkTransformInit->SetTransform(output_);
     landmarkTransformInit->InitializeTransform();
 
+    return output_;
+}
+
+AffineLandmarkRegistration::Transform::Pointer
+AffineLandmarkRegistration::getTransform()
+{
     return output_;
 }

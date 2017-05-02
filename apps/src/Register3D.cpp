@@ -10,11 +10,11 @@
 #include <vc/core/types/Exceptions.hpp>
 #include <vc/core/types/UVMap.hpp>
 
+#include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
-#include "rt/LandmarkIO.hpp"
-#include "rt/LandmarkRegistration.hpp"
+#include "rt/LandmarkReader.hpp"
 #include "rt/itk/itkOpenCVImageBridge.h"
 
 namespace fs = boost::filesystem;
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     movingImage->SetSpacing(1.0);
 
     // Read the landmarks file
-    rt::LandmarkIO landmarkReader(landmarksPath);
+    rt::LandmarkReader landmarkReader(landmarksPath);
     landmarkReader.setFixedImage(fixedImage);
     landmarkReader.setMovingImage(movingImage);
     landmarkReader.read();
@@ -91,7 +91,8 @@ int main(int argc, char* argv[])
     printf("Running landmark registration...\n");
 
     // Generate the landmark transform
-    rt::LandmarkRegistration landmark;
+    rt::BSplineLandmarkWarping landmark;
+    landmark.setFixedImage(fixedImage);
     landmark.setFixedLandmarks(fixedLandmarks);
     landmark.setMovingLandmarks(movingLandmarks);
     auto ldmTransform = landmark.compute();
