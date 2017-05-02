@@ -27,6 +27,8 @@ BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
     std::copy(movingLdmks_.begin(), movingLdmks_.end(), m->begin());
 
     // Assign landmarks
+    // I'm not sure why the fixed landmarks are set to the source. It seems
+    // like it should be the other way around. - SP
     landmarkTransformer->SetSourceLandmarks(f);
     landmarkTransformer->SetTargetLandmarks(m);
 
@@ -36,5 +38,11 @@ BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
     // Get output
     output_ = landmarkTransformer->GetKernelTransform();
 
+    return output_;
+}
+
+BSplineLandmarkWarping::Transform::Pointer
+BSplineLandmarkWarping::getTransform()
+{
     return output_;
 }

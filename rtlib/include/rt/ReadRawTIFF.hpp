@@ -17,6 +17,8 @@ namespace io
  * (width, height, bit-depth, etc.) is accurate and attempts to read the first
  * TIFF strip as uncompressed binary data.
  *
+ * @ingroup rtlib
+ *
  * @param path Path to TIFF file
  * @param offset Shift the encoded strip offset by a number of bytes
  */

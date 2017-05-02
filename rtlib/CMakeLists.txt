@@ -8,7 +8,7 @@ set(srcs
     src/LandmarkDetector.cpp
     src/DeformableRegistration.cpp
     src/AffineLandmarkRegistration.cpp
-    src/LandmarkIO.cpp
+    src/LandmarkReader.cpp
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
 )

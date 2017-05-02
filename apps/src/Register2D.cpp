@@ -10,7 +10,7 @@
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
-#include "rt/LandmarkIO.hpp"
+#include "rt/LandmarkReader.hpp"
 
 using namespace rt;
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
     movingImage->SetSpacing(1.0);
 
     // Read the landmarks file
-    LandmarkIO landmarkReader(landmarksFileName);
+    LandmarkReader landmarkReader(landmarksFileName);
     landmarkReader.setFixedImage(fixedImage);
     landmarkReader.setMovingImage(movingImage);
     landmarkReader.read();

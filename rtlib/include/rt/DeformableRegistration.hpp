@@ -7,17 +7,18 @@
 namespace rt
 {
 
-/** @class DeformableRegistration
+/**
+ * @class DeformableRegistration
  * @brief BSpline-based deformable registration
  *
  * Computes a BSpline transform that aligns the fine details of two input
  * images. Assumes the input images have already been roughly aligned using
- * LandmarkRegistration.
+ * some sort of landmark registration algorithm.
  *
  * This class is a simplified wrapper around ITK's ImageRegistrationMethod. If
  * you want fine-grained control, you should probably use that instead.
  *
- * @ingroup rtlib
+ * @ingroup deformable
  */
 class DeformableRegistration
 {
