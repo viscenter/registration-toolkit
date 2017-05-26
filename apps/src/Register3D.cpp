@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 
         // Get the UV mapping
         auto origUV = uvMap.get(point->Index());
-        if (origUV == VC_UVMAP_NULL_MAPPING) {
+        if (origUV == vc::NULL_MAPPING) {
             continue;
         }
 

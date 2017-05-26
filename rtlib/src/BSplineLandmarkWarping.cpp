@@ -23,8 +23,14 @@ BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
     using BSplineLandmarkContainer = TransformInitializer::LandmarkContainer;
     BSplineLandmarkContainer::Pointer f = BSplineLandmarkContainer::New();
     BSplineLandmarkContainer::Pointer m = BSplineLandmarkContainer::New();
-    std::copy(fixedLdmks_.begin(), fixedLdmks_.end(), f->begin());
-    std::copy(movingLdmks_.begin(), movingLdmks_.end(), m->begin());
+    uint32_t id = 0;
+    for (auto& l : fixedLdmks_) {
+        f->InsertElement(id++, l);
+    }
+    id = 0;
+    for (auto& l : movingLdmks_) {
+        m->InsertElement(id++, l);
+    }
 
     // Assign landmarks
     // I'm not sure why the fixed landmarks are set to the source. It seems
