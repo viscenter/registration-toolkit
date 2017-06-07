@@ -17,8 +17,8 @@ void LandmarkReader::read()
 
     // Read the landmarks file
     rt::Landmark fixedPoint, movingPoint;
-    Image8UC3::IndexType fixedIndex, movingIndex;
-    size_t fixedX, fixedY, movingX, movingY;
+    itk::ContinuousIndex<double, 2> fixedIndex, movingIndex;
+    double fixedX, fixedY, movingX, movingY;
 
     std::ifstream ifs(landmarksPath_.string());
     while (ifs.good()) {
@@ -30,8 +30,10 @@ void LandmarkReader::read()
         movingIndex[1] = movingY;
 
         // Transform landmarks in case spacing still gets used
-        fixedImage_->TransformIndexToPhysicalPoint(fixedIndex, fixedPoint);
-        movingImage_->TransformIndexToPhysicalPoint(movingIndex, movingPoint);
+        fixedImage_->TransformContinuousIndexToPhysicalPoint(
+            fixedIndex, fixedPoint);
+        movingImage_->TransformContinuousIndexToPhysicalPoint(
+            movingIndex, movingPoint);
 
         fixedLandmarks_.push_back(fixedPoint);
         movingLandmarks_.push_back(movingPoint);

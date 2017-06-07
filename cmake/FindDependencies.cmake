@@ -37,7 +37,7 @@ set_target_properties(eigen3 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
 )
 
-find_package(VC REQUIRED)
+find_package(VC 2.13 REQUIRED)
 
 ############
 # Optional #
