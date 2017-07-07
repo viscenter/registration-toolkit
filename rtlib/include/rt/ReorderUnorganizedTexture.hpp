@@ -85,8 +85,6 @@ public:
     /**@}*/
 
 private:
-    /** @brief Align the mesh with the XY plane */
-    void align_mesh_();
     /** @brief Resample the input image into the organized texture */
     void create_texture_();
     /** @brief Generate a new UV map relating the input mesh to the organized
@@ -118,12 +116,14 @@ private:
 
     /** XY plane sample rate (in mesh units) */
     double sampleRate_;
-    /** Copy of input mesh, aligned to the XY plane */
-    vtkSmartPointer<vtkPolyData> alignedMesh_;
-    /** Maximum X value of alignedMesh_ after alignment. Used in create_uv_() */
-    double alignedMeshMaxX_;
-    /** Maximum Y value of alignedMesh_ after alignment. Used in create_uv_() */
-    double alignedMeshMaxY_;
+
+    /**
+     *
+     */
+    cv::Vec3d origin_;
+    cv::Vec3d xAxis_;
+    cv::Vec3d yAxis_;
+    cv::Vec3d zAxis_;
 
     /** Output UV map */
     volcart::UVMap outputUV_;

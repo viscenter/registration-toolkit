@@ -4,119 +4,67 @@
 #include <vtkOBBTree.h>
 #include <vtkTransformPolyDataFilter.h>
 
+#include <vtkPLYWriter.h>
+
 using namespace rt;
 
 // Compute the result
 cv::Mat ReorderUnorganizedTexture::compute()
 {
-    align_mesh_();
     create_texture_();
     create_uv_();
 
     return outputTexture_;
 }
 
-// Uses landmark registration to align the input mesh to be parallel to the XY
-// plane and near the origin
-void ReorderUnorganizedTexture::align_mesh_()
-{
-    std::cerr << "Aligning mesh..." << std::endl;
-    //// Computes the OBB and returns the 3 axis relative to the box
-    double corner[3], min[3], mid[3], max[3], size[3];
-    auto obbTree = vtkSmartPointer<vtkOBBTree>::New();
-    obbTree->ComputeOBB(inputMesh_, corner, max, mid, min, size);
-
-    //// Create the moving landmarks
-    cv::Vec3d movCorner(corner);
-    cv::Vec3d movX(max), movY(mid), movZ(min);
-
-    // Normalize the axes points and make relative to corner
-    movX *= 1 / cv::norm(movX);
-    movY *= 1 / cv::norm(movY);
-    movZ *= 1 / cv::norm(movZ);
-
-    movX += movCorner;
-    movY += movCorner;
-    movZ += movCorner;
-
-    auto movingPts = vtkSmartPointer<vtkPoints>::New();
-    movingPts->InsertNextPoint(movCorner.val);
-    movingPts->InsertNextPoint(movX.val);
-    movingPts->InsertNextPoint(movY.val);
-    movingPts->InsertNextPoint(movZ.val);
-
-    //// Create the static landmarks
-    double stcCorner[3] = {0.0, 0.0, 0.0};
-    double stcX[3] = {1.0, 0.0, 0.0};
-    double stcY[3] = {0.0, 1.0, 0.0};
-    double stcZ[3] = {0.0, 0.0, 1.0};
-
-    auto fixedPts = vtkSmartPointer<vtkPoints>::New();
-    fixedPts->InsertNextPoint(stcCorner);
-    fixedPts->InsertNextPoint(stcX);
-    fixedPts->InsertNextPoint(stcY);
-    fixedPts->InsertNextPoint(stcZ);
-
-    //// Create the affine, landmark-based transform
-    auto transform = vtkSmartPointer<vtkLandmarkTransform>::New();
-    transform->SetSourceLandmarks(movingPts);
-    transform->SetTargetLandmarks(fixedPts);
-    transform->Update();
-
-    //// Apply the transform to the mesh
-    auto filter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    filter->SetInputData(inputMesh_);
-    filter->SetTransform(transform);
-    filter->Update();
-    alignedMesh_ = filter->GetOutput();
-}
-
 void ReorderUnorganizedTexture::create_texture_()
 {
+    std::cerr << "Reordering texture..." << std::endl;
+
     // Computes the OBB and returns the 3 axes relative to the box
-    double corner[3], min[3], mid[3], max[3], size[3];
+    double size[3];
     auto obbTree = vtkSmartPointer<vtkOBBTree>::New();
-    obbTree->ComputeOBB(alignedMesh_, corner, max, mid, min, size);
-    obbTree->SetDataSet(alignedMesh_);
+    obbTree->ComputeOBB(
+        inputMesh_, origin_.val, xAxis_.val, yAxis_.val, zAxis_.val, size);
+    obbTree->SetDataSet(inputMesh_);
     obbTree->BuildLocator();
 
     // Setup the output image
     // After alignment, dimensions go from [0, dimension max], therefore
     // dimension max / sample rate == # of pixels in dimension
-    alignedMeshMaxX_ = max[0];
-    alignedMeshMaxY_ = mid[1];
-    int cols = static_cast<int>(std::ceil(alignedMeshMaxX_ / sampleRate_));
-    int rows = static_cast<int>(std::ceil(alignedMeshMaxY_ / sampleRate_));
+    int cols = static_cast<int>(std::ceil(cv::norm(xAxis_) / sampleRate_));
+    int rows = static_cast<int>(std::ceil(cv::norm(yAxis_) / sampleRate_));
     outputTexture_ = cv::Mat::zeros(rows, cols, CV_8UC3);
+
+    // Normalize the length
+    auto normedX = xAxis_ / cv::norm(xAxis_);
+    auto normedY = yAxis_ / cv::norm(yAxis_);
 
     // Loop over every pixel of the image
     auto interPts = vtkSmartPointer<vtkPoints>::New();
     auto interCells = vtkSmartPointer<vtkIdList>::New();
-    for (auto j = 0; j < rows; j++) {
-        for (auto i = 0; i < cols; i++) {
-            double progress_ = (i + 1.0 + (cols * j)) * 100.0 / (cols * rows);
-            std::cerr << "Reordering texture: " << std::to_string(progress_)
-                      << "%\r" << std::flush;
-
+    for (auto v = 0; v < rows; v++) {
+        for (auto u = 0; u < cols; u++) {
             // Clear the intersection point and cell ID lists
             interPts->Reset();
             interCells->Reset();
 
-            // Convert pixel position to position in mesh's XY space
-            auto n_i = i * sampleRate_;
-            auto n_j = j * sampleRate_;
+            // Convert pixel position to offset in mesh's XY space
+            auto uOffset = u * sampleRate_ * normedX;
+            auto vOffset = v * sampleRate_ * normedY;
 
-            // Position at ground plane and above mesh
-            double a0[3] = {n_i, n_j, 0};
-            double a1[3] = {n_i, n_j, std::ceil(corner[2])};
+            // Get t
+            auto a0 = origin_ + uOffset + vOffset;
+            auto a1 = a0 + zAxis_ * 2;
 
             // Calculate mesh intersection
-            auto res = obbTree->IntersectWithLine(a0, a1, interPts, interCells);
+            auto res = obbTree->IntersectWithLine(
+                a0.val, a1.val, interPts, interCells);
             if (res != 0) {
                 // Get the three vertices of the last intersected cell
                 auto cell = interCells->GetId(interCells->GetNumberOfIds() - 1);
                 auto pointIds = vtkSmartPointer<vtkIdList>::New();
-                alignedMesh_->GetCellPoints(cell, pointIds);
+                inputMesh_->GetCellPoints(cell, pointIds);
 
                 // Make sure we only have three vertices
                 assert(pointIds->GetNumberOfIds() == 3);
@@ -125,9 +73,9 @@ void ReorderUnorganizedTexture::create_texture_()
                 auto v_id2 = pointIds->GetId(2);
 
                 // Get the 3D positions of each vertex
-                cv::Vec3d A{alignedMesh_->GetPoint(v_id0)};
-                cv::Vec3d B{alignedMesh_->GetPoint(v_id1)};
-                cv::Vec3d C{alignedMesh_->GetPoint(v_id2)};
+                cv::Vec3d A{inputMesh_->GetPoint(v_id0)};
+                cv::Vec3d B{inputMesh_->GetPoint(v_id1)};
+                cv::Vec3d C{inputMesh_->GetPoint(v_id2)};
 
                 // Get the 3D position of the intersection pt
                 auto i_id = interPts->GetNumberOfPoints() - 1;
@@ -151,20 +99,19 @@ void ReorderUnorganizedTexture::create_texture_()
                 cv::Vec3d cart_point = cartesian_coord_(bary_point, A, B, C);
 
                 // Convert the UV position to pixel coordinates (in orig image)
-                float x = static_cast<float>(cart_point[0]) *
-                          (inputTexture_.cols - 1);
-                float y = static_cast<float>(
+                auto x = static_cast<float>(
+                    cart_point[0] * (inputTexture_.cols - 1));
+                auto y = static_cast<float>(
                     cart_point[1] * (inputTexture_.rows - 1));
 
                 // Bilinear interpolate color and assign to output
                 cv::Mat subRect;
                 cv::getRectSubPix(inputTexture_, {1, 1}, {x, y}, subRect);
-                outputTexture_.at<cv::Vec3b>(j, i) =
+                outputTexture_.at<cv::Vec3b>(v, u) =
                     subRect.at<cv::Vec3b>(0, 0);
             }
         }
     }
-    std::cerr << std::endl;
 }
 
 // Generate a new UV map using the aligned mesh
@@ -173,12 +120,21 @@ void ReorderUnorganizedTexture::create_uv_()
 {
     std::cerr << "Creating UV map..." << std::endl;
     outputUV_ = volcart::UVMap();
-    double p[3];
-    for (auto i = 0; i < alignedMesh_->GetNumberOfPoints(); ++i) {
-        alignedMesh_->GetPoint(i, p);
-        outputUV_.set(
-            static_cast<size_t>(i),
-            {p[0] / alignedMeshMaxX_, p[1] / alignedMeshMaxY_});
+
+    auto uLen = cv::norm(xAxis_);
+    auto vLen = cv::norm(yAxis_);
+    auto uVec = xAxis_ / uLen;
+    auto vVec = yAxis_ / vLen;
+
+    cv::Vec3d p;
+    for (auto i = 0; i < inputMesh_->GetNumberOfPoints(); ++i) {
+        // Get the point
+        inputMesh_->GetPoint(i, p.val);
+
+        auto u = (p - origin_).dot(uVec) / uLen;
+        auto v = (p - origin_).dot(vVec) / vLen;
+
+        outputUV_.set(static_cast<size_t>(i), {u, v});
     }
 }
 

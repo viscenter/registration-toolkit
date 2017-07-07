@@ -7,7 +7,7 @@
 find_package(Sanitizers)
 
 ### Boost ###
-find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 
 ### OpenCV ###
 find_package(OpenCV 3 REQUIRED)
@@ -15,10 +15,10 @@ find_package(OpenCV 3 REQUIRED)
 ### ITK ###
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
-set(ITKIOTransformLibs 
-    ITKIOTransformBase 
-    ITKIOTransformHDF5 
-    ITKIOTransformInsightLegacy 
+set(ITKIOTransformLibs
+    ITKIOTransformBase
+    ITKIOTransformHDF5
+    ITKIOTransformInsightLegacy
     ITKIOTransformMatlab
 )
 
