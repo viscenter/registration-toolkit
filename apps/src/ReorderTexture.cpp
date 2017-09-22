@@ -1,14 +1,12 @@
 #include <boost/filesystem.hpp>
 
-#include <vc/core/io/OBJReader.hpp>
-#include <vc/core/io/OBJWriter.hpp>
-#include <vc/core/types/ITKMesh.hpp>
-#include <vc/core/types/UVMap.hpp>
-#include <vc/meshing/ITK2VTK.hpp>
-
 #include "rt/ReorderUnorganizedTexture.hpp"
+#include "rt/io/OBJReader.hpp"
+#include "rt/io/OBJWriter.hpp"
+#include "rt/types/ITK2VTK.hpp"
+#include "rt/types/ITKMesh.hpp"
+#include "rt/types/UVMap.hpp"
 
-namespace vc = volcart;
 namespace fs = boost::filesystem;
 
 int main(int argc, char* argv[])
@@ -26,7 +24,7 @@ int main(int argc, char* argv[])
 
     // Load the mesh
     std::cerr << "Reading mesh..." << std::endl;
-    vc::io::OBJReader reader;
+    rt::io::OBJReader reader;
     reader.setPath(objPath);
     auto mesh = reader.read();
     auto uvMap = reader.getUVMap();
@@ -34,7 +32,7 @@ int main(int argc, char* argv[])
 
     // Reorder the texture
     vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    vc::meshing::ITK2VTK(mesh, vtkMesh);
+    rt::ITK2VTK(mesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
     r.setMesh(vtkMesh);
     r.setUVMap(uvMap);
@@ -43,7 +41,7 @@ int main(int argc, char* argv[])
     r.compute();
 
     // Write to file
-    vc::io::OBJWriter writer;
+    rt::io::OBJWriter writer;
     writer.setPath(outPath);
     writer.setMesh(mesh);
     writer.setUVMap(r.getUVMap());

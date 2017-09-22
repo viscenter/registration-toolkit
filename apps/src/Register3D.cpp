@@ -5,20 +5,19 @@
 #include <itkTransformFileWriter.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <vc/core/io/OBJReader.hpp>
-#include <vc/core/io/OBJWriter.hpp>
-#include <vc/core/types/Exceptions.hpp>
-#include <vc/core/types/UVMap.hpp>
 
 #include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkReader.hpp"
+#include "rt/io/OBJReader.hpp"
+#include "rt/io/OBJWriter.hpp"
 #include "rt/itk/itkOpenCVImageBridge.h"
+#include "rt/types/Exceptions.hpp"
+#include "rt/types/UVMap.hpp"
 
 namespace fs = boost::filesystem;
-namespace vc = volcart;
 
 // Composite Transform
 using CompositeTransform = itk::CompositeTransform<double, 2>;
@@ -56,9 +55,9 @@ int main(int argc, char* argv[])
     rt::Image8UC3::Pointer movingImage;
 
     // Read the OBJ file and static image
-    vc::io::OBJReader reader;
+    rt::io::OBJReader reader;
     reader.setPath(objPath);
-    vc::ITKMesh::Pointer origMesh;
+    rt::ITKMesh::Pointer origMesh;
     cv::Mat cvFixedImage;
     try {
         origMesh = reader.read();
@@ -116,13 +115,15 @@ int main(int argc, char* argv[])
 
     ///// Apply the transformation to the UV map /////
     printf("Finished registration\n\n");
-    auto uvMap = reader.getUVMap();
+    auto oldUVMap = reader.getUVMap();
+    rt::UVMap newUVMap;
     for (auto point = origMesh->GetPoints()->Begin();
          point != origMesh->GetPoints()->End(); ++point) {
 
-        // Get the UV mapping
-        auto origUV = uvMap.get(point->Index());
-        if (origUV == vc::NULL_MAPPING) {
+        cv::Vec2d origUV;
+        try {
+            origUV = oldUVMap.getUV(point->Index());
+        } catch (const std::exception& e) {
             continue;
         }
 
@@ -133,15 +134,15 @@ int main(int argc, char* argv[])
                         out[1] / (cvMovingImage.rows - 1)};
 
         // Reassign to UV map
-        uvMap.set(point->Index(), newUV);
+        newUVMap.addUV(newUV);
     }
 
     ///// Write output mesh /////
     printf("Writing OBJ file...\n");
-    vc::io::OBJWriter writer;
+    rt::io::OBJWriter writer;
     writer.setPath(outPath);
     writer.setMesh(origMesh);
-    writer.setUVMap(uvMap);
+    writer.setUVMap(newUVMap);
     writer.setTexture(cvMovingImage);
     writer.write();
 

@@ -4,8 +4,6 @@
 #include <vtkOBBTree.h>
 #include <vtkTransformPolyDataFilter.h>
 
-#include <vtkPLYWriter.h>
-
 using namespace rt;
 
 // Compute the result
@@ -85,9 +83,10 @@ void ReorderUnorganizedTexture::create_texture_()
                 cv::Vec3d bary_point = barycentric_coord_(alpha, A, B, C);
 
                 // Get the UV coordinates of triangle vertices
-                auto a = inputUV_.get(v_id0);
-                auto b = inputUV_.get(v_id1);
-                auto c = inputUV_.get(v_id2);
+                auto f = inputUV_.getFace(cell);
+                auto a = inputUV_.getUV(f[0]);
+                auto b = inputUV_.getUV(f[1]);
+                auto c = inputUV_.getUV(f[2]);
 
                 // Setup some temp variables
                 // Drop the third dimension because UV is 2D
@@ -119,7 +118,7 @@ void ReorderUnorganizedTexture::create_texture_()
 void ReorderUnorganizedTexture::create_uv_()
 {
     std::cerr << "Creating UV map..." << std::endl;
-    outputUV_ = volcart::UVMap();
+    outputUV_ = UVMap();
 
     auto uLen = cv::norm(xAxis_);
     auto vLen = cv::norm(yAxis_);
@@ -134,7 +133,7 @@ void ReorderUnorganizedTexture::create_uv_()
         auto u = (p - origin_).dot(uVec) / uLen;
         auto v = (p - origin_).dot(vVec) / vLen;
 
-        outputUV_.set(static_cast<size_t>(i), {u, v});
+        outputUV_.addUV({u, v});
     }
 }
 

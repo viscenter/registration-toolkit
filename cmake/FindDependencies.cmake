@@ -31,14 +31,6 @@ include(${VTK_USE_FILE})
 # headers.
 include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
 
-find_package(Eigen3 REQUIRED)
-add_library(eigen3 INTERFACE IMPORTED)
-set_target_properties(eigen3 PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
-)
-
-find_package(VC 2.13 REQUIRED)
-
 ############
 # Optional #
 ############

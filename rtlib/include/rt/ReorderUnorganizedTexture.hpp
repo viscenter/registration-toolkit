@@ -5,7 +5,7 @@
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 
-#include <vc/core/types/UVMap.hpp>
+#include "rt/types/UVMap.hpp"
 
 namespace rt
 {
@@ -45,7 +45,7 @@ public:
     /** @brief Construct with all input parameters */
     ReorderUnorganizedTexture(
         const vtkSmartPointer<vtkPolyData>& mesh,
-        const volcart::UVMap& uv,
+        const UVMap& uv,
         const cv::Mat& img,
         double rate = DEFAULT_SAMPLE_RATE)
         : inputMesh_(mesh), inputUV_(uv), inputTexture_(img), sampleRate_(rate)
@@ -60,7 +60,7 @@ public:
         inputMesh_ = mesh;
     }
     /** @brief Set the input UV map for the mesh */
-    void setUVMap(const volcart::UVMap& uv) { inputUV_ = uv; }
+    void setUVMap(const UVMap& uv) { inputUV_ = uv; }
     /** @brief Set the input, unorganized texture image */
     void setTextureMat(const cv::Mat& img) { inputTexture_ = img; }
     /** @brief Set the rate (in mesh units) at which to sample XY plane into an
@@ -79,7 +79,7 @@ public:
 
     /**@{*/
     /** @brief Get the output UV map */
-    volcart::UVMap getUVMap() { return outputUV_; }
+    UVMap getUVMap() { return outputUV_; }
     /** @brief Get the output texture image */
     cv::Mat getTextureMat() { return outputTexture_; }
     /**@}*/
@@ -110,7 +110,7 @@ private:
     /** Input mesh */
     vtkSmartPointer<vtkPolyData> inputMesh_;
     /** Input UV map */
-    volcart::UVMap inputUV_;
+    UVMap inputUV_;
     /** Input texture image */
     cv::Mat inputTexture_;
 
@@ -126,7 +126,7 @@ private:
     cv::Vec3d zAxis_;
 
     /** Output UV map */
-    volcart::UVMap outputUV_;
+    UVMap outputUV_;
     /** Output texture image */
     cv::Mat outputTexture_;
 };
