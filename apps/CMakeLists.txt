@@ -6,6 +6,8 @@ add_executable(rt_register2d src/Register2D.cpp)
 target_link_libraries(rt_register2d
     rt::rtlib
     ${ITK_LIBRARIES}
+    Boost::filesystem
+    Boost::program_options
 )
 
 # 3D Registration Apps
@@ -16,8 +18,6 @@ target_link_libraries(rt_reorder_texture
     opencv_imgproc
     opencv_highgui
     ${VTK_LIBRARIES}
-    VC::core
-    VC::meshing
 )
 
 add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)

@@ -7,7 +7,7 @@
 find_package(Sanitizers)
 
 ### Boost ###
-find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 
 ### OpenCV ###
 find_package(OpenCV 3 REQUIRED)
@@ -15,10 +15,10 @@ find_package(OpenCV 3 REQUIRED)
 ### ITK ###
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
-set(ITKIOTransformLibs 
-    ITKIOTransformBase 
-    ITKIOTransformHDF5 
-    ITKIOTransformInsightLegacy 
+set(ITKIOTransformLibs
+    ITKIOTransformBase
+    ITKIOTransformHDF5
+    ITKIOTransformInsightLegacy
     ITKIOTransformMatlab
 )
 
@@ -30,14 +30,6 @@ include(${VTK_USE_FILE})
 # warnings from those headers show up in builds. This marks them as "system"
 # headers.
 include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
-
-find_package(Eigen3 REQUIRED)
-add_library(eigen3 INTERFACE IMPORTED)
-set_target_properties(eigen3 PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
-)
-
-find_package(VC 2.13 REQUIRED)
 
 ############
 # Optional #

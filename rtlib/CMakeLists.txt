@@ -2,18 +2,28 @@ project(librtlib VERSION 0.1 LANGUAGES CXX)
 set(module "rtlib")
 set(target "${module}")
 
+set(io_srcs
+    src/OBJReader.cpp
+    src/OBJWriter.cpp
+    src/ReadRawTIFF.cpp
+    src/LandmarkReader.cpp
+)
+
+set(type_srcs
+    src/UVMap.cpp
+    src/ITK2VTK.cpp
+)
+
 set(srcs
     src/ReorderUnorganizedTexture.cpp
-    src/ReadRawTIFF.cpp
     src/LandmarkDetector.cpp
     src/DeformableRegistration.cpp
     src/AffineLandmarkRegistration.cpp
-    src/LandmarkReader.cpp
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
 )
 
-add_library(${target} ${srcs})
+add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
 add_library("${namespace}${module}" ALIAS "${target}")
 target_include_directories(${target}
     PUBLIC
@@ -29,7 +39,6 @@ target_link_libraries(${target}
         ITKCommon
         ITKTransform
         ITKOptimizers
-        VC::core
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"
