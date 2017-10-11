@@ -17,8 +17,6 @@ cv::Mat ReorderUnorganizedTexture::compute()
 
 void ReorderUnorganizedTexture::create_texture_()
 {
-    std::cerr << "Reordering texture..." << std::endl;
-
     // Computes the OBB and returns the 3 axes relative to the box
     double size[3];
     auto obbTree = vtkSmartPointer<vtkOBBTree>::New();
@@ -53,6 +51,10 @@ void ReorderUnorganizedTexture::create_texture_()
 
             // Get t
             auto a0 = origin_ + uOffset + vOffset;
+
+            if (cv::norm(zAxis_) < 1.0) {
+                zAxis_ = normedY.cross(normedX);
+            }
             auto a1 = a0 + zAxis_ * 2;
 
             // Calculate mesh intersection
@@ -83,7 +85,12 @@ void ReorderUnorganizedTexture::create_texture_()
                 cv::Vec3d bary_point = barycentric_coord_(alpha, A, B, C);
 
                 // Get the UV coordinates of triangle vertices
-                auto f = inputUV_.getFace(cell);
+                UVMap::Face f;
+                try {
+                    f = inputUV_.getFace(cell);
+                } catch (const std::exception& e) {
+                    continue;
+                }
                 auto a = inputUV_.getUV(f[0]);
                 auto b = inputUV_.getUV(f[1]);
                 auto c = inputUV_.getUV(f[2]);
@@ -117,7 +124,6 @@ void ReorderUnorganizedTexture::create_texture_()
 // This is simple after alignment u = pos.x / max.x, v = pos.y / max.y
 void ReorderUnorganizedTexture::create_uv_()
 {
-    std::cerr << "Creating UV map..." << std::endl;
     outputUV_ = UVMap();
 
     auto uLen = cv::norm(xAxis_);
