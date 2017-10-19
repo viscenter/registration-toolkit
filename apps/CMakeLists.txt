@@ -30,6 +30,7 @@ target_link_libraries(rt_register3d
     rt::rtlib
     opencv_core
     opencv_imgcodecs
+    Boost::program_options
     ${ITKIOTransformLibs}
 )
 

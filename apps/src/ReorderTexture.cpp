@@ -30,7 +30,16 @@ int main(int argc, char* argv[])
     auto uvMap = reader.getUVMap();
     auto texture = reader.getTextureMat();
 
+    // We don't support RGBA textures
+    auto channels = texture.channels();
+    if (channels == 4) {
+        cv::cvtColor(texture, texture, CV_BGRA2BGR);
+    } else if (channels != 1 && channels != 3) {
+        std::cerr << "Texture has unsupported channels: " << channels << "\n";
+    }
+
     // Reorder the texture
+    std::cerr << "Reordering texture..." << std::endl;
     vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
     rt::ITK2VTK(mesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
