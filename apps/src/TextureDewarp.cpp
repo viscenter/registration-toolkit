@@ -1,4 +1,5 @@
 #include <boost/filesystem.hpp>
+#include <vc/texturing/AngleBasedFlattening.hpp>
 
 #include "rt/ReorderUnorganizedTexture.hpp"
 #include "rt/io/OBJReader.hpp"
@@ -8,6 +9,7 @@
 #include "rt/types/UVMap.hpp"
 
 namespace fs = boost::filesystem;
+namespace vct = volcart::texturing;
 
 int main(int argc, char* argv[])
 {
@@ -30,18 +32,16 @@ int main(int argc, char* argv[])
     auto uvMap = reader.getUVMap();
     auto texture = reader.getTextureMat();
 
-    // We don't support RGBA textures
-    auto channels = texture.channels();
-    if (channels == 4) {
-        cv::cvtColor(texture, texture, CV_BGRA2BGR);
-    } else if (channels != 1 && channels != 3) {
-        std::cerr << "Texture has unsupported channels: " << channels << "\n";
-    }
+    std::cerr << "Flattening mesh..." << std::endl;
+    vct::AngleBasedFlattening abf;
+    abf.setMesh(mesh);
+    abf.compute();
+    auto flatMesh = abf.getMesh();
 
     // Reorder the texture
     std::cerr << "Reordering texture..." << std::endl;
-    vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    rt::ITK2VTK(mesh, vtkMesh);
+    auto vtkMesh = vtkSmartPointer<vtkPolyData>::New();
+    rt::ITK2VTK(flatMesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
     r.setMesh(vtkMesh);
     r.setUVMap(uvMap);
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     // Write to file
     rt::io::OBJWriter writer;
     writer.setPath(outPath);
-    writer.setMesh(mesh);
+    writer.setMesh(flatMesh);
     writer.setUVMap(r.getUVMap());
     writer.setTexture(r.getTextureMat());
     writer.write();

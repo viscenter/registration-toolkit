@@ -30,6 +30,7 @@ target_link_libraries(rt_register3d
     rt::rtlib
     opencv_core
     opencv_imgcodecs
+    Boost::program_options
     ${ITKIOTransformLibs}
 )
 
@@ -41,3 +42,23 @@ target_link_libraries(rt_brisk_match
     opencv_features2d
     opencv_highgui
 )
+
+find_package(Eigen3)
+add_library(eigen3 INTERFACE IMPORTED)
+set_target_properties(eigen3 PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
+)
+find_package(VC 2.13)
+
+if(VC_FOUND)
+    add_executable(rt_dewarp src/TextureDewarp.cpp)
+    target_link_libraries(rt_dewarp
+        rt::rtlib
+        VC::core
+        VC::texturing
+        opencv_core
+        opencv_imgproc
+        opencv_highgui
+        ${VTK_LIBRARIES}
+    )
+endif()
