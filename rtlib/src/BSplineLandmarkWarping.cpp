@@ -9,40 +9,20 @@ BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
         throw std::runtime_error("Empty input parameter");
     }
 
+    using TransformInitializer =
+        itk::LandmarkBasedTransformInitializer<Transform, Image8UC3, Image8UC3>;
+
     // Setup new transform
     output_ = Transform::New();
+    output_->SetIdentity();
 
     // Initialize transform
-    auto landmarkTransformer = TransformInitializer::New();
-    landmarkTransformer->SetOutputSpacing(fixedImg_->GetSpacing());
-    landmarkTransformer->SetOutputOrigin(fixedImg_->GetOrigin());
-    landmarkTransformer->SetOutputRegion(fixedImg_->GetLargestPossibleRegion());
-    landmarkTransformer->SetOutputDirection(fixedImg_->GetDirection());
-
-    // Convert landmarks to what deformation field needs
-    using BSplineLandmarkContainer = TransformInitializer::LandmarkContainer;
-    BSplineLandmarkContainer::Pointer f = BSplineLandmarkContainer::New();
-    BSplineLandmarkContainer::Pointer m = BSplineLandmarkContainer::New();
-    uint32_t id = 0;
-    for (auto& l : fixedLdmks_) {
-        f->InsertElement(id++, l);
-    }
-    id = 0;
-    for (auto& l : movingLdmks_) {
-        m->InsertElement(id++, l);
-    }
-
-    // Assign landmarks
-    // I'm not sure why the fixed landmarks are set to the source. It seems
-    // like it should be the other way around. - SP
-    landmarkTransformer->SetSourceLandmarks(f);
-    landmarkTransformer->SetTargetLandmarks(m);
-
-    // Run registration
-    landmarkTransformer->UpdateLargestPossibleRegion();
-
-    // Get output
-    output_ = landmarkTransformer->GetKernelTransform();
+    auto landmarkTransformInit = TransformInitializer::New();
+    landmarkTransformInit->SetFixedLandmarks(fixedLdmks_);
+    landmarkTransformInit->SetMovingLandmarks(movingLdmks_);
+    landmarkTransformInit->SetReferenceImage(fixedImg_);
+    landmarkTransformInit->SetTransform(output_);
+    landmarkTransformInit->InitializeTransform();
 
     return output_;
 }

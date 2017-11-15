@@ -1,5 +1,6 @@
 #pragma once
 
+#include <itkBSplineTransform.h>
 #include <itkLandmarkDisplacementFieldSource.h>
 
 #include "rt/ImageTypes.hpp"
@@ -9,25 +10,22 @@ namespace rt
 {
 /**
  * @class BSplineLandmarkWarping
- * @brief Generate a B-spline based displacement field transformation using
- * source and target landmarks
+ * @brief Generate a B-spline-based transformation that maps an ordered set of
+ * landmarks onto a fixed set of landmarks
  * @ingroup landmark
  */
 class BSplineLandmarkWarping : public LandmarkRegistrationBase
 {
 public:
-    /** Displacement field generator type */
-    using TransformInitializer =
-        itk::LandmarkDisplacementFieldSource<DeformationField>;
-
     /** @brief Transform type returned by this class */
-    using Transform = TransformInitializer::KernelTransformType;
+    using Transform = itk::BSplineTransform<double, 2>;
 
-    /** @brief Set the fixed image
+    /**
+     * @brief Set the fixed image
      *
      * This must be set in order to compute the transform.
      */
-    void setFixedImage(const Image8UC3::Pointer f) { fixedImg_ = f; }
+    void setFixedImage(const Image8UC3::Pointer& f) { fixedImg_ = f; }
 
     /** @brief Compute the transform */
     Transform::Pointer compute();

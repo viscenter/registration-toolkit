@@ -1,30 +1,50 @@
 #include "rt/ImageTransformResampler.hpp"
 
-#include <itkNearestNeighborInterpolateImageFunction.h>
-
 using namespace rt;
 
-using ColorInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<Image8UC3, double>;
+using Transform = itk::CompositeTransform<double, 2>::Pointer;
 
-static constexpr uint8_t EMPTY_PIXEL = 0;
-
-Image8UC3::Pointer rt::ImageTransformResampler(
-    const Image8UC3::Pointer fixed,
-    const Image8UC3::Pointer moving,
-    ResampleFilter::TransformType* transform)
+cv::Mat rt::ImageTransformResampler(
+    const cv::Mat& m, cv::Size& s, Transform transform)
 {
-    auto interpolator = ColorInterpolator::New();
-    auto resample = ResampleFilter::New();
-    resample->SetInput(moving);
-    resample->SetTransform(transform);
-    resample->SetInterpolator(interpolator);
-    resample->SetSize(fixed->GetLargestPossibleRegion().GetSize());
-    resample->SetOutputOrigin(fixed->GetOrigin());
-    resample->SetOutputSpacing(fixed->GetSpacing());
-    resample->SetOutputDirection(fixed->GetDirection());
-    resample->SetDefaultPixelValue(EMPTY_PIXEL);
-    resample->Update();
-
-    return resample->GetOutput();
+    switch (m.type()) {
+        case CV_8UC1: {
+            using T = Image8UC1;
+            auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
+            i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+            return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+        }
+        case CV_8UC3: {
+            using T = Image8UC3;
+            auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
+            i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+            return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+        }
+        case CV_16UC1: {
+            using T = Image16UC1;
+            auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
+            i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+            return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+        }
+        case CV_16UC3: {
+            using T = Image16UC3;
+            auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
+            i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+            return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+        }
+        case CV_32FC1: {
+            using T = Image32FC1;
+            auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
+            i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+            return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+        }
+        case CV_32FC3: {
+            using T = Image32FC3;
+            auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
+            i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+            return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+        }
+        default:
+            throw std::runtime_error("unsupported image type");
+    }
 }
