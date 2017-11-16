@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
+#include <opencv2/core.hpp>
 
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkRegistrationBase.hpp"
@@ -18,7 +19,7 @@ class LandmarkReader
 {
 public:
     /** @brief Default constructor */
-    LandmarkReader(const boost::filesystem::path& landmarksPath)
+    explicit LandmarkReader(const boost::filesystem::path& landmarksPath)
         : landmarksPath_(landmarksPath)
     {
     }
@@ -43,6 +44,9 @@ public:
 
     /** @brief Get the parsed moving landmarks */
     rt::LandmarkContainer getMovingLandmarks() { return movingLandmarks_; }
+
+    std::vector<cv::Point2f> getFixedCVPoints();
+    std::vector<cv::Point2f> getMovingCVPoints();
 
 private:
     /** Path to the Landmarks file */

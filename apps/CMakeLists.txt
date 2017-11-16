@@ -5,7 +5,11 @@ target_link_libraries(ApplyTransform ${ITK_LIBRARIES})
 add_executable(rt_register2d src/Register2D.cpp)
 target_link_libraries(rt_register2d
     rt::rtlib
-    ${ITK_LIBRARIES}
+    opencv_core
+    opencv_imgproc
+    opencv_imgcodecs
+    opencv_calib3d
+    opencv_video
     Boost::filesystem
     Boost::program_options
 )

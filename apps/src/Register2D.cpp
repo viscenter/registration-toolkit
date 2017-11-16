@@ -3,30 +3,19 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include <itkCompositeTransform.h>
-#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
-#include <itkTransformFileWriter.h>
 
-#include "rt/AffineLandmarkRegistration.hpp"
-#include "rt/BSplineLandmarkWarping.hpp"
-#include "rt/DeformableRegistration.hpp"
-#include "rt/ImageTransformResampler.hpp"
-#include "rt/ImageTypes.hpp"
+#include <opencv2/calib3d.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/video.hpp>
+
 #include "rt/LandmarkReader.hpp"
 
 using namespace rt;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
-
-// Composite Transform
-using CompositeTransform = itk::CompositeTransform<double, 2>;
-
-// IO
-using ImageReader = itk::ImageFileReader<Image8UC3>;
-using ImageWriter = itk::ImageFileWriter<Image8UC3>;
-using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
 {
@@ -74,109 +63,55 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    fs::path fixedImageFileName = parsed["fixed"].as<std::string>();
-    fs::path movingImageFileName = parsed["moving"].as<std::string>();
-    fs::path outputImageFileName = parsed["output-file"].as<std::string>();
+    fs::path fixedPath = parsed["fixed"].as<std::string>();
+    fs::path movingPath = parsed["moving"].as<std::string>();
+    fs::path outputPath = parsed["output-file"].as<std::string>();
 
     ///// Setup input files /////
-    Image8UC3::Pointer fixedImage;
-    Image8UC3::Pointer movingImage;
-    Image8UC3::Pointer tmpMovingImage;
-
-    // Read the two images
-    try {
-        // Read the fixed image
-        auto imgReader = ImageReader::New();
-        imgReader->SetFileName(fixedImageFileName.string());
-        imgReader->Update();
-        fixedImage = imgReader->GetOutput();
-
-        // Read the moving image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(movingImageFileName.string());
-        imgReader->Update();
-        movingImage = imgReader->GetOutput();
-    } catch (itk::ExceptionObject& excp) {
-        std::cerr << "Exception thrown " << std::endl;
-        std::cerr << excp << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    // Ignore spacing information
-    fixedImage->SetSpacing(1.0);
-    movingImage->SetSpacing(1.0);
-
-    // Setup final transform
-    auto compositeTrans = CompositeTransform::New();
+    auto fixedImage = cv::imread(fixedPath.string(), -1);
+    auto movingImage = cv::imread(movingPath.string(), -1);
+    auto result = cv::Mat(fixedImage.rows, fixedImage.cols, movingImage.type());
 
     ///// Landmark Registration /////
-    if (parsed.count("landmarks")) {
-        printf("Running landmark registration...\n");
-        fs::path landmarksFileName = parsed["landmarks"].as<std::string>();
-        LandmarkReader landmarkReader(landmarksFileName);
-        landmarkReader.setFixedImage(fixedImage);
-        landmarkReader.setMovingImage(movingImage);
-        landmarkReader.read();
-        auto fixedLandmarks = landmarkReader.getFixedLandmarks();
-        auto movingLandmarks = landmarkReader.getMovingLandmarks();
+    printf("Running landmark registration...\n");
+    fs::path landmarksFileName = parsed["landmarks"].as<std::string>();
+    LandmarkReader landmarkReader(landmarksFileName);
+    landmarkReader.read();
+    auto fixedLandmarks = landmarkReader.getFixedCVPoints();
+    auto movingLandmarks = landmarkReader.getMovingCVPoints();
 
-        // Generate the landmark transform
-        if (parsed.count("landmark-affine")) {
-            AffineLandmarkRegistration landmark;
-            landmark.setFixedLandmarks(fixedLandmarks);
-            landmark.setMovingLandmarks(movingLandmarks);
-            auto ldmTransform = landmark.compute();
-            compositeTrans->AddTransform(ldmTransform);
-        } else {
-            BSplineLandmarkWarping landmark;
-            landmark.setFixedImage(fixedImage);
-            landmark.setFixedLandmarks(fixedLandmarks);
-            landmark.setMovingLandmarks(movingLandmarks);
-            auto ldmTransform = landmark.compute();
-            compositeTrans->AddTransform(ldmTransform);
-        }
+    auto T = cv::findHomography(movingLandmarks, fixedLandmarks, cv::RANSAC);
 
-        // Resample intermediate image
-        tmpMovingImage =
-            ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-    } else {
-        // Copy the moving image if we didn't do landmark
-        tmpMovingImage = movingImage;
-    }
+    cv::warpPerspective(movingImage, result, T, {result.cols, result.rows});
+
+    cv::imwrite("landmark.png", result);
 
     ///// Deformable Registration /////
-    auto iterations = parsed["deformable-iterations"].as<int>();
-    if (iterations > 0) {
-        printf("Running deformable registration...\n");
-        rt::DeformableRegistration deformable;
-        deformable.setFixedImage(fixedImage);
-        deformable.setMovingImage(tmpMovingImage);
-        deformable.setNumberOfIterations(iterations);
-        auto deformTransform = deformable.compute();
+    printf("Running deformable registration...\n");
 
-        compositeTrans->AddTransform(deformTransform);
+    // Dense Optical flow
+    cv::Mat prev, next;
+    fixedImage.convertTo(prev, CV_8U);
+    cv::cvtColor(prev, prev, cv::COLOR_BGR2GRAY);
+    result.convertTo(next, CV_8U, 255.0 / 65535.0);
+
+    cv::Mat flow;
+    cv::calcOpticalFlowFarneback(
+        next, prev, flow, 0.5, 3, 20, 50, 7, 1.5,
+        cv::OPTFLOW_FARNEBACK_GAUSSIAN);
+
+    cv::Mat map(flow.size(), CV_32FC2);
+    for (int y = 0; y < map.rows; ++y) {
+        for (int x = 0; x < map.cols; ++x) {
+            cv::Point2f f = flow.at<cv::Point2f>(y, x);
+            map.at<cv::Point2f>(y, x) = cv::Point2f(x + f.x, y + f.y);
+        }
     }
 
-    ///// Write the output image /////
-    printf("Writing output image to file...\n");
-    auto finalImage =
-        ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-    auto writer = ImageWriter::New();
-    writer->SetInput(finalImage);
-    writer->SetFileName(outputImageFileName.string());
-    writer->Update();
-
-    ///// Write the final transformations /////
-    if (parsed.count("output-tfm")) {
-        fs::path transformFileName = parsed["output-tfm"].as<std::string>();
-        printf("Writing transformation to file...\n");
-
-        // Write deformable transform
-        auto transformWriter = TransformWriter::New();
-        transformWriter->SetFileName(transformFileName.string());
-        transformWriter->SetInput(compositeTrans);
-        transformWriter->Update();
-    }
+    printf("Remapping image...\n");
+    cv::Mat result2;
+    cv::remap(result, result2, map, cv::Mat(), cv::INTER_CUBIC);
+    cv::imwrite("flow.png", result);
 
     return EXIT_SUCCESS;
 }

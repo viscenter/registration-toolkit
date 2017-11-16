@@ -52,6 +52,9 @@ public:
      */
     std::vector<LandmarkPair> getLandmarkPairs(int numMatches);
 
+    std::vector<cv::Point2f> getFixedLandmarks();
+    std::vector<cv::Point2f> getMovingLandmarks();
+
 private:
     /** Fixed image */
     cv::Mat fixedImg_;

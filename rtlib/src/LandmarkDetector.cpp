@@ -42,7 +42,7 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     for (auto& m : matches) {
         auto fixIdx = m.queryIdx;
         auto movIdx = m.trainIdx;
-        output_.push_back({fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt});
+        output_.emplace_back(fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
     }
 
     // Return only the matches we've requested
@@ -62,4 +62,24 @@ std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs(int numMatches)
                 ? static_cast<int>(output_.size() - 1)
                 : numMatches;
     return {std::begin(output_), std::begin(output_) + n};
+}
+
+std::vector<cv::Point2f> LandmarkDetector::getFixedLandmarks()
+{
+    std::vector<cv::Point2f> pts;
+    for (const auto& p : output_) {
+        pts.emplace_back(p.first);
+    }
+
+    return pts;
+}
+
+std::vector<cv::Point2f> LandmarkDetector::getMovingLandmarks()
+{
+    std::vector<cv::Point2f> pts;
+    for (const auto& p : output_) {
+        pts.emplace_back(p.second);
+    }
+
+    return pts;
 }
