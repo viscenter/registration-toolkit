@@ -52,6 +52,17 @@ target_link_libraries(rt_brisk_match
     opencv_highgui
 )
 
+add_executable(rt_plot_landmarks src/PlotLandmarks.cpp)
+target_link_libraries(rt_plot_landmarks
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    opencv_imgproc
+    ${ITK_LIBRARIES}
+    Boost::filesystem
+    Boost::program_options
+)
+
 find_package(Eigen3)
 add_library(eigen3 INTERFACE IMPORTED)
 set_target_properties(eigen3 PROPERTIES
