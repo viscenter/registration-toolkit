@@ -1,12 +1,12 @@
-#include <fstream>
 #include <iostream>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
-#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
+#include <itkOpenCVImageBridge.h>
 #include <itkTransformFileWriter.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
@@ -24,9 +24,8 @@ namespace fs = boost::filesystem;
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
-using ImageReader = itk::ImageFileReader<Image8UC3>;
-using ImageWriter = itk::ImageFileWriter<Image8UC3>;
-using TransformWriter = itk::TransformFileWriterTemplate<double>;
+using OCVB = itk::OpenCVImageBridge;
+using TransformWriter = itk::TransformFileWriter;
 
 int main(int argc, char* argv[])
 {
@@ -39,13 +38,13 @@ int main(int argc, char* argv[])
         ("fixed,f", po::value<std::string>()->required(), "Fixed image")
         ("output-file,o", po::value<std::string>()->required(),
             "Output file path for the registered moving image")
-        ("output-tfm", po::value<std::string>(),
+        ("output-tfm,t", po::value<std::string>(),
             "Output file path for the generated transform file");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
         ("landmarks,l", po::value<std::string>(),"Landmarks file")
-        ("landmark-affine", "Limit landmark registration to affine transform");
+        ("landmark-disable-bspline", "Disable B-Spline Landmark Registration");
 
     po::options_description deformOptions("Deformable Registration Options");
     deformOptions.add_options()
@@ -74,33 +73,16 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    fs::path fixedImageFileName = parsed["fixed"].as<std::string>();
-    fs::path movingImageFileName = parsed["moving"].as<std::string>();
-    fs::path outputImageFileName = parsed["output-file"].as<std::string>();
+    fs::path fixedPath = parsed["fixed"].as<std::string>();
+    fs::path movingPath = parsed["moving"].as<std::string>();
+    fs::path outputPath = parsed["output-file"].as<std::string>();
 
     ///// Setup input files /////
-    Image8UC3::Pointer fixedImage;
-    Image8UC3::Pointer movingImage;
-    Image8UC3::Pointer tmpMovingImage;
-
-    // Read the two images
-    try {
-        // Read the fixed image
-        auto imgReader = ImageReader::New();
-        imgReader->SetFileName(fixedImageFileName.string());
-        imgReader->Update();
-        fixedImage = imgReader->GetOutput();
-
-        // Read the moving image
-        imgReader = ImageReader::New();
-        imgReader->SetFileName(movingImageFileName.string());
-        imgReader->Update();
-        movingImage = imgReader->GetOutput();
-    } catch (itk::ExceptionObject& excp) {
-        std::cerr << "Exception thrown " << std::endl;
-        std::cerr << excp << std::endl;
-        return EXIT_FAILURE;
-    }
+    // Load the fixed and moving image at 8bpc
+    auto cvFixed = cv::imread(fixedPath.string());
+    auto fixedImage = OCVB::CVMatToITKImage<Image8UC3>(cvFixed);
+    auto cvMoving = cv::imread(movingPath.string());
+    auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMoving);
 
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);
@@ -108,10 +90,9 @@ int main(int argc, char* argv[])
 
     // Setup final transform
     auto compositeTrans = CompositeTransform::New();
-
     ///// Landmark Registration /////
     if (parsed.count("landmarks")) {
-        printf("Running landmark registration...\n");
+        printf("Running affine registration...\n");
         fs::path landmarksFileName = parsed["landmarks"].as<std::string>();
         LandmarkReader landmarkReader(landmarksFileName);
         landmarkReader.setFixedImage(fixedImage);
@@ -120,28 +101,42 @@ int main(int argc, char* argv[])
         auto fixedLandmarks = landmarkReader.getFixedLandmarks();
         auto movingLandmarks = landmarkReader.getMovingLandmarks();
 
+        AffineLandmarkRegistration landmark;
+        landmark.setFixedLandmarks(fixedLandmarks);
+        landmark.setMovingLandmarks(movingLandmarks);
+        auto ldmTransform = landmark.compute();
+        compositeTrans->AddTransform(ldmTransform);
+
+        // Resample moving image for next stage
+        auto tmpMoving = ImageTransformResampler<Image8UC3>(
+            movingImage, fixedImage->GetLargestPossibleRegion().GetSize(),
+            compositeTrans);
+
         // Generate the landmark transform
-        if (parsed.count("landmark-affine")) {
-            AffineLandmarkRegistration landmark;
-            landmark.setFixedLandmarks(fixedLandmarks);
-            landmark.setMovingLandmarks(movingLandmarks);
-            auto ldmTransform = landmark.compute();
-            compositeTrans->AddTransform(ldmTransform);
-        } else {
-            BSplineLandmarkWarping landmark;
-            landmark.setFixedImage(fixedImage);
-            landmark.setFixedLandmarks(fixedLandmarks);
-            landmark.setMovingLandmarks(movingLandmarks);
-            auto ldmTransform = landmark.compute();
-            compositeTrans->AddTransform(ldmTransform);
+        if (parsed.count("landmark-disable-bspline") == 0) {
+            printf("Running B-spline landmark registration...\n");
+
+            // Update the landmark positions
+            auto i = compositeTrans->GetInverseTransform();
+            for (auto& p : movingLandmarks) {
+                p = i->TransformPoint(p);
+            }
+
+            // BSpline Warp
+            BSplineLandmarkWarping bSplineLandmark;
+            bSplineLandmark.setFixedImage(fixedImage);
+            bSplineLandmark.setFixedLandmarks(fixedLandmarks);
+            bSplineLandmark.setMovingLandmarks(movingLandmarks);
+            auto warp = bSplineLandmark.compute();
+            compositeTrans->AddTransform(warp);
+
+            // Resample moving image for next stage
+            tmpMoving = ImageTransformResampler<Image8UC3>(
+                movingImage, fixedImage->GetLargestPossibleRegion().GetSize(),
+                compositeTrans);
         }
 
-        // Resample intermediate image
-        tmpMovingImage =
-            ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-    } else {
-        // Copy the moving image if we didn't do landmark
-        tmpMovingImage = movingImage;
+        movingImage = tmpMoving;
     }
 
     ///// Deformable Registration /////
@@ -150,21 +145,22 @@ int main(int argc, char* argv[])
         printf("Running deformable registration...\n");
         rt::DeformableRegistration deformable;
         deformable.setFixedImage(fixedImage);
-        deformable.setMovingImage(tmpMovingImage);
+        deformable.setMovingImage(movingImage);
         deformable.setNumberOfIterations(iterations);
         auto deformTransform = deformable.compute();
 
         compositeTrans->AddTransform(deformTransform);
     }
 
+    ///// Resample the source image /////
+    printf("Resampling the moving image...\n");
+    cvMoving = cv::imread(movingPath.string(), -1);
+    cv::Size s(cvFixed.cols, cvFixed.rows);
+    auto cvFinal = ImageTransformResampler(cvMoving, s, compositeTrans);
+
     ///// Write the output image /////
     printf("Writing output image to file...\n");
-    auto finalImage =
-        ImageTransformResampler(fixedImage, movingImage, compositeTrans);
-    auto writer = ImageWriter::New();
-    writer->SetInput(finalImage);
-    writer->SetFileName(outputImageFileName.string());
-    writer->Update();
+    cv::imwrite(outputPath.string(), cvFinal);
 
     ///// Write the final transformations /////
     if (parsed.count("output-tfm")) {

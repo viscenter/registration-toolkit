@@ -9,9 +9,9 @@ namespace rt
 
 /**
  * @class DeformableRegistration
- * @brief BSpline-based deformable registration
+ * @brief B-Spline-based deformable registration
  *
- * Computes a BSpline transform that aligns the fine details of two input
+ * Computes a B-Spline transform that aligns the fine details of two input
  * images. Assumes the input images have already been roughly aligned using
  * some sort of landmark registration algorithm.
  *

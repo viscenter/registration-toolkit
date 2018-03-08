@@ -1,10 +1,19 @@
 # 2D Registration Apps
-add_executable(ApplyTransform src/ApplyTransform.cxx)
-target_link_libraries(ApplyTransform ${ITK_LIBRARIES})
+add_executable(rt_apply_transform src/ApplyTransform.cxx)
+target_link_libraries(rt_apply_transform
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    Boost::filesystem
+    Boost::program_options
+    ${ITK_LIBRARIES}
+)
 
 add_executable(rt_register2d src/Register2D.cpp)
 target_link_libraries(rt_register2d
     rt::rtlib
+    opencv_core
+    opencv_imgcodecs
     ${ITK_LIBRARIES}
     Boost::filesystem
     Boost::program_options
@@ -41,6 +50,17 @@ target_link_libraries(rt_brisk_match
     opencv_imgcodecs
     opencv_features2d
     opencv_highgui
+)
+
+add_executable(rt_plot_landmarks src/PlotLandmarks.cpp)
+target_link_libraries(rt_plot_landmarks
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    opencv_imgproc
+    ${ITK_LIBRARIES}
+    Boost::filesystem
+    Boost::program_options
 )
 
 find_package(Eigen3)

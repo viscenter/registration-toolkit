@@ -33,13 +33,13 @@ using Image16UC3 = itk::Image<Pixel16UC3, 2>;
 /**@{*/
 /** @ingroup types */
 /** @brief 32-bit, floating point, single channel pixel */
-using Pixel32UC1 = float;
+using Pixel32FC1 = float;
 /** @brief 32-bit, floating point, single channel image */
-using Image32UC1 = itk::Image<Pixel32UC1, 2>;
+using Image32FC1 = itk::Image<Pixel32FC1, 2>;
 /** @brief 32-bit, floating point, three channel pixel */
-using Pixel32UC3 = itk::RGBPixel<float>;
+using Pixel32FC3 = itk::RGBPixel<float>;
 /** @brief 32-bit, floating point, three channel image */
-using Image32UC3 = itk::Image<Pixel32UC3, 2>;
+using Image32FC3 = itk::Image<Pixel32FC3, 2>;
 /**@}*/
 
 /**@{*/

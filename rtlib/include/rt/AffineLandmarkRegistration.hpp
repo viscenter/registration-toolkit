@@ -7,8 +7,8 @@ namespace rt
 {
 /**
  * @class AffineLandmarkRegistration
- * @brief Generate an affine transformation that best maps a set of points
- * onto a second set of points
+ * @brief Generate an affine transformation that maps an ordered set of
+ * landmarks onto a fixed set of landmarks
  * @ingroup landmark
  */
 class AffineLandmarkRegistration : public LandmarkRegistrationBase

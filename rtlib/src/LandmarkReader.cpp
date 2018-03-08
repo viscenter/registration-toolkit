@@ -1,5 +1,7 @@
 #include "rt/LandmarkReader.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 using namespace rt;
 namespace fs = boost::filesystem;
 
@@ -18,16 +20,44 @@ void LandmarkReader::read()
     // Read the landmarks file
     rt::Landmark fixedPoint, movingPoint;
     itk::ContinuousIndex<double, 2> fixedIndex, movingIndex;
-    double fixedX, fixedY, movingX, movingY;
+
+    auto fixedSize = fixedImage_->GetLargestPossibleRegion().GetSize();
+    auto movingSize = movingImage_->GetLargestPossibleRegion().GetSize();
 
     std::ifstream ifs(landmarksPath_.string());
-    while (ifs.good()) {
-        ifs >> fixedX >> fixedY >> movingX >> movingY;
+    std::string line;
+    std::vector<std::string> strs;
+    while (std::getline(ifs, line)) {
+        // Parse the line
+        boost::trim(line);
+        boost::split(strs, line, boost::is_any_of(" "));
+        std::for_each(std::begin(strs), std::end(strs), [](std::string& t) {
+            boost::trim(t);
+        });
 
-        fixedIndex[0] = fixedX;
-        fixedIndex[1] = fixedY;
-        movingIndex[0] = movingX;
-        movingIndex[1] = movingY;
+        if (strs.size() != 4) {
+            continue;
+        }
+
+        fixedIndex[0] = std::stod(strs[0]);
+        fixedIndex[1] = std::stod(strs[1]);
+        movingIndex[0] = std::stod(strs[2]);
+        movingIndex[1] = std::stod(strs[3]);
+
+        if (fixedIndex[0] < 0 || fixedIndex[1] < 0 ||
+            fixedIndex[0] >= fixedSize[0] || fixedIndex[1] >= fixedSize[1]) {
+            std::stringstream s;
+            s << "Fixed landmark not in image bounds: " << fixedIndex;
+            throw std::runtime_error(s.str());
+        }
+
+        if (movingIndex[0] < 0 || movingIndex[1] < 0 ||
+            movingIndex[0] >= movingSize[0] ||
+            movingIndex[1] >= movingSize[1]) {
+            std::stringstream s;
+            s << "Moving landmark not in image bounds: " << movingIndex;
+            throw std::runtime_error(s.str());
+        }
 
         // Transform landmarks in case spacing still gets used
         fixedImage_->TransformContinuousIndexToPhysicalPoint(
