@@ -70,3 +70,44 @@ void LandmarkReader::read()
     }
     ifs.close();
 }
+
+void LandmarkReader::readRaw()
+{
+    // Check that input is set
+    if (!fs::exists(landmarksPath_)) {
+        throw std::runtime_error("Invalid input. Unable to read.");
+    }
+
+    // Reset landmark containers
+    fixedLandmarks_.clear();
+    movingLandmarks_.clear();
+
+    // Read the landmarks file
+    rt::Landmark fixedPoint, movingPoint;
+    itk::ContinuousIndex<double, 2> fixedIndex, movingIndex;
+
+    std::ifstream ifs(landmarksPath_.string());
+    std::string line;
+    std::vector<std::string> strs;
+    while (std::getline(ifs, line)) {
+        // Parse the line
+        boost::trim(line);
+        boost::split(strs, line, boost::is_any_of(" "));
+        std::for_each(std::begin(strs), std::end(strs), [](std::string& t) {
+            boost::trim(t);
+        });
+
+        if (strs.size() != 4) {
+            continue;
+        }
+
+        fixedIndex[0] = std::stod(strs[0]);
+        fixedIndex[1] = std::stod(strs[1]);
+        movingIndex[0] = std::stod(strs[2]);
+        movingIndex[1] = std::stod(strs[3]);
+
+        fixedLandmarks_.push_back(fixedIndex);
+        movingLandmarks_.push_back(movingIndex);
+    }
+    ifs.close();
+}

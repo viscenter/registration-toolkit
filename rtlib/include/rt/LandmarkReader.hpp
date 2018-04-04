@@ -18,8 +18,10 @@ class LandmarkReader
 {
 public:
     /** @brief Default constructor */
-    LandmarkReader(const boost::filesystem::path& landmarksPath)
-        : landmarksPath_(landmarksPath)
+    LandmarkReader() = default;
+
+    LandmarkReader(boost::filesystem::path landmarksPath)
+        : landmarksPath_(std::move(landmarksPath))
     {
     }
 
@@ -37,6 +39,8 @@ public:
 
     /** @brief Read the Landmarks file */
     void read();
+
+    void readRaw();
 
     /** @brief Get the parsed fixed landmarks */
     rt::LandmarkContainer getFixedLandmarks() { return fixedLandmarks_; }
