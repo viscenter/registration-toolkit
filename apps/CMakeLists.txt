@@ -63,6 +63,13 @@ target_link_libraries(rt_plot_landmarks
     Boost::program_options
 )
 
+add_executable(rt_swap_landmarks src/SwapLandmarks.cpp)
+target_link_libraries(rt_swap_landmarks
+    rt::rtlib
+    Boost::filesystem
+    Boost::program_options
+)
+
 find_package(Eigen3)
 add_library(eigen3 INTERFACE IMPORTED)
 set_target_properties(eigen3 PROPERTIES

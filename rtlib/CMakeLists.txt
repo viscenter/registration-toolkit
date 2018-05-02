@@ -7,6 +7,7 @@ set(io_srcs
     src/OBJWriter.cpp
     src/ReadRawTIFF.cpp
     src/LandmarkReader.cpp
+    src/LandmarkWriter.cpp
 )
 
 set(type_srcs
