@@ -31,6 +31,8 @@ include(${VTK_USE_FILE})
 # headers.
 include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
 
+find_package(TIFF REQUIRED)
+
 ############
 # Optional #
 ############
