@@ -22,6 +22,9 @@ set(ITKIOTransformLibs
     ITKIOTransformMatlab
 )
 
+### Qt ###
+find_package(Qt5 5.7 QUIET REQUIRED COMPONENTS Widgets Gui Core X11Extras)
+
 ### VTK ###
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
@@ -31,6 +34,10 @@ include(${VTK_USE_FILE})
 # headers.
 include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
 
+### Eigen3 ###
+# include(FindEigen3)
+
+### libtiff ###
 find_package(TIFF REQUIRED)
 
 ############
