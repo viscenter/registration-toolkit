@@ -23,10 +23,7 @@ target_link_libraries(rt_register2d
 add_executable(rt_reorder_texture src/ReorderTexture.cpp)
 target_link_libraries(rt_reorder_texture
     rt::rtlib
-    opencv_core
-    opencv_imgproc
-    opencv_highgui
-    ${VTK_LIBRARIES}
+    Boost::filesystem
 )
 
 add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
@@ -81,11 +78,7 @@ if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
     target_link_libraries(rt_dewarp
         rt::rtlib
-        VC::core
         VC::texturing
-        opencv_core
-        opencv_imgproc
-        opencv_highgui
-        ${VTK_LIBRARIES}
+        Boost::filesystem
     )
 endif()
