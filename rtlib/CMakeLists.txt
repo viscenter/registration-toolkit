@@ -40,6 +40,14 @@ target_link_libraries(${target}
         ITKCommon
         ITKTransform
         ITKOptimizers
+	vtkCommonCore
+	vtkCommonDataModel
+	vtkCommonExecutionModel
+	vtkCommonMath
+	vtkCommonMisc
+	vtkCommonTransforms
+	vtkFiltersCore
+	vtkFiltersGeneral
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"
