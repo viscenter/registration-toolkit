@@ -42,7 +42,7 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     for (auto& m : matches) {
         auto fixIdx = m.queryIdx;
         auto movIdx = m.trainIdx;
-        output_.push_back({fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt});
+        output_.emplace_back(fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
     }
 
     // Return only the matches we've requested

@@ -35,11 +35,18 @@ target_link_libraries(${target}
     PUBLIC
         Boost::filesystem
         opencv_core
-        opencv_features2d
-        opencv_highgui
         ITKCommon
         ITKTransform
+        vtkCommonCore
+        vtkCommonDataModel
+    PRIVATE
+        opencv_features2d
+        opencv_highgui
+        opencv_imgproc
         ITKOptimizers
+        vtkCommonTransforms
+        vtkFiltersGeneral
+        TIFF::TIFF
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"
