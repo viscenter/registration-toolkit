@@ -42,11 +42,8 @@ target_link_libraries(${target}
         ITKOptimizers
 	vtkCommonCore
 	vtkCommonDataModel
-	vtkCommonExecutionModel
-	vtkCommonMath
-	vtkCommonMisc
+    PRIVATE
 	vtkCommonTransforms
-	vtkFiltersCore
 	vtkFiltersGeneral
 )
 set_target_properties(${target} PROPERTIES
