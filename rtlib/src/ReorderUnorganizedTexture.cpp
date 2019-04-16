@@ -1,5 +1,6 @@
 #include "rt/ReorderUnorganizedTexture.hpp"
 
+#include <opencv2/imgproc.hpp>
 #include <vtkLandmarkTransform.h>
 #include <vtkOBBTree.h>
 #include <vtkTransformPolyDataFilter.h>

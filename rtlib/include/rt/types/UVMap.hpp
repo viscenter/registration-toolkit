@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 #include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
 
 namespace rt
 {

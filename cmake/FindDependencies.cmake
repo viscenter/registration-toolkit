@@ -38,6 +38,8 @@ find_package(TIFF REQUIRED)
 # Optional #
 ############
 
+find_package(VC 2.13)
+
 # If this option is set, then use all optional dependencies
 option(PROJ_USE_ALL "Use all optional third-party libs" off)
 if(PROJ_USE_ALL)

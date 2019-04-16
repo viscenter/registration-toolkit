@@ -1,4 +1,5 @@
 #include <boost/filesystem.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include "rt/ReorderUnorganizedTexture.hpp"
 #include "rt/io/OBJReader.hpp"
