@@ -6,7 +6,10 @@ target_link_libraries(rt_apply_transform
     opencv_imgcodecs
     Boost::filesystem
     Boost::program_options
-    ${ITK_LIBRARIES}
+    ITKIOTransformBase
+    ITKIOTransformHDF5
+    ITKIOTransformInsightLegacy
+    ITKIOTransformMatlab
 )
 
 add_executable(rt_register2d src/Register2D.cpp)
@@ -14,9 +17,12 @@ target_link_libraries(rt_register2d
     rt::rtlib
     opencv_core
     opencv_imgcodecs
-    ${ITK_LIBRARIES}
     Boost::filesystem
     Boost::program_options
+    ITKIOTransformBase
+    ITKIOTransformHDF5
+    ITKIOTransformInsightLegacy
+    ITKIOTransformMatlab
 )
 
 # 3D Registration Apps
@@ -37,7 +43,10 @@ target_link_libraries(rt_register3d
     opencv_core
     opencv_imgcodecs
     Boost::program_options
-    ${ITKIOTransformLibs}
+    ITKIOTransformBase
+    ITKIOTransformHDF5
+    ITKIOTransformInsightLegacy
+    ITKIOTransformMatlab
 )
 
 add_executable(rt_brisk_match src/BriskMatch.cpp)
@@ -55,7 +64,6 @@ target_link_libraries(rt_plot_landmarks
     opencv_core
     opencv_imgcodecs
     opencv_imgproc
-    ${ITK_LIBRARIES}
     Boost::filesystem
     Boost::program_options
 )
@@ -67,13 +75,6 @@ target_link_libraries(rt_swap_landmarks
     Boost::program_options
 )
 
-find_package(Eigen3)
-add_library(eigen3 INTERFACE IMPORTED)
-set_target_properties(eigen3 PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
-)
-find_package(VC 2.13)
-
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
     target_link_libraries(rt_dewarp
@@ -82,3 +83,17 @@ if(VC_FOUND)
         Boost::filesystem
     )
 endif()
+
+install(
+    TARGETS
+	rt_apply_transform
+	rt_register2d
+	rt_reorder_texture
+	rt_raw_tiff_converter
+	rt_register3d
+	rt_brisk_match
+	rt_plot_landmarks
+	rt_swap_landmarks
+    RUNTIME DESTINATION bin
+    COMPONENT Programs
+)
