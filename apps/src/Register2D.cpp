@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
 
     ///// Resample the source image /////
     printf("Resampling the moving image...\n");
-    cvMoving = cv::imread(movingPath.string(), -1);
+    cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
     cv::Size s(cvFixed.cols, cvFixed.rows);
     auto cvFinal = ImageTransformResampler(cvMoving, s, compositeTrans);
 

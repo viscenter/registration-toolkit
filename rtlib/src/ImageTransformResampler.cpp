@@ -20,6 +20,21 @@ cv::Mat rt::ImageTransformResampler(
             i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
             return itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
         }
+        case CV_8UC4: {
+            // Extract and transform each channel
+            std::vector<cv::Mat> cns;
+            cv::split(m, cns);
+            for(auto& c : cns) {
+                using T = Image8UC1;
+                auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(c);
+                i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+                c = itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
+            }
+
+            cv::Mat result(m.rows, m.cols, CV_8U);
+            cv::merge(cns, result);
+            return result;
+        }
         case CV_16UC1: {
             using T = Image16UC1;
             auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(m);
