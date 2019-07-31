@@ -24,10 +24,11 @@ cv::Mat rt::ImageTransformResampler(
             // Extract and transform each channel
             std::vector<cv::Mat> cns;
             cv::split(m, cns);
-            for(auto& c : cns) {
+            for (auto& c : cns) {
                 using T = Image8UC1;
                 auto i = itk::OpenCVImageBridge::CVMatToITKImage<T>(c);
-                i = ImageTransformResampler<T>(i, {s.width, s.height}, transform);
+                i = ImageTransformResampler<T>(
+                    i, {s.width, s.height}, transform);
                 c = itk::OpenCVImageBridge::ITKImageToCVMat<T>(i);
             }
 

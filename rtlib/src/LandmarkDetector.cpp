@@ -34,16 +34,34 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     matcher.knnMatch(fixedDesc, movingDesc, matches, 2);
 
     // Sort according to distance between descriptor matches
-    std::sort(matches.begin(), matches.end(), [](const std::vector<cv::DMatch>& a, const std::vector<cv::DMatch>& b) {
-      return a[0].distance < b[0].distance;
-    });
+    std::sort(
+        matches.begin(), matches.end(),
+        [](const std::vector<cv::DMatch>& a, const std::vector<cv::DMatch>& b) {
+            return a[0].distance < b[0].distance;
+        });
 
     // Filter and transfer to the output vector
-    for(const auto& m : matches) {
-        if(m[0].distance < nnMatchRatio_ * m[1].distance) {
+    int regionsX{4}, regionsY{4}, regionLimit{10};
+    auto intervalX = std::ceil(fixedImg_.cols / regionsX);
+    auto intervalY = std::ceil(fixedImg_.rows / regionsY);
+    std::vector<int> regionCounts(regionsX * regionsY, 0);
+    for (const auto& m : matches) {
+        // Filter according to nn ratio
+        if (m[0].distance < nnMatchRatio_ * m[1].distance) {
             auto fixIdx = m[0].queryIdx;
             auto movIdx = m[0].trainIdx;
-            output_.emplace_back(fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
+
+            // Filter so there's a relatively even spatial density
+            double xRegion{0}, yRegion{0};
+            std::modf(fixedKeyPts[fixIdx].pt.x / intervalX, &xRegion);
+            std::modf(fixedKeyPts[fixIdx].pt.y / intervalY, &yRegion);
+            int idx = static_cast<int>(yRegion) * regionsY +
+                      static_cast<int>(xRegion);
+            if(regionCounts[idx] < regionLimit) {
+                output_.emplace_back(
+                    fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
+                regionCounts[idx]++;
+            }
         }
     }
 
