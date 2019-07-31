@@ -33,6 +33,8 @@ public:
     void setMovingImage(const cv::Mat& img) { movingImg_ = img; }
     /** @brief Set the fixed image mask */
     void setMovingMask(const cv::Mat& img) { movingMask_ = img; }
+    /** @brief Set the nearest-neighbor matching ratio */
+    void setMatchRatio(float r) { nnMatchRatio_ = r; }
 
     /** @brief Compute key point matches between the fixed and moving images
      *
@@ -63,5 +65,7 @@ private:
     cv::Mat movingMask_;
     /** Matched pairs */
     std::vector<LandmarkPair> output_;
+    /** Nearest-neighbor matching ratio */
+    float nnMatchRatio_{0.8f};
 };
 }

@@ -8,7 +8,7 @@
 
 #include "rt/LandmarkDetector.hpp"
 
-static constexpr int NUM_BEST_MATCHES = 30;
+static constexpr int NUM_BEST_MATCHES = -1;
 namespace fs = boost::filesystem;
 
 void WriteLDM(const fs::path& path, const std::vector<rt::LandmarkPair>& pairs);

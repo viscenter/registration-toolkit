@@ -20,29 +20,31 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     output_.clear();
 
     // Detect key points and compute their descriptors
-    auto brisk = cv::BRISK::create();
+    auto featureDetector = cv::AKAZE::create();
     std::vector<cv::KeyPoint> fixedKeyPts, movingKeyPts;
     cv::Mat fixedDesc, movingDesc;
-    brisk->detectAndCompute(
+    featureDetector->detectAndCompute(
         fixedImg_, fixedMask_, fixedKeyPts, fixedDesc, false);
-    brisk->detectAndCompute(
+    featureDetector->detectAndCompute(
         movingImg_, movingMask_, movingKeyPts, movingDesc, false);
 
     // Compute matches from descriptors
-    auto matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
-    std::vector<cv::DMatch> matches;
-    matcher->match(fixedDesc, movingDesc, matches, cv::Mat());
+    cv::BFMatcher matcher(cv::NORM_HAMMING);
+    std::vector<std::vector<cv::DMatch>> matches;
+    matcher.knnMatch(fixedDesc, movingDesc, matches, 2);
 
     // Sort according to distance between descriptor matches
-    std::sort(matches.begin(), matches.end(), [](cv::DMatch a, cv::DMatch b) {
-        return a.distance < b.distance;
+    std::sort(matches.begin(), matches.end(), [](const std::vector<cv::DMatch>& a, const std::vector<cv::DMatch>& b) {
+      return a[0].distance < b[0].distance;
     });
 
-    // Transfer to the output vector
-    for (auto& m : matches) {
-        auto fixIdx = m.queryIdx;
-        auto movIdx = m.trainIdx;
-        output_.emplace_back(fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
+    // Filter and transfer to the output vector
+    for(const auto& m : matches) {
+        if(m[0].distance < nnMatchRatio_ * m[1].distance) {
+            auto fixIdx = m[0].queryIdx;
+            auto movIdx = m[0].trainIdx;
+            output_.emplace_back(fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
+        }
     }
 
     // Return only the matches we've requested
