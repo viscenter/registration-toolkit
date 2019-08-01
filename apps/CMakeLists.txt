@@ -30,6 +30,7 @@ add_executable(rt_reorder_texture src/ReorderTexture.cpp)
 target_link_libraries(rt_reorder_texture
     rt::rtlib
     Boost::filesystem
+    Boost::program_options
 )
 
 add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
@@ -86,14 +87,14 @@ endif()
 
 install(
     TARGETS
-	rt_apply_transform
-	rt_register2d
-	rt_reorder_texture
-	rt_raw_tiff_converter
-	rt_register3d
-	rt_brisk_match
-	rt_plot_landmarks
-	rt_swap_landmarks
+        rt_apply_transform
+        rt_register2d
+        rt_reorder_texture
+        rt_raw_tiff_converter
+        rt_register3d
+        rt_brisk_match
+        rt_plot_landmarks
+        rt_swap_landmarks
     RUNTIME DESTINATION bin
     COMPONENT Programs
 )
