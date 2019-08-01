@@ -3,7 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
-#include "rt/LandmarkReader.hpp"
+#include "rt/io/LandmarkReader.hpp"
 #include "rt/io/LandmarkWriter.hpp"
 
 using namespace rt;

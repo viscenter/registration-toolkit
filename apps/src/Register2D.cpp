@@ -13,7 +13,9 @@
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
-#include "rt/LandmarkReader.hpp"
+#include "rt/LandmarkDetector.hpp"
+#include "rt/io/LandmarkReader.hpp"
+#include "rt/io/LandmarkWriter.hpp"
 
 using namespace rt;
 
@@ -38,16 +40,22 @@ int main(int argc, char* argv[])
         ("fixed,f", po::value<std::string>()->required(), "Fixed image")
         ("output-file,o", po::value<std::string>()->required(),
             "Output file path for the registered moving image")
+        ("output-ldm", po::value<std::string>(),
+            "Output file path for the generated landmarks file")
         ("output-tfm,t", po::value<std::string>(),
             "Output file path for the generated transform file");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
-        ("landmarks,l", po::value<std::string>(),"Landmarks file")
-        ("landmark-disable-bspline", "Disable B-Spline Landmark Registration");
+        ("disable-landmark", "Disable all landmark registration steps")
+        ("disable-landmark-bspline", "Disable secondary B-Spline landmark registration")
+        ("input-landmarks,l", po::value<std::string>(),
+            "Input landmarks file. If not provided, landmark features "
+            "are automatically detected from the input images.");
 
     po::options_description deformOptions("Deformable Registration Options");
     deformOptions.add_options()
+        ("disable-deformable", "Disable all deformable registration steps")
         ("deformable-iterations,i", po::value<int>()->default_value(100),
             "Number of deformable optimization iterations");
 
@@ -91,16 +99,40 @@ int main(int argc, char* argv[])
     // Setup final transform
     auto compositeTrans = CompositeTransform::New();
     ///// Landmark Registration /////
-    if (parsed.count("landmarks")) {
-        printf("Running affine registration...\n");
-        fs::path landmarksFileName = parsed["landmarks"].as<std::string>();
-        LandmarkReader landmarkReader(landmarksFileName);
-        landmarkReader.setFixedImage(fixedImage);
-        landmarkReader.setMovingImage(movingImage);
-        landmarkReader.read();
-        auto fixedLandmarks = landmarkReader.getFixedLandmarks();
-        auto movingLandmarks = landmarkReader.getMovingLandmarks();
+    if (parsed.count("disable-landmark") == 0) {
+        LandmarkContainer fixedLandmarks, movingLandmarks;
+        if (parsed.count("input-landmarks") > 0) {
+            std::cout << "Loading landmarks from file..." << std::endl;
+            fs::path landmarksFileName =
+                parsed["input-landmarks"].as<std::string>();
+            LandmarkReader landmarkReader(landmarksFileName);
+            landmarkReader.setFixedImage(fixedImage);
+            landmarkReader.setMovingImage(movingImage);
+            landmarkReader.read();
+            fixedLandmarks = landmarkReader.getFixedLandmarks();
+            movingLandmarks = landmarkReader.getMovingLandmarks();
+        } else {
+            std::cout << "Detecting landmarks..." << std::endl;
+            LandmarkDetector landmarkDetector;
+            landmarkDetector.setFixedImage(cvFixed);
+            landmarkDetector.setMovingImage(cvMoving);
+            landmarkDetector.compute();
+            fixedLandmarks = landmarkDetector.getFixedLandmarks();
+            movingLandmarks = landmarkDetector.getMovingLandmarks();
 
+            if (parsed.count("output-ldm")) {
+                printf("Writing landmarks to file...\n");
+                fs::path landmarkFileName =
+                    parsed["output-ldm"].as<std::string>();
+                LandmarkWriter landmarksWriter;
+                landmarksWriter.setPath(landmarkFileName);
+                landmarksWriter.setFixedLandmarks(fixedLandmarks);
+                landmarksWriter.setMovingLandmarks(movingLandmarks);
+                landmarksWriter.write();
+            }
+        }
+
+        std::cout << "Running affine registration..." << std::endl;
         AffineLandmarkRegistration landmark;
         landmark.setFixedLandmarks(fixedLandmarks);
         landmark.setMovingLandmarks(movingLandmarks);
@@ -112,8 +144,8 @@ int main(int argc, char* argv[])
             movingImage, fixedImage->GetLargestPossibleRegion().GetSize(),
             compositeTrans);
 
-        // Generate the landmark transform
-        if (parsed.count("landmark-disable-bspline") == 0) {
+        // B-Spline landmark warping
+        if (parsed.count("disable-landmark-bspline") == 0) {
             printf("Running B-spline landmark registration...\n");
 
             // Update the landmark positions
@@ -140,9 +172,9 @@ int main(int argc, char* argv[])
     }
 
     ///// Deformable Registration /////
-    auto iterations = parsed["deformable-iterations"].as<int>();
-    if (iterations > 0) {
+    if (parsed.count("disable-deformable") == 0) {
         printf("Running deformable registration...\n");
+        auto iterations = parsed["deformable-iterations"].as<int>();
         rt::DeformableRegistration deformable;
         deformable.setFixedImage(fixedImage);
         deformable.setMovingImage(movingImage);

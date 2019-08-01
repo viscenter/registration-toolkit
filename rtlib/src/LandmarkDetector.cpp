@@ -71,3 +71,27 @@ std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs()
 {
     return output_;
 }
+
+LandmarkContainer LandmarkDetector::getFixedLandmarks() const
+{
+    LandmarkContainer res;
+    Landmark l;
+    for (const auto& p : output_) {
+        l[0] = p.first.x;
+        l[1] = p.first.y;
+        res.push_back(l);
+    }
+    return res;
+}
+
+LandmarkContainer LandmarkDetector::getMovingLandmarks() const
+{
+    LandmarkContainer res;
+    Landmark l;
+    for (const auto& p : output_) {
+        l[0] = p.second.x;
+        l[1] = p.second.y;
+        res.push_back(l);
+    }
+    return res;
+}

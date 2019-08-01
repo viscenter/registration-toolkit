@@ -13,7 +13,7 @@
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
-#include "rt/LandmarkReader.hpp"
+#include "rt/io/LandmarkReader.hpp"
 
 using namespace rt;
 

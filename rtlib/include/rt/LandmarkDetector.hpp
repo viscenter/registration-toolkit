@@ -4,6 +4,8 @@
 
 #include <opencv2/core.hpp>
 
+#include "rt/LandmarkRegistrationBase.hpp"
+
 namespace rt
 {
 /** @brief Pair of matched positions
@@ -18,7 +20,7 @@ using LandmarkPair = std::pair<cv::Point2f, cv::Point2f>;
  * @brief Automatically generate landmark pairs between a two images
  * @author Ali Bertelsman
  *
- * Uses BRISK feature descriptors to generate pairs of matching key points
+ * Uses AKAZE feature descriptors to generate pairs of matching key points
  * between two images. To create key points bounded by a region of interest,
  * set the mask for either the static or moving image.
  *
@@ -45,12 +47,18 @@ public:
      */
     std::vector<LandmarkPair> compute();
 
-    /** @brief Get the computed matches
+    /**
+     * @brief Get the computed matches
      *
      * Returns a list of matches, sorted by strength of match and filtered for
      * outliers.
      */
     std::vector<LandmarkPair> getLandmarkPairs();
+
+    /** @brief Get the detected landmarks for the fixed image */
+    LandmarkContainer getFixedLandmarks() const;
+    /** @brief Get the detected landmarks for the moving image */
+    LandmarkContainer getMovingLandmarks() const;
 
 private:
     /** Fixed image */

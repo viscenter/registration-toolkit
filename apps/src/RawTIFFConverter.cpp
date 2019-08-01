@@ -3,7 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#include "rt/ReadRawTIFF.hpp"
+#include "rt/io/ReadRawTIFF.hpp"
 
 namespace fs = boost::filesystem;
 
