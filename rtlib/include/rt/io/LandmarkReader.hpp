@@ -20,7 +20,7 @@ public:
     /** @brief Default constructor */
     LandmarkReader() = default;
 
-    LandmarkReader(boost::filesystem::path landmarksPath)
+    explicit LandmarkReader(boost::filesystem::path landmarksPath)
         : landmarksPath_(std::move(landmarksPath))
     {
     }
@@ -64,4 +64,4 @@ private:
     /** Moving landmarks container */
     rt::LandmarkContainer movingLandmarks_;
 };
-}
+}  // namespace rt

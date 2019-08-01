@@ -13,7 +13,7 @@
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
-#include "rt/LandmarkReader.hpp"
+#include "rt/io/LandmarkReader.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/Exceptions.hpp"

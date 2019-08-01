@@ -1,15 +1,15 @@
 #include "rt/LandmarkDetector.hpp"
 
-#include <fstream>
-#include <iostream>
+#include <algorithm>
+#include <exception>
+
+#include <opencv2/calib3d.hpp>
 #include <opencv2/features2d.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 
 using namespace rt;
 
 // Compute the matches
-std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
+std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 {
     // Make sure we have the images
     if (fixedImg_.data == nullptr || movingImg_.data == nullptr) {
@@ -20,46 +20,80 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
     output_.clear();
 
     // Detect key points and compute their descriptors
-    auto brisk = cv::BRISK::create();
+    auto featureDetector = cv::AKAZE::create();
     std::vector<cv::KeyPoint> fixedKeyPts, movingKeyPts;
     cv::Mat fixedDesc, movingDesc;
-    brisk->detectAndCompute(
+    featureDetector->detectAndCompute(
         fixedImg_, fixedMask_, fixedKeyPts, fixedDesc, false);
-    brisk->detectAndCompute(
+    featureDetector->detectAndCompute(
         movingImg_, movingMask_, movingKeyPts, movingDesc, false);
 
     // Compute matches from descriptors
-    auto matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
-    std::vector<cv::DMatch> matches;
-    matcher->match(fixedDesc, movingDesc, matches, cv::Mat());
+    cv::BFMatcher matcher(cv::NORM_HAMMING);
+    std::vector<std::vector<cv::DMatch>> matches;
+    int k = 2;
+    matcher.knnMatch(fixedDesc, movingDesc, matches, k);
 
     // Sort according to distance between descriptor matches
-    std::sort(matches.begin(), matches.end(), [](cv::DMatch a, cv::DMatch b) {
-        return a.distance < b.distance;
-    });
+    std::sort(
+        matches.begin(), matches.end(),
+        [](const std::vector<cv::DMatch>& a, const std::vector<cv::DMatch>& b) {
+            return a[0].distance < b[0].distance;
+        });
 
-    // Transfer to the output vector
-    for (auto& m : matches) {
-        auto fixIdx = m.queryIdx;
-        auto movIdx = m.trainIdx;
-        output_.emplace_back(fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
+    // Ratio Test
+    std::vector<cv::Point2f> goodFixed, goodMoving;
+    for (const auto& m : matches) {
+        // Filter according to nn ratio
+        if (m[0].distance < nnMatchRatio_ * m[1].distance) {
+            auto fixIdx = m[0].queryIdx;
+            auto movIdx = m[0].trainIdx;
+
+            goodFixed.emplace_back(fixedKeyPts[fixIdx].pt);
+            goodMoving.emplace_back(movingKeyPts[movIdx].pt);
+        }
+    }
+
+    // RANSAC outlier filtering
+    cv::Mat ransacMask;
+    double ransacReprojThreshold = 3;
+    cv::findHomography(goodMoving, goodFixed, cv::RANSAC, ransacReprojThreshold, ransacMask);
+    for (size_t idx = 0; idx < goodMoving.size(); idx++) {
+        if (ransacMask.at<uint8_t>(idx) > 0) {
+            output_.emplace_back(goodFixed[idx], goodMoving[idx]);
+        }
     }
 
     // Return only the matches we've requested
-    return getLandmarkPairs(numMatches);
+    return output_;
 }
 
 // Return previously computed matches
-std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs(int numMatches)
+std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs()
 {
-    // Return all
-    if (numMatches == -1 || output_.empty()) {
-        return output_;
-    }
+    return output_;
+}
 
-    // Return limited number
-    int n = (numMatches > static_cast<int>(output_.size()))
-                ? static_cast<int>(output_.size() - 1)
-                : numMatches;
-    return {std::begin(output_), std::begin(output_) + n};
+LandmarkContainer LandmarkDetector::getFixedLandmarks() const
+{
+    LandmarkContainer res;
+    Landmark l;
+    for (const auto& p : output_) {
+        l[0] = p.first.x;
+        l[1] = p.first.y;
+        res.push_back(l);
+    }
+    return res;
+}
+
+LandmarkContainer LandmarkDetector::getMovingLandmarks() const
+{
+    LandmarkContainer res;
+    Landmark l;
+    for (const auto& p : output_) {
+        l[0] = p.second.x;
+        l[1] = p.second.y;
+        res.push_back(l);
+    }
+    return res;
 }

@@ -1,4 +1,4 @@
-#include "rt/ReadRawTIFF.hpp"
+#include "rt/io/ReadRawTIFF.hpp"
 
 #include <iostream>
 

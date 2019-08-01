@@ -50,8 +50,8 @@ target_link_libraries(rt_register3d
     ITKIOTransformMatlab
 )
 
-add_executable(rt_brisk_match src/BriskMatch.cpp)
-target_link_libraries(rt_brisk_match
+add_executable(rt_generate_landmarks src/GenerateLandmarks.cpp)
+target_link_libraries(rt_generate_landmarks
     rt::rtlib
     opencv_core
     opencv_imgcodecs
@@ -92,7 +92,7 @@ install(
         rt_reorder_texture
         rt_raw_tiff_converter
         rt_register3d
-        rt_brisk_match
+        rt_generate_landmarks
         rt_plot_landmarks
         rt_swap_landmarks
     RUNTIME DESTINATION bin

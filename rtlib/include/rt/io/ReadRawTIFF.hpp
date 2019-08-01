@@ -23,5 +23,5 @@ namespace io
  * @param offset Shift the encoded strip offset by a number of bytes
  */
 cv::Mat ReadRawTIFF(const boost::filesystem::path& path, int offset = 0);
-}
-}
+}  // namespace io
+}  // namespace rt
