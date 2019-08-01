@@ -31,7 +31,8 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
     // Compute matches from descriptors
     cv::BFMatcher matcher(cv::NORM_HAMMING);
     std::vector<std::vector<cv::DMatch>> matches;
-    matcher.knnMatch(fixedDesc, movingDesc, matches, 2);
+    int k = 2;
+    matcher.knnMatch(fixedDesc, movingDesc, matches, k);
 
     // Sort according to distance between descriptor matches
     std::sort(
@@ -55,7 +56,8 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 
     // RANSAC outlier filtering
     cv::Mat ransacMask;
-    cv::findHomography(goodMoving, goodFixed, cv::RANSAC, 3, ransacMask);
+    double ransacReprojThreshold = 3;
+    cv::findHomography(goodMoving, goodFixed, cv::RANSAC, ransacReprojThreshold, ransacMask);
     for (size_t idx = 0; idx < goodMoving.size(); idx++) {
         if (ransacMask.at<uint8_t>(idx) > 0) {
             output_.emplace_back(goodFixed[idx], goodMoving[idx]);
