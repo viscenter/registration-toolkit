@@ -8,7 +8,6 @@
 
 #include "rt/LandmarkDetector.hpp"
 
-static constexpr int NUM_BEST_MATCHES = -1;
 namespace fs = boost::filesystem;
 
 void WriteLDM(const fs::path& path, const std::vector<rt::LandmarkPair>& pairs);
@@ -42,7 +41,7 @@ int main(int argc, const char* argv[])
     rt::LandmarkDetector detector;
     detector.setFixedImage(fixedImg);
     detector.setMovingImage(movingImg);
-    auto matchedPairs = detector.compute(NUM_BEST_MATCHES);
+    auto matchedPairs = detector.compute();
 
     // Write the output
     WriteLDM(outputPath, matchedPairs);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <opencv2/core.hpp>
 
 namespace rt
@@ -38,21 +40,17 @@ public:
 
     /** @brief Compute key point matches between the fixed and moving images
      *
-     * Returns a list of matches, sorted by strength of match. The size of the
-     * returned vector is guaranteed to be less than or equal to the number
-     * specified by numMatches. If numMatches = -1 (default), then all matches
-     * are returned.
+     * Returns a list of matches, sorted by strength of match and filtered for
+     * outliers.
      */
-    std::vector<LandmarkPair> compute(int numMatches = -1);
+    std::vector<LandmarkPair> compute();
 
     /** @brief Get the computed matches
      *
-     * Returns a list of matches, sorted by strength of match. The size of the
-     * returned vector is guaranteed to be less than or equal to the number
-     * specified by numMatches. If numMatches = -1, then all matches are
-     * returned.
+     * Returns a list of matches, sorted by strength of match and filtered for
+     * outliers.
      */
-    std::vector<LandmarkPair> getLandmarkPairs(int numMatches);
+    std::vector<LandmarkPair> getLandmarkPairs();
 
 private:
     /** Fixed image */

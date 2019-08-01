@@ -1,15 +1,15 @@
 #include "rt/LandmarkDetector.hpp"
 
-#include <fstream>
-#include <iostream>
+#include <algorithm>
+#include <exception>
+
+#include <opencv2/calib3d.hpp>
 #include <opencv2/features2d.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 
 using namespace rt;
 
 // Compute the matches
-std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
+std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 {
     // Make sure we have the images
     if (fixedImg_.data == nullptr || movingImg_.data == nullptr) {
@@ -40,46 +40,34 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute(int numMatches)
             return a[0].distance < b[0].distance;
         });
 
-    // Filter and transfer to the output vector
-    int regionsX{4}, regionsY{4}, regionLimit{10};
-    auto intervalX = std::ceil(fixedImg_.cols / regionsX);
-    auto intervalY = std::ceil(fixedImg_.rows / regionsY);
-    std::vector<int> regionCounts(regionsX * regionsY, 0);
+    // Ratio Test
+    std::vector<cv::Point2f> goodFixed, goodMoving;
     for (const auto& m : matches) {
         // Filter according to nn ratio
         if (m[0].distance < nnMatchRatio_ * m[1].distance) {
             auto fixIdx = m[0].queryIdx;
             auto movIdx = m[0].trainIdx;
 
-            // Filter so there's a relatively even spatial density
-            double xRegion{0}, yRegion{0};
-            std::modf(fixedKeyPts[fixIdx].pt.x / intervalX, &xRegion);
-            std::modf(fixedKeyPts[fixIdx].pt.y / intervalY, &yRegion);
-            int idx = static_cast<int>(yRegion) * regionsY +
-                      static_cast<int>(xRegion);
-            if(regionCounts[idx] < regionLimit) {
-                output_.emplace_back(
-                    fixedKeyPts[fixIdx].pt, movingKeyPts[movIdx].pt);
-                regionCounts[idx]++;
-            }
+            goodFixed.emplace_back(fixedKeyPts[fixIdx].pt);
+            goodMoving.emplace_back(movingKeyPts[movIdx].pt);
+        }
+    }
+
+    // RANSAC outlier filtering
+    cv::Mat ransacMask;
+    cv::findHomography(goodMoving, goodFixed, cv::RANSAC, 3, ransacMask);
+    for (size_t idx = 0; idx < goodMoving.size(); idx++) {
+        if (ransacMask.at<uint8_t>(idx) > 0) {
+            output_.emplace_back(goodFixed[idx], goodMoving[idx]);
         }
     }
 
     // Return only the matches we've requested
-    return getLandmarkPairs(numMatches);
+    return output_;
 }
 
 // Return previously computed matches
-std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs(int numMatches)
+std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs()
 {
-    // Return all
-    if (numMatches == -1 || output_.empty()) {
-        return output_;
-    }
-
-    // Return limited number
-    int n = (numMatches > static_cast<int>(output_.size()))
-                ? static_cast<int>(output_.size() - 1)
-                : numMatches;
-    return {std::begin(output_), std::begin(output_) + n};
+    return output_;
 }

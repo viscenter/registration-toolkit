@@ -40,6 +40,7 @@ target_link_libraries(${target}
         vtkCommonCore
         vtkCommonDataModel
     PRIVATE
+        opencv_calib3d
         opencv_features2d
         opencv_highgui
         opencv_imgproc
