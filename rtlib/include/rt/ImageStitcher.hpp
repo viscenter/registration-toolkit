@@ -12,12 +12,13 @@ class ImageStitcher
 public:
     ImageStitcher() = default;
 
-    void setImages(std::vector<cv::Mat> i) { imgs_ = i; }
+    void setImages(cv::InputArrayOfArrays i) { i.getUMatVector(imgs_); }
 
     cv::Mat compute();
 
 private:
-    std::vector<cv::Mat> imgs_;
+    std::vector<cv::UMat> imgs_;
+    std::vector<cv::UMat> masks_;
 };
 
 }  // namespace rt
