@@ -67,6 +67,8 @@ public:
      * image
      */
     void setSampleRate(double s) { sampleRate_ = s; }
+    /** @brief Set whether to use the first mesh intersection point */
+    void setUseFirstIntersection(bool b) { useFirstInterection_ = b; };
     /**@}*/
 
     /**@{*/
@@ -124,6 +126,9 @@ private:
     cv::Vec3d xAxis_;
     cv::Vec3d yAxis_;
     cv::Vec3d zAxis_;
+
+    /** Whether we want the first or last mesh interesection point */
+    bool useFirstInterection_{false};
 
     /** Output UV map */
     UVMap outputUV_;
