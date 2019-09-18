@@ -62,8 +62,13 @@ void ReorderUnorganizedTexture::create_texture_()
             auto res = obbTree->IntersectWithLine(
                 a0.val, a1.val, interPts, interCells);
             if (res != 0) {
+                auto cid = interCells->GetNumberOfIds() - 1;
+                if (useFirstInterection_) {
+                    cid = 0;
+                }
+
                 // Get the three vertices of the last intersected cell
-                auto cell = interCells->GetId(interCells->GetNumberOfIds() - 1);
+                auto cell = interCells->GetId(cid);
                 auto pointIds = vtkSmartPointer<vtkIdList>::New();
                 inputMesh_->GetCellPoints(cell, pointIds);
 

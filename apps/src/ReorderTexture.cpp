@@ -24,7 +24,13 @@ int main(int argc, char* argv[])
         ("output-mesh,o", po::value<std::string>()->required(),
              "Path to output OBJ with ordered texture")
         ("sample-rate,r", po::value<double>()->default_value(0.1),
-             "Sample rate at which mesh space is rasterized to pixels");
+             "Sample rate at which mesh space is rasterized to pixels")
+        ("use-first-intersection,f", "This program assumes that "
+             "the projection origin is behind the base plane of the sampled "
+             "mesh. Thus, the last mesh intersection point will lie on the "
+             "visible surface. If instead the projection origin is in front of "
+             "the base plane, the first mesh intersection point lies on the "
+             "visible surface.");
 
     po::options_description all("Usage");
     all.add(required);
@@ -35,7 +41,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Show the help message
-    if (parsed.count("help")) {
+    if (parsed.count("help") || argc < 5) {
         std::cerr << all << std::endl;
         return EXIT_SUCCESS;
     }
@@ -51,6 +57,7 @@ int main(int argc, char* argv[])
     fs::path inputPath = parsed["input-mesh"].as<std::string>();
     fs::path outputPath = parsed["output-mesh"].as<std::string>();
     auto sampleRate = parsed["sample-rate"].as<double>();
+    auto useFirstIntersection = parsed.count("use-first-intersection") > 0;
 
     // Load the mesh
     std::cerr << "Reading mesh: " << inputPath << std::endl;
@@ -78,6 +85,7 @@ int main(int argc, char* argv[])
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
     r.setSampleRate(sampleRate);
+    r.setUseFirstIntersection(useFirstIntersection);
     r.compute();
 
     // Write to file
