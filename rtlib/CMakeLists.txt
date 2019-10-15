@@ -22,6 +22,7 @@ set(srcs
     src/AffineLandmarkRegistration.cpp
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
+    src/RegPkg.cpp
 )
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
