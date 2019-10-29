@@ -68,7 +68,7 @@ public:
      */
     void setSampleRate(double s) { sampleRate_ = s; }
     /** @brief Set whether to use the first mesh intersection point */
-    void setUseFirstIntersection(bool b) { useFirstInterection_ = b; };
+    void setUseFirstIntersection(bool b) { useFirstInterection_ = b; }
     /**@}*/
 
     /**@{*/

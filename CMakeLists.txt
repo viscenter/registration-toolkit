@@ -1,8 +1,4 @@
-# registration-toolkit
-# Written by: Stephen Parson, Zack Anderson, and the VC Project Team
-
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-
 project("registration-toolkit" VERSION 0.1.0)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)

@@ -10,7 +10,10 @@ find_package(Sanitizers)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 
 ### OpenCV ###
-find_package(OpenCV 3 REQUIRED)
+find_package(OpenCV 3 QUIET)
+if(NOT OpenCV_FOUND)
+    find_package(OpenCV 4 QUIET REQUIRED)
+endif()
 
 ### ITK ###
 find_package(ITK REQUIRED)
