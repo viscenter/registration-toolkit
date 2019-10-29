@@ -76,6 +76,14 @@ target_link_libraries(rt_swap_landmarks
     Boost::program_options
 )
 
+add_executable(rt_stitch src/StitchImages.cpp)
+target_link_libraries(rt_stitch
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    Boost::filesystem
+)
+
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
     target_link_libraries(rt_dewarp
