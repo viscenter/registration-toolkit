@@ -23,6 +23,7 @@ set(srcs
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
     src/DisegniSegmenter.cpp
+    src/Data.cpp
 )
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
