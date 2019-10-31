@@ -18,6 +18,7 @@
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/Exceptions.hpp"
 #include "rt/types/UVMap.hpp"
+#include "rt/Data.hpp"
 
 using namespace rt;
 
@@ -101,8 +102,14 @@ int main(int argc, char* argv[])
     }
 
     // Read the moving image
+    /*
     auto cvMovingImage = cv::imread(movingPath.string());
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
+     */
+    auto cvMoving = Data::Data::Load(movingPath.string());
+    cv::Mat cvMovingImage = cvMoving->getImage();
+    movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
+
 
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);

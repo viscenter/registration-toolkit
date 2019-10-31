@@ -10,6 +10,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/Data.hpp"
 
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 using TransformConverter = itk::CompositeTransformIOHelperTemplate<double>;
@@ -70,10 +71,16 @@ int main(int argc, char* argv[])
         tfmReader->GetTransformList()->begin()->GetPointer());
 
     // Load the moving image at full depth and resample it
-    auto cvFixed = cv::imread(fixedPath.string());
-    auto cvMoving = cv::imread(movingPath.string(), -1);
-    cv::Size s(cvFixed.cols, cvFixed.rows);
-    auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
+    auto cvFixed = Data::Data::Load(fixedPath.string());
+    auto cvMoving = Data::Data::Load(movingPath.string());
+    cv::Mat cvFixedImg = cvFixed->getImage();
+    cv::Mat cvMovingImg = cvMoving->getImage(-1);
+    //auto cvFixed = cv::imread(fixedPath.string());
+    //auto cvMoving = cv::imread(movingPath.string(), -1);
+    //cv::Size s(cvFixed.cols, cvFixed.rows);
+    //auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
+    cv::Size s(cvFixedImg.cols, cvFixedImg.rows);
+    auto cvFinal = rt::ImageTransformResampler(cvMovingImg, s, transform);
 
     // Write out the file
     cv::imwrite(outputPath.string(), cvFinal);
