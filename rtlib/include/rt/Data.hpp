@@ -22,7 +22,7 @@ namespace Data {
 
     protected:
         Data() = default;
-        Data(std::string path){}; //Constructor
+        Data(std::string path) {} //Constructor
 
     };
 
@@ -30,8 +30,8 @@ namespace Data {
     class Image : public Data
     {
     public:
-        Image(std::string path){ /* Do something to load */};
-        cv::Mat getImage(int idx = 0){ return img_; }; //Return this image
+        Image(std::string path){ /* Do something to load */}
+        cv::Mat getImage() { return img_; } //Return this image
     private:
         cv::Mat img_;
     };
@@ -41,8 +41,8 @@ namespace Data {
     class ENVI : public Data
     {
     public:
-        ENVI(std::string path){ /* Do something to load */ };
-        cv::Mat getImage(int idx = 0){ return bands_[idx]; };
+        ENVI(std::string path){ /* Do something to load */ }
+        cv::Mat getImage(int idx = 0) { return bands_[idx]; }
     private:
         std::vector<cv::Mat> bands_;
     };
