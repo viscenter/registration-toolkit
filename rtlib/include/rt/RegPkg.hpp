@@ -16,7 +16,7 @@ class RegPkg
 
         RegPkg(std::string root_dir); //Constructor with setting root directory, linking to a regpkg
 
-        auto getInputs() const }; //Return list of inputs. What should the type be?? General data class????
+        auto getInputs() const {}; //Return list of inputs. What should the type be?? General data class????
 
         auto getInput(std::string input_dir) const {}; //Get one of the input data objects from the existing list
 
@@ -28,8 +28,8 @@ class RegPkg
 
 
     private:
-        std::string rootDir; //root directory of this regpkg
-        auto inputDataList; //some list of all the input data objects. What are those object types?
+        std::string rootPath_; //root directory of this regpkg
+        auto inputDataList_; //some list of all the input data objects. What are those object types?
 
         void save() {};
 };
