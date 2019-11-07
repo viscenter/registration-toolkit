@@ -14,24 +14,15 @@ Data::Pointer Data::Load(std::string path)
 
 Data::Image(std::string path)
 {
-
-}
-
-
-cv::Mat Data::Image::getImage(int idx)
-{
-
+    img_ = cv::imread(path.string());
 }
 
 
 Data::ENVI(std::string path)
 {
+    //Read in ENVI file from the file path
 
+    //Read in all bands, each as a cv::Mat
+
+    //Add band to the private member vector "bands_"
 }
-
-
-cv::Mat Data::ENVI::getImage(int idx)
-{
-
-}
-

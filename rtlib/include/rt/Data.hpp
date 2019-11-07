@@ -17,7 +17,7 @@ namespace Data {
         using Pointer = std::shared_ptr<Data>; //DOES THIS GO HERE?
 
     public:
-        static Pointer Load(std::string path); //This may need to change return type to a smart pointer (C++11)
+        static Pointer Load(std::string path);
         virtual cv::Mat getImage(int idx = 0) = 0;
 
     protected:
