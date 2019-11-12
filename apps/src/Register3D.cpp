@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer movingImage;
 
     // Read the OBJ file and static image
+    /* PREVIOUS CODE
     io::OBJReader reader;
     reader.setPath(fixedPath);
     ITKMesh::Pointer origMesh;
@@ -100,9 +101,18 @@ int main(int argc, char* argv[])
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+     */
+    ITKMesh::Pointer origMesh;
+    cv::Mat cvFixedImage;
+
+    auto meshObj = Data::Data::Load(fixedPath);
+    origMesh = meshObj.getMesh();
+    cvFixedImage = meshObj.getCVImage();
+    fixedImage = meshObj.getFixedImage();
+
 
     // Read the moving image
-    /*
+    /* PREVIOUS CODE
     auto cvMovingImage = cv::imread(movingPath.string());
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
      */
