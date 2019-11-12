@@ -13,7 +13,7 @@ using namespace Data;
 // IO
 using OCVBridge = itk::OpenCVImageBridge;
 
-Data::Pointer Data::Load(std::string path)
+Data::Pointer Data::Load(const fs::path& path)
 {
     //HOW TO GET METADATA AKA FILE TYPE? Could just read the 'metadata.json' file from the current directory right? Since each
     //input data thing in the RegPkg is a sub-folder that contains only the data and then the metadata file.
@@ -31,13 +31,13 @@ Data::Pointer Data::Load(std::string path)
 }
 
 
-Data::Image(std::string path)
+Data::Image(const fs::path& path)
 {
     img_ = cv::imread(path.string());
 }
 
 
-Data::ENVI(std::string path)
+Data::ENVI(const fs::path& path)
 {
     //Read in ENVI file from the file path
 
@@ -46,7 +46,7 @@ Data::ENVI(std::string path)
     //Add band to the private member vector "bands_"
 }
 
-Data::Mesh(std::string path)
+Data::Mesh(const fs::path& path)
 {
     //Read in mesh along with it's texture
     io::OBJReader reader;

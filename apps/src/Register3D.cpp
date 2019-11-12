@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     auto cvMovingImage = cv::imread(movingPath.string());
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
      */
-    auto cvMoving = Data::Data::Load(movingPath.string());
+    auto cvMoving = Data::Data::Load(movingPath);
     cv::Mat cvMovingImage = cvMoving->getImage();
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
 

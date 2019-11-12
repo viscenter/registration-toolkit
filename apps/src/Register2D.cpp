@@ -95,10 +95,10 @@ int main(int argc, char* argv[])
     auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMoving);
     */
 
-    auto cvFixed = Data::Data::Load(fixedPath.string());
+    auto cvFixed = Data::Data::Load(fixedPath);
     cv::Mat cvFixedImg = cvFixed->getImage();
     auto fixedImage = OCVB::CVMatToITKImage<Image8UC3>(cvFixedImg);
-    auto cvMoving = Data::Data::Load(movingPath.string());
+    auto cvMoving = Data::Data::Load(movingPath);
     cv::Mat cvMovingImg = cvMoving->getImage();
     auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMovingImg);
 

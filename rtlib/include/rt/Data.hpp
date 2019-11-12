@@ -7,11 +7,14 @@
 #include <memory>
 #include <string>
 
+#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
 #include "rt/ImageTypes.hpp"
 #include "rt/types/ITKMesh.hpp"
 
+
+namespace fs = boost::filesystem;
 
 
 namespace Data {
@@ -20,7 +23,7 @@ namespace Data {
         using Pointer = std::shared_ptr<Data>; //DOES THIS GO HERE?
 
     public:
-        static Pointer Load(std::string path);
+        static Pointer Load(const fs::path& path);
         virtual cv::Mat getImage(int idx = 0) = 0;
 
     protected:
@@ -33,7 +36,7 @@ namespace Data {
     class Image : public Data
     {
     public:
-        Image(std::string path){ /* Do something to load */}
+        Image(const fs::path& path){ /* Do something to load */}
         cv::Mat getImage() { return img_; } //Return this image
     private:
         cv::Mat img_;
@@ -44,7 +47,7 @@ namespace Data {
     class ENVI : public Data
     {
     public:
-        ENVI(std::string path){ /* Do something to load */ }
+        ENVI(const fs::path& path){ /* Do something to load */ }
         cv::Mat getImage(int idx = 0) { return bands_[idx]; }
     private:
         std::vector<cv::Mat> bands_;
@@ -54,7 +57,7 @@ namespace Data {
     class Mesh : public Data
     {
     public:
-        Mesh(std::string path){ /* Do something to load */ }
+        Mesh(const fs::path& path){ /* Do something to load */ }
         cv::Mat getCVImage() { return cvFixedImage_; }
         rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
         rt::ITKMesh::Pointer getMesh() { return origMesh_; }
