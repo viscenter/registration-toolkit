@@ -7,9 +7,10 @@
 
 #include "rt/ImageStitcher.hpp"
 
+
 namespace fs = boost::filesystem;
 
-auto divide_images = true;
+auto divide_images = false;
 
 int main(int argc, char* argv[])
 {
@@ -37,8 +38,8 @@ int main(int argc, char* argv[])
     }
 
     rt::ImageStitcher stitcher;
-    stitcher.setImages(imgs);
-    auto res = stitcher.compute();
+    //stitcher.setImages(imgs);
+    auto res = stitcher.compute(imgs);
 
     cv::imwrite(output.string(), res);
 }
