@@ -9,6 +9,9 @@
 
 #include <opencv2/core.hpp>
 
+#include "rt/ImageTypes.hpp"
+#include "rt/types/ITKMesh.hpp"
+
 
 
 namespace Data {
@@ -45,5 +48,19 @@ namespace Data {
         cv::Mat getImage(int idx = 0) { return bands_[idx]; }
     private:
         std::vector<cv::Mat> bands_;
+    };
+
+
+    class Mesh : public Data
+    {
+    public:
+        Mesh(std::string path){ /* Do something to load */ }
+        cv::Mat getCVImage() { return cvFixedImage_; }
+        rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
+        rt::ITKMesh::Pointer getMesh() { return origMesh_; }
+    private:
+        cv::Mat cvFixedImage_;
+        rt::Image8UC3::Pointer fixedImage_;
+        rt::ITKMesh::Pointer origMesh_;
     };
 }
