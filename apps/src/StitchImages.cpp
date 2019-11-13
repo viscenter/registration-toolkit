@@ -38,8 +38,8 @@ int main(int argc, char* argv[])
     }
 
     rt::ImageStitcher stitcher;
-    //stitcher.setImages(imgs);
-    auto res = stitcher.compute(imgs);
+    stitcher.setImages(imgs);
+    auto res = stitcher.compute();
 
     cv::imwrite(output.string(), res);
 }

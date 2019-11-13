@@ -62,7 +62,7 @@ using namespace rt;
 // The implementation of this function is a modified version of
 // cv::Stitcher::stitch()
 
-cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
+cv::Mat ImageStitcher::compute()
 {
     /*cv::Mat result;
     auto stitcher = cv::Stitcher::create(cv::Stitcher::SCANS);
@@ -77,10 +77,7 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
 
     return result;*/
     cv::ocl::setUseOpenCL(false);
-    std::vector<cv::UMat> imgs_;
-    std::vector<cv::UMat> masks_;
-    i.getUMatVector(imgs_);
-    cv::UMat pano;
+    cv::Mat pano;
 
     //////////////////////
     //// match images ////
@@ -101,17 +98,16 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     std::vector<cv::detail::ImageFeatures> features_(imgs_.size());
     std::vector<cv::detail::MatchesInfo> pairwise_matches_;
     std::vector<cv::UMat> seam_est_imgs_(imgs_.size());
+
     std::vector<cv::Size> full_img_sizes_(imgs_.size());
 
-    cv::Ptr<cv::detail::FeaturesFinder> features_finder_ = new cv::detail::OrbFeaturesFinder(); //stitcher->featuresFinder();
-    //cv::Ptr<cv::Feature2D> features_finder_ = cv::ORB::create();
-    //cv::Ptr<cv::detail::FeaturesMatcher> features_matcher_ = stitcher->featuresMatcher();
+    cv::Ptr<cv::detail::FeaturesFinder> features_finder_ = new cv::detail::OrbFeaturesFinder();
     cv::Ptr<cv::detail::FeaturesMatcher> features_matcher_ = cv::makePtr<cv::detail::AffineBestOf2NearestMatcher>(false, false);
     cv::UMat matching_mask_;
-    //cv::Ptr<cv::detail::BundleAdjusterBase> bundle_adjuster_ = stitcher->bundleAdjuster();
     cv::Ptr<cv::detail::BundleAdjusterBase> bundle_adjuster_ = cv::makePtr<cv::detail::BundleAdjusterAffinePartial>();
 
     std::vector<cv::UMat> feature_find_imgs(imgs_.size());
+
     std::vector<cv::UMat> feature_find_masks(masks_.size());
 
     for (size_t i = 0; i < imgs_.size(); ++i) {
@@ -157,7 +153,6 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     // if (rois_.empty())
     (*features_finder_)(feature_find_imgs, features_);
     //cv::detail::computeImageFeatures(features_finder_, feature_find_imgs, features_, feature_find_masks);
-    //(*(stitcher->featuresFinder()))(feature_find_imgs, features_);
 
     // else
     //(*features_finder_)(feature_find_imgs, features_, feature_find_rois);
@@ -171,7 +166,6 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
 
     (*features_matcher_)(features_, pairwise_matches_, matching_mask_);
     features_matcher_->collectGarbage();
-    //(*(stitcher->featuresMatcher()))(features_, pairwise_matches_, matching_mask_);
     //(stitcher->featuresMatcher())->collectGarbage();
     // LOGLN("Pairwise matching, time: " << ((getTickCount() - t) /
     // getTickFrequency()) << " sec");
@@ -191,18 +185,12 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     imgs_ = imgs_subset;
     full_img_sizes_ = full_img_sizes_subset;
 
-    // Look at this
-    imgs_subset.clear();
-    seam_est_imgs_subset.clear();
-    // End of looking
-
     if ((int)imgs_.size() < 2) {
         // LOGLN("Need more images");
         throw std::runtime_error(
             "Not enough matched images to perform stitching");
     }
 
-    //matchImages();
     //////////////////////////////////
     ///// Estimate camera params /////
     //////////////////////////////////
@@ -223,9 +211,7 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     }
 
     bundle_adjuster_->setConfThresh(conf_thresh_);
-    //(stitcher->bundleAdjuster())->setConfThresh(conf_thresh_);
     if (!(*bundle_adjuster_)(features_, pairwise_matches_, cameras_)) {
-    //if (!(*(stitcher->bundleAdjuster()))(features_, pairwise_matches_, cameras_)) {
         throw std::runtime_error("Failed bundle adjustment");
     }
 
@@ -277,8 +263,6 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     cv::Ptr<cv::WarperCreator> warper_ = cv::makePtr<cv::AffineWarper>();
     cv::Ptr<cv::detail::RotationWarper> w =
             (warper_)->create(float(warped_image_scale_ * seam_work_aspect_));
-    //cv::Ptr<cv::detail::RotationWarper> w =
-        //(stitcher->warper())->create(float(warped_image_scale_ * seam_work_aspect_));
     cv::InterpolationFlags interp_flags_{cv::INTER_LINEAR};
     for (size_t i = 0; i < imgs_.size(); ++i) {
         cv::Mat_<float> K;
@@ -304,8 +288,6 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     for (size_t i = 0; i < imgs_.size(); ++i)
         exposure_comp_->apply(
                 int(i), corners[i], images_warped[i], masks_warped[i]);
-        //(stitcher->exposureCompensator())->apply(
-            //int(i), corners[i], images_warped[i], masks_warped[i]);
 
     // Find seams
     cv::Ptr<cv::detail::SeamFinder> seam_finder_ = cv::makePtr<cv::detail::GraphCutSeamFinder>(cv::detail::GraphCutSeamFinderBase::COST_COLOR);
@@ -313,7 +295,6 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
     for (size_t i = 0; i < imgs_.size(); ++i)
         images_warped[i].convertTo(images_warped_f[i], CV_32F);
     seam_finder_->find(images_warped_f, corners, masks_warped);
-    //(stitcher->seamFinder())->find(images_warped_f, corners, masks_warped);
 
     // Release unused memory
     seam_est_imgs_.clear();
@@ -371,7 +352,7 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
                         cvRound(full_img_sizes_[i].height * compose_scale);
                 }
 
-                cv::Mat K;
+                cv::UMat K;
                 cameras_scaled[i].K().convertTo(K, CV_32F);
                 cv::Rect roi = w->warpRoi(sz, K, cameras_scaled[i].R);
                 corners[i] = roi.tl();
@@ -387,7 +368,7 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
         full_img.release();
         cv::Size img_size = img.size();
 
-        cv::Mat K;
+        cv::UMat K;
         cameras_scaled[img_idx].K().convertTo(K, CV_32F);
 
         // Warp the current image
@@ -405,8 +386,6 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
         // Compensate exposure
         exposure_comp_->apply(
                 (int)img_idx, corners[img_idx], img_warped, mask_warped);
-        //(stitcher->exposureCompensator())->apply(
-            //(int)img_idx, corners[img_idx], img_warped, mask_warped);
 
         img_warped.convertTo(img_warped_s, CV_16S);
         img_warped.release();
@@ -414,7 +393,7 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
         mask.release();
 
         // Make sure seam mask has proper size
-        cv::dilate(masks_warped[img_idx], dilated_mask, cv::Mat());
+        cv::dilate(masks_warped[img_idx], dilated_mask, cv::UMat());
         cv::resize(
             dilated_mask, seam_mask, mask_warped.size(), 0, 0,
             cv::INTER_LINEAR);
@@ -424,25 +403,21 @@ cv::Mat ImageStitcher::compute(cv::InputArrayOfArrays i)
         // Blender
         if (!is_blender_prepared) {
             blender_->prepare(corners, sizes);
-            //(stitcher->blender())->prepare(corners, sizes);
             is_blender_prepared = true;
         }
 
         // Blend the current image
         blender_->feed(img_warped_s, mask_warped, corners[img_idx]);
-        //(stitcher->blender())->feed(img_warped_s, mask_warped, corners[img_idx]);
     }
 
     cv::UMat result;
     cv::UMat result_mask_;
     blender_->blend(result, result_mask_);
-    //(stitcher->blender())->blend(result, result_mask_);
 
     // Preliminary result is in CV_16SC3 format, but all values are in [0,255]
     // range, so convert it to avoid user confusing
     result.convertTo(pano, CV_8U);
-    for(auto & img : imgs_){
-        img.release();
-    }
-    return pano.getMat(cv::ACCESS_RW);
+
+    return pano;
+    //return pano.getMat(cv::ACCESS_RW);
 }
