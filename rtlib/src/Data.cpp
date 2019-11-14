@@ -50,9 +50,8 @@ Data::Mesh(const fs::path& path)
 {
     //Read in mesh along with it's texture
     io::OBJReader reader;
-    reader.setPath(fixedPath);
-    //ITKMesh::Pointer origMesh;
-    //cv::Mat cvFixedImage;
+    reader.setPath(path);
+
     try {
         origMesh_ = reader.read();
         cvFixedImage_ = reader.getTextureMat();
