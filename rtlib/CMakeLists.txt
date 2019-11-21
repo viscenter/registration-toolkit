@@ -22,7 +22,7 @@ set(srcs
     src/AffineLandmarkRegistration.cpp
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
-    #src/SepDisegni.cpp
+        src/DisegniSegmenter.cpp
 )
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
