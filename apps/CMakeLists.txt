@@ -76,8 +76,14 @@ target_link_libraries(rt_swap_landmarks
     Boost::program_options
 )
 
-#add_executable(Image_Segmentation_2_0 ImageSegmentationMain.cpp SepDisegni.cpp)
-#target_link_libraries(Image_Segmentation_2_0 opencv_core opencv_imgcodecs opencv_highgui)
+add_executable(rt_image_segmentation_main src/ImageSegmentationMain.cpp)
+target_link_libraries(rt_image_segmentation_main
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    opencv_highgui
+)
+
 
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
@@ -98,6 +104,7 @@ install(
         rt_generate_landmarks
         rt_plot_landmarks
         rt_swap_landmarks
+        rt_image_segmentation_main
     RUNTIME DESTINATION bin
     COMPONENT Programs
 )

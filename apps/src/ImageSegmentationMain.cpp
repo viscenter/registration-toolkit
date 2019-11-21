@@ -1,33 +1,30 @@
-//
-// Created by Sammy Stampley on 11/12/19.
-//
-#include "SepDisegni.h"
+#include "rt/DisegniSegmenter.hpp"
+
+using namespace cv;
 
 
-
-int main() {
+int main(int argc, char* argv[]) {
 
 
     //TESTING PURPOSE
-    Mat input = imread(samples::findFile("Shapes.jpg") , IMREAD_COLOR);
+    cv::Mat input = cv::imread(samples::findFile("simpleShapes.jpg") , cv::IMREAD_COLOR);
 
-    if( input.empty() )                      // Check for invalid input
+    //Checks for valid input
+    if( input.empty() )
     {
-        cout <<  "Could not open or find the image" << std::endl ;
-        exit(0);
+        std::cout <<  "Could not open or find the image" << std::endl ;
+        return EXIT_FAILURE;
     }
     //TESTING PURPOSE
 
-    SepDisegni a;
-    a.SetImage(input);
-    vector<Mat> fragmentedImage = a.Compute();
+    DisegniSegmenter a;
+    a.setInputImage(input);
+    auto fragmentedImage = a.compute();
 
     //TESTING PURPOSE
-
-    namedWindow("Fragmented Image", 0);
-    imshow("Fragmented Image", fragmentedImage[0]);
-    waitKey(0);
+    cv::namedWindow("Fragmented Image", 0);
+    cv::imshow("Fragmented Image", fragmentedImage[0]);
+    cv::waitKey(0);
+    return EXIT_SUCCESS;
     //TESTING PURPOSE
-
-    return 0;
 }
