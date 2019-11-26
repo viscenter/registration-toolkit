@@ -13,6 +13,7 @@ using namespace Data;
 // IO
 using OCVBridge = itk::OpenCVImageBridge;
 
+
 Data::Pointer Data::Load(const fs::path& path)
 {
     //HOW TO GET METADATA AKA FILE TYPE? Could just read the 'metadata.json' file from the current directory right? Since each
@@ -39,12 +40,22 @@ Data::Image(const fs::path& path)
 
 Data::ENVI(const fs::path& path)
 {
-    //Read in ENVI file from the file path
+    //Read in ENVI file from the file path, set the object to the envi_ private member
+    envi_ = et::ENVI envi(path); //or does it need to be envitools::ENVI envi(path);
+    //or is it et::ENVI envi_(path);
 
-    //Read in all bands, each as a cv::Mat
-
-    //Add band to the private member vector "bands_"
 }
+
+cv::Mat Data::ENVI::getImage(int idx)
+{
+    //Get particular image
+    cv::Mat img = envi_.getBand(idx);
+
+    //envi_.closeFile();
+
+    return img
+}
+
 
 Data::Mesh(const fs::path& path)
 {

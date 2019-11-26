@@ -13,7 +13,7 @@
 #include "rt/ImageTypes.hpp"
 #include "rt/types/ITKMesh.hpp"
 
-
+namespace et = envitools;
 namespace fs = boost::filesystem;
 
 
@@ -48,9 +48,11 @@ namespace Data {
     {
     public:
         ENVI(const fs::path& path){ /* Do something to load */ }
-        cv::Mat getImage(int idx = 0) { return bands_[idx]; }
+        //cv::Mat getImage(int idx = 0) { return bands_[idx]; } //Could use this if we read bands into vector. But would also need functions to load into vector, and access vector.
+        cv::Mat getImage(int idx = 0) {}
     private:
-        std::vector<cv::Mat> bands_;
+        //std::vector<cv::Mat> bands_; //Could use to store bands we have read in memory?
+        et::ENVI envi_;
     };
 
 
