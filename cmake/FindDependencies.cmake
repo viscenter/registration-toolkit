@@ -2,6 +2,22 @@
 # Core #
 ########
 
+include(FetchContent)
+
+## Envi-tools ##
+FetchContent_Declare(
+        envi-tools
+        GIT_REPOSITORY
+        GIT_TAG release-
+)
+
+FetchContent_GetProperties(envi-tools)
+if(NOT envi-tools_POPULATED)
+    #Override default options
+
+    FetchContent_Populate(envi-tools)
+
+
 # For compiler sanitizers. Taken from:
 # https://github.com/arsenm/sanitizers-cmake/blob/master/README.md
 find_package(Sanitizers)
