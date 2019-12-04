@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 
     // TESTING PURPOSE
     cv::Mat input =
-        cv::imread(samples::findFile("DesigniTest2.png"), cv::IMREAD_COLOR);
+        cv::imread(samples::findFile("firstFragment.png"), cv::IMREAD_COLOR);
 
     // Checks for valid input
     if (input.empty()) {

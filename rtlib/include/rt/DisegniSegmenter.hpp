@@ -44,5 +44,5 @@ private:
     std::vector<cv::Mat> resultImages_;
 
     cv::Mat watershed_image_();
-    std::vector<cv::Mat> split_merge_(cv::Mat watershededImage);
+    std::vector<cv::Mat> split_(cv::Mat watershededImage);
 };

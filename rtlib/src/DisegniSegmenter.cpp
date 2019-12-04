@@ -12,7 +12,7 @@ void DisegniSegmenter::setInputImage(Mat i) { inputImage_ = i; }
 std::vector<Mat> DisegniSegmenter::compute()
 {
     auto labeledImage = watershed_image_();
-    return split_merge_(labeledImage);
+    return split_(labeledImage);
 }
 
 /*
@@ -26,6 +26,7 @@ Mat DisegniSegmenter::watershed_image_()
 {
     Mat src = inputImage_;
 
+    //TURN THIS INTO AN OPTION IF YOU HAVE TIME
     // Change the background from white to black, since that will help later to
     // extract better results during the use of Distance Transform
     for (int y = 0; y < src.rows; y++) {
@@ -108,7 +109,7 @@ Mat DisegniSegmenter::watershed_image_()
     return markers;
 }
 
-std::vector<Mat> DisegniSegmenter::split_merge_(Mat watershededImage)
+std::vector<Mat> DisegniSegmenter::split_(Mat watershededImage)
 {
     // Finding Boundary Boxes
     struct MinMaxIdentifier {
