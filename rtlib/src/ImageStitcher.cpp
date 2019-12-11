@@ -59,8 +59,7 @@ using namespace rt;
 // It was take the same types as that function takes
 //
 
-// The implementation of this function is a modified version of
-// cv::Stitcher::stitch()
+
 
 void ImageStitcher::setLandmarks(std::vector<std::pair<float, float> > &features1,
                                  std::vector<std::pair<float, float> > &features2) {
@@ -68,21 +67,18 @@ void ImageStitcher::setLandmarks(std::vector<std::pair<float, float> > &features
     features2_ = features2;
 }
 
-void ImageStitcher::findFeaturesAndMatches(double work_scale_, double conf_thresh_, double seam_work_aspect_, std::vector<cv::Size>& full_img_sizes_,
-                                            std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::detail::ImageFeatures>& features_, std::vector<cv::detail::MatchesInfo>& pairwise_matches_) {
+std::vector<cv::detail::ImageFeatures> ImageStitcher::findFeatures(double& work_scale_, double seam_work_aspect_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_) {
     double registr_resol_{0.6};
     double seam_est_resol_{0.1};
     double seam_scale_ = 1;
     bool is_work_scale_set = false;
     bool is_seam_scale_set = false;
-
     cv::Ptr<cv::detail::FeaturesFinder> features_finder_ = new cv::detail::OrbFeaturesFinder();
-    cv::Ptr<cv::detail::FeaturesMatcher> features_matcher_ = cv::makePtr<cv::detail::AffineBestOf2NearestMatcher>(false, false);
-    cv::UMat matching_mask_;
-
     std::vector<cv::UMat> feature_find_imgs(imgs_.size());
-
     std::vector<cv::UMat> feature_find_masks(masks_.size());
+
+    std::vector<cv::detail::ImageFeatures> features_(imgs_.size());
+
     for (size_t i = 0; i < imgs_.size(); ++i) {
         full_img_sizes_[i] = imgs_[i].size();
         if (registr_resol_ < 0) {
@@ -134,6 +130,13 @@ void ImageStitcher::findFeaturesAndMatches(double work_scale_, double conf_thres
     feature_find_imgs.clear();
     feature_find_masks.clear();
 
+    return features_;
+}
+
+std::vector<cv::detail::MatchesInfo> ImageStitcher::findMatches(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_, std::vector<cv::detail::ImageFeatures>& features_) {
+    std::vector<cv::detail::MatchesInfo> pairwise_matches_;
+    cv::Ptr<cv::detail::FeaturesMatcher> features_matcher_ = cv::makePtr<cv::detail::AffineBestOf2NearestMatcher>(false, false);
+    cv::UMat matching_mask_;
     // LOGLN("Finding features, time: " << ((getTickCount() - t) /
     // getTickFrequency()) << " sec");
 
@@ -142,7 +145,6 @@ void ImageStitcher::findFeaturesAndMatches(double work_scale_, double conf_thres
     //(stitcher->featuresMatcher())->collectGarbage();
     // LOGLN("Pairwise matching, time: " << ((getTickCount() - t) /
     // getTickFrequency()) << " sec");
-    // End here
 
     // Leave only images we are sure are from the same panorama
     auto indices_ = cv::detail::leaveBiggestComponent(
@@ -159,6 +161,7 @@ void ImageStitcher::findFeaturesAndMatches(double work_scale_, double conf_thres
     imgs_ = imgs_subset;
     full_img_sizes_ = full_img_sizes_subset;
 
+    return pairwise_matches_;
 }
 
 std::vector<cv::detail::CameraParams> ImageStitcher::estimateCameraParams(double conf_thresh_, float& warped_image_scale_, std::vector<cv::detail::ImageFeatures>& features_,
@@ -398,10 +401,10 @@ cv::Mat ImageStitcher::composePano(double seam_work_aspect_, float warped_image_
     return pano;
 }
 
+// The implementation of this function is a modified version of
+// cv::Stitcher::stitch()
 cv::Mat ImageStitcher::compute()
 {
-    cv::Mat pano;
-
     //////////////////////
     //// match images ////
     //////////////////////
@@ -409,106 +412,17 @@ cv::Mat ImageStitcher::compute()
         throw std::runtime_error("Not enough images to perform stitching");
     }
 
-    double registr_resol_{0.6};
-    double seam_est_resol_{0.1};
     double conf_thresh_{1};
     double work_scale_ = 1;
     double seam_work_aspect_ = 1;
-    double seam_scale_ = 1;
-    bool is_work_scale_set = false;
-    bool is_seam_scale_set = false;
-
-    std::vector<cv::detail::ImageFeatures> features_(imgs_.size());
-    std::vector<cv::detail::MatchesInfo> pairwise_matches_;
 
     std::vector<cv::UMat> seam_est_imgs_(imgs_.size());
 
     std::vector<cv::Size> full_img_sizes_(imgs_.size());
 
-    cv::Ptr<cv::detail::FeaturesFinder> features_finder_ = new cv::detail::OrbFeaturesFinder();
-    cv::Ptr<cv::detail::FeaturesMatcher> features_matcher_ = cv::makePtr<cv::detail::AffineBestOf2NearestMatcher>(false, false);
-    cv::UMat matching_mask_;
+    auto features_ = findFeatures(work_scale_, seam_work_aspect_, seam_est_imgs_, full_img_sizes_);
 
-    //findFeaturesAndMatches(work_scale_, conf_thresh_, seam_work_aspect_, full_img_sizes_, seam_est_imgs_, features_, pairwise_matches_);
-
-    std::vector<cv::UMat> feature_find_imgs(imgs_.size());
-
-    std::vector<cv::UMat> feature_find_masks(masks_.size());
-
-    for (size_t i = 0; i < imgs_.size(); ++i) {
-        full_img_sizes_[i] = imgs_[i].size();
-        if (registr_resol_ < 0) {
-            feature_find_imgs[i] = imgs_[i];
-            work_scale_ = 1;
-            is_work_scale_set = true;
-        } else {
-            if (!is_work_scale_set) {
-                work_scale_ = std::min(
-                    1.0, std::sqrt(
-                             registr_resol_ * 1e6 / full_img_sizes_[i].area()));
-                is_work_scale_set = true;
-            }
-            cv::resize(
-                imgs_[i], feature_find_imgs[i], cv::Size(), work_scale_,
-                work_scale_, cv::INTER_LINEAR);
-        }
-        if (!is_seam_scale_set) {
-            seam_scale_ = std::min(
-                1.0,
-                std::sqrt(seam_est_resol_ * 1e6 / full_img_sizes_[i].area()));
-            seam_work_aspect_ = seam_scale_ / work_scale_;
-            is_seam_scale_set = true;
-        }
-
-        if (!masks_.empty()) {
-            cv::resize(
-                masks_[i], feature_find_masks[i], cv::Size(), work_scale_,
-                work_scale_, cv::INTER_NEAREST);
-        }
-        features_[i].img_idx = (int)i;
-        // LOGLN("Features in image #" << i+1 << ": " <<
-        // features_[i].keypoints.size());
-
-        cv::resize(
-            imgs_[i], seam_est_imgs_[i], cv::Size(), seam_scale_, seam_scale_,
-            cv::INTER_LINEAR);
-    }
-
-    // find features possibly in parallel
-    // if (rois_.empty())
-    (*features_finder_)(feature_find_imgs, features_);
-    //cv::detail::computeImageFeatures(features_finder_, feature_find_imgs, features_, feature_find_masks);
-
-    // else
-    //(*features_finder_)(feature_find_imgs, features_, feature_find_rois);
-
-    // Do it to save memory
-    feature_find_imgs.clear();
-    feature_find_masks.clear();
-
-    // LOGLN("Finding features, time: " << ((getTickCount() - t) /
-    // getTickFrequency()) << " sec");
-
-    (*features_matcher_)(features_, pairwise_matches_, matching_mask_);
-    features_matcher_->collectGarbage();
-    //(stitcher->featuresMatcher())->collectGarbage();
-    // LOGLN("Pairwise matching, time: " << ((getTickCount() - t) /
-    // getTickFrequency()) << " sec");
-
-    // Leave only images we are sure are from the same panorama
-    auto indices_ = cv::detail::leaveBiggestComponent(
-        features_, pairwise_matches_, (float)conf_thresh_);
-    std::vector<cv::UMat> seam_est_imgs_subset;
-    std::vector<cv::UMat> imgs_subset;
-    std::vector<cv::Size> full_img_sizes_subset;
-    for (size_t i = 0; i < indices_.size(); ++i) {
-        imgs_subset.push_back(imgs_[indices_[i]]);
-        seam_est_imgs_subset.push_back(seam_est_imgs_[indices_[i]]);
-        full_img_sizes_subset.push_back(full_img_sizes_[indices_[i]]);
-    }
-    seam_est_imgs_ = seam_est_imgs_subset;
-    imgs_ = imgs_subset;
-    full_img_sizes_ = full_img_sizes_subset;
+    auto pairwise_matches_ = findMatches(conf_thresh_, seam_est_imgs_, full_img_sizes_, features_);
 
     if ((int)imgs_.size() < 2) {
         // LOGLN("Need more images");

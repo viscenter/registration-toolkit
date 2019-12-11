@@ -33,6 +33,9 @@ private:
 
     void findFeaturesAndMatches(double work_scale, double conf_thresh_, double seam_work_aspect_, std::vector<cv::Size>& full_img_sizes_,
                                 std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::detail::ImageFeatures>& features_, std::vector<cv::detail::MatchesInfo>& pairwise_matches_);
+    std::vector<cv::detail::ImageFeatures> findFeatures(double& work_scale_, double seam_work_aspect_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_);
+
+    std::vector<cv::detail::MatchesInfo> findMatches(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_, std::vector<cv::detail::ImageFeatures>& features_);
 
     std::vector<cv::detail::CameraParams> estimateCameraParams(double conf_thresh_, float& warped_image_scale_, std::vector<cv::detail::ImageFeatures>& features_,
                                                                std::vector<cv::detail::MatchesInfo>& pairwise_matches_);
