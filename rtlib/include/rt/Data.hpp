@@ -39,8 +39,7 @@ namespace Data {
         Data() = default;
 
         /** Constructor */
-        Data(std::string path) {}
-
+        Data(const fs::path& path) {}
     };
 
 
