@@ -76,8 +76,8 @@ target_link_libraries(rt_swap_landmarks
     Boost::program_options
 )
 
-add_executable(rt_image_segmentation_main src/ImageSegmentationMain.cpp)
-target_link_libraries(rt_image_segmentation_main
+add_executable(rt_segment_disegni src/ImageSegmentationMain.cpp)
+target_link_libraries(rt_segment_disegni
     rt::rtlib
     opencv_core
     opencv_imgcodecs
@@ -104,7 +104,7 @@ install(
         rt_generate_landmarks
         rt_plot_landmarks
         rt_swap_landmarks
-        rt_image_segmentation_main
+        rt_segment_disegni
     RUNTIME DESTINATION bin
     COMPONENT Programs
 )

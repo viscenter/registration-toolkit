@@ -1,15 +1,29 @@
 #include "rt/DisegniSegmenter.hpp"
 
+#include <limits>
+#include <map>
+#include <iostream>
+
+#include <opencv2/imgproc.hpp>
+
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
-using namespace cv;
+
+// Finding Boundary Boxes
+struct MinMaxIdentifier {
+    cv::Point min{INT_MAXI, INT_MAXI};
+    cv::Point max{INT_MINI, INT_MINI};
+};
 
 // Takes an Input Image and sets it into your private image member
-void DisegniSegmenter::setInputImage(Mat i) { inputImage_ = i; }
+void DisegniSegmenter::setInputImage(cv::Mat i) { inputImage_ = i; }
+
+//This returns the subregions you have segemented in a vector container
+std::vector<cv::Mat> DisegniSegmenter::getOutputImages() const { return resultImages_; }
 
 // Conducts all the private class functions to keep the
 // ImageSegmentationMain.cpp concise
-std::vector<Mat> DisegniSegmenter::compute()
+std::vector<cv::Mat> DisegniSegmenter::compute()
 {
     auto labeledImage = watershed_image_();
     return split_(labeledImage);
@@ -17,30 +31,45 @@ std::vector<Mat> DisegniSegmenter::compute()
 
 /*
  * In the study of Image Processing, a watershed is a transformation defined on
-a grayscale image. The tool treats the image like a topographic map, with the
+a gray-scale image. The tool treats the image like a topographic map, with the
 brightness of each point representing its height. The tool then finds the lines
 that run along the ridges/boundaries of the points of interest. Finally, it
 outputs an image with only the points of interest visible.
- */
-Mat DisegniSegmenter::watershed_image_()
-{
-    Mat src = inputImage_;
 
-    //TURN THIS INTO AN OPTION IF YOU HAVE TIME
+ This method is heavily based off of the OpenCv tutorial "Image Segmentation with Distance Transform
+ and Watershed Algorithm" available at : https://docs.opencv.org/3.4/d2/dbd/tutorial_distance_transform.html
+ */
+cv::Mat DisegniSegmenter::watershed_image_() {
+    cv::Mat src = inputImage_;
+
     // Change the background from white to black, since that will help later to
     // extract better results during the use of Distance Transform
-    for (int y = 0; y < src.rows; y++) {
-        for (int x = 0; x < src.cols; x++) {
-            if (src.at<Vec3b>(y, x) == Vec3b(255, 255, 255)) {
-                src.at<Vec3b>(y, x)[0] = 0;
-                src.at<Vec3b>(y, x)[1] = 0;
-                src.at<Vec3b>(y, x)[2] = 0;
+    int menuLoop = 1;
+    char userInput;
+    do {
+        std::cout << "Would you like to change invert the background of your src image? (Y or N):";
+        std::cin >> userInput;
+
+        if (userInput == 'Y' || userInput == 'y'){
+            for (int y = 0; y < src.rows; y++) {
+                for (int x = 0; x < src.cols; x++) {
+                    if (src.at<cv::Vec3b>(y, x) == cv::Vec3b(255, 255, 255)) {
+                        src.at<cv::Vec3b>(y, x)[0] = 0;
+                        src.at<cv::Vec3b>(y, x)[1] = 0;
+                        src.at<cv::Vec3b>(y, x)[2] = 0;
+                    }
+                }
             }
+            menuLoop = 0;
+        } else if (userInput == 'N' || userInput == 'n') {
+            menuLoop = 0;
+        } else {
+            std::cout << "Enter a valid input." << std::endl;
         }
-    }
+    } while (menuLoop == 1);
 
     // Create a kernel that we will use to sharpen our image
-    Mat kernel = (Mat_<float>(3, 3) << 1, 1, 1, 1, -8, 1, 1, 1, 1);
+    cv::Mat kernel = (cv::Mat_<float>(3, 3) << 1, 1, 1, 1, -8, 1, 1, 1, 1);
     // an approximation of second derivative, a quite strong kernel
     // do the laplacian filtering as it is
     // well, we need to convert everything in something more deeper then CV_8U
@@ -48,11 +77,11 @@ Mat DisegniSegmenter::watershed_image_()
     // and we can expect in general to have a Laplacian image with negative
     // values BUT a 8bits unsigned int (the one we are working with) can contain
     // values from 0 to 255 so the possible negative number will be truncated
-    Mat imgLaplacian;
+    cv::Mat imgLaplacian;
     filter2D(src, imgLaplacian, CV_32F, kernel);
-    Mat sharp;
+    cv::Mat sharp;
     src.convertTo(sharp, CV_32F);
-    Mat imgResult = sharp - imgLaplacian;
+    cv::Mat imgResult = sharp - imgLaplacian;
     // convert back to 8bits gray scale
     imgResult.convertTo(imgResult, CV_8UC3);
     imgLaplacian.convertTo(imgLaplacian, CV_8UC3);
@@ -61,47 +90,47 @@ Mat DisegniSegmenter::watershed_image_()
     medianBlur(imgResult, imgResult, 7);
 
     // Create binary image from source image
-    Mat bw;
-    cvtColor(imgResult, bw, COLOR_BGR2GRAY);
-    threshold(bw, bw, 40, 255, THRESH_BINARY | THRESH_OTSU);
+    cv::Mat bw;
+    cvtColor(imgResult, bw, cv::COLOR_BGR2GRAY);
+    threshold(bw, bw, 40, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
     // Perform the distance transform algorithm
-    Mat dist;
-    distanceTransform(bw, dist, DIST_L2, 3);
+    cv::Mat dist;
+    distanceTransform(bw, dist, cv::DIST_L2, 3);
     // Normalize the distance image for range = {0.0, 1.0}
     // so we can visualize and threshold it
-    normalize(dist, dist, 0, 1.0, NORM_MINMAX);
+    normalize(dist, dist, 0, 1.0, cv::NORM_MINMAX);
 
     // Threshold to obtain the peaks
     // This will be the markers for the foreground objects
-    threshold(dist, dist, 0.4, 1.0, THRESH_BINARY);
+    threshold(dist, dist, 0.4, 1.0, cv::THRESH_BINARY);
     // Dilate a bit the dist image
-    Mat kernel1 = Mat::ones(3, 3, CV_8U);
+    cv::Mat kernel1 = cv::Mat::ones(3, 3, CV_8U);
     dilate(dist, dist, kernel1);
 
     // Create the CV_8U version of the distance image
     // It is needed for findContours()
-    Mat dist_8u;
+    cv::Mat dist_8u;
     dist.convertTo(dist_8u, CV_8U);
     // Find total markers
-    std::vector<std::vector<Point>> contours;
-    findContours(dist_8u, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+    std::vector<std::vector<cv::Point>> contours;
+    findContours(dist_8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     // Create the marker image for the watershed algorithm
-    Mat markers = Mat::zeros(dist.size(), CV_32S);
+    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32S);
     // Draw the foreground markers
     for (size_t i = 0; i < contours.size(); i++) {
         drawContours(
             markers, contours, static_cast<int>(i),
-            Scalar(static_cast<int>(i) + 1), -1);
+            cv::Scalar(static_cast<int>(i) + 1), -1);
     }
     // Draw the background marker
-    circle(markers, Point(5, 5), 3, Scalar(255), -1);
+    circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
     markers.convertTo(markers, CV_8U);
     markers.convertTo(markers, CV_32S);
 
     // Perform the watershed algorithm
     watershed(imgResult, markers);
-    Mat mark;
+    cv::Mat mark;
     markers.convertTo(mark, CV_8U);
     bitwise_not(mark, mark);
 
@@ -109,21 +138,15 @@ Mat DisegniSegmenter::watershed_image_()
     return markers;
 }
 
-std::vector<Mat> DisegniSegmenter::split_(Mat watershededImage)
+std::vector<cv::Mat> DisegniSegmenter::split_(cv::Mat labeledImage)
 {
-    // Finding Boundary Boxes
-    struct MinMaxIdentifier {
-        cv::Point min{INT_MAXI, INT_MAXI};
-        cv::Point max{INT_MINI, INT_MINI};
-    };
-
     // Finding Maximum and Minimum of a subregion
     std::map<int32_t, MinMaxIdentifier> extremeFinder;
-    for (int y = 0; y < watershededImage.rows; y++) {
-        for (int x = 0; x < watershededImage.cols; x++) {
+    for (int y = 0; y < labeledImage.rows; y++) {
+        for (int x = 0; x < labeledImage.cols; x++) {
 
             // Get label
-            auto label = watershededImage.at<int32_t>(y, x);
+            auto label = labeledImage.at<int32_t>(y, x);
 
             // Labels that are skipped because they aren't a part of the
             // subregion
@@ -158,8 +181,8 @@ std::vector<Mat> DisegniSegmenter::split_(Mat watershededImage)
     for (const auto& i : extremeFinder) {
         int height = ((i.second.max.y) - (i.second.min.y));
         int width = ((i.second.max.x) - (i.second.min.x));
-        Rect roi(i.second.min.x, i.second.min.y, width, height);
-        Mat image_roi = inputImage_(roi).clone();
+        cv::Rect roi(i.second.min.x, i.second.min.y, width, height);
+        cv::Mat image_roi = inputImage_(roi).clone();
         resultImages_.push_back(image_roi);
     }
 
