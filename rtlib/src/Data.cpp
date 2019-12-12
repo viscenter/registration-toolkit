@@ -31,12 +31,7 @@ Data::Pointer Data::Load(const fs::path& path)
     }
 }
 
-
-Data::Image(const fs::path& path)
-{
-    img_ = cv::imread(path.string());
-}
-
+Data::Image(const fs::path& path) { img_ = cv::imread(path.string()); }
 
 Data::ENVI(const fs::path& path)
 {
@@ -53,9 +48,8 @@ cv::Mat Data::ENVI::getImage(int idx)
 
     //envi_.closeFile();
 
-    return img
+    return img;
 }
-
 
 Data::Mesh(const fs::path& path)
 {
