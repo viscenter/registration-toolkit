@@ -82,6 +82,7 @@ target_link_libraries(rt_stitch
     opencv_core
     opencv_imgcodecs
     Boost::filesystem
+    Boost::program_options
 )
 
 if(VC_FOUND)

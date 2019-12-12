@@ -60,7 +60,7 @@ using namespace rt;
 //
 
 
-
+// This will probably need to be changed to account for having more than 2 images
 void ImageStitcher::setLandmarks(std::vector<std::pair<float, float> > &features1,
                                  std::vector<std::pair<float, float> > &features2) {
     features1_ = features1;
@@ -121,7 +121,6 @@ std::vector<cv::detail::ImageFeatures> ImageStitcher::findFeatures(double& work_
     // find features possibly in parallel
     // if (rois_.empty())
     (*features_finder_)(feature_find_imgs, features_);
-    //cv::detail::computeImageFeatures(features_finder_, feature_find_imgs, features_, feature_find_masks);
 
     // else
     //(*features_finder_)(feature_find_imgs, features_, feature_find_rois);
@@ -142,7 +141,6 @@ std::vector<cv::detail::MatchesInfo> ImageStitcher::findMatches(double conf_thre
 
     (*features_matcher_)(features_, pairwise_matches_, matching_mask_);
     features_matcher_->collectGarbage();
-    //(stitcher->featuresMatcher())->collectGarbage();
     // LOGLN("Pairwise matching, time: " << ((getTickCount() - t) /
     // getTickFrequency()) << " sec");
 
@@ -420,9 +418,21 @@ cv::Mat ImageStitcher::compute()
 
     std::vector<cv::Size> full_img_sizes_(imgs_.size());
 
-    auto features_ = findFeatures(work_scale_, seam_work_aspect_, seam_est_imgs_, full_img_sizes_);
+    std::vector<cv::detail::ImageFeatures> all_features;
 
-    auto pairwise_matches_ = findMatches(conf_thresh_, seam_est_imgs_, full_img_sizes_, features_);
+    std::vector<cv::detail::MatchesInfo> all_pairwise_matches;
+
+    // Need to add the functionality for adding the user generate landmarks/features
+    // Add these landmarks/features and matches to the all_features and all_pairwise_matches vectors
+
+    if(generateLandmarks_) {
+        auto features_ = findFeatures(work_scale_, seam_work_aspect_, seam_est_imgs_, full_img_sizes_);
+
+        auto pairwise_matches_ = findMatches(conf_thresh_, seam_est_imgs_, full_img_sizes_, features_);
+
+        all_features.insert(all_features.end(), features_.begin(), features_.end());
+        all_pairwise_matches.insert(all_pairwise_matches.end(), pairwise_matches_.begin(), pairwise_matches_.end());
+    }
 
     if ((int)imgs_.size() < 2) {
         // LOGLN("Need more images");
@@ -434,7 +444,7 @@ cv::Mat ImageStitcher::compute()
     ///// Estimate camera params /////
     //////////////////////////////////
     float warped_image_scale_;
-    std::vector<cv::detail::CameraParams> cameras_ = estimateCameraParams(conf_thresh_, warped_image_scale_, features_, pairwise_matches_);
+    std::vector<cv::detail::CameraParams> cameras_ = estimateCameraParams(conf_thresh_, warped_image_scale_, all_features, all_pairwise_matches);
 
     //////////////////////
     //// compose pano ////
