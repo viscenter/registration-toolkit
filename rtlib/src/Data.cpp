@@ -48,7 +48,7 @@ Data::ENVI(const fs::path& path)
 
 cv::Mat Data::ENVI::getImage(int idx)
 {
-    //Get particular image
+    //Get image of particular spectral band
     cv::Mat img = envi_.getBand(idx);
 
     //envi_.closeFile();
@@ -59,7 +59,7 @@ cv::Mat Data::ENVI::getImage(int idx)
 
 Data::Mesh(const fs::path& path)
 {
-    //Read in mesh along with it's texture
+    //Read in mesh along with its texture
     io::OBJReader reader;
     reader.setPath(path);
 
