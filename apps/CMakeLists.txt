@@ -76,7 +76,7 @@ target_link_libraries(rt_swap_landmarks
     Boost::program_options
 )
 
-add_executable(rt_segment_disegni src/ImageSegmentationMain.cpp)
+add_executable(rt_segment_disegni src/SegmentDisegni.cpp)
 target_link_libraries(rt_segment_disegni
     rt::rtlib
     opencv_core

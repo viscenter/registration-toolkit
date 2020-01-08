@@ -1,46 +1,61 @@
 #pragma once
 
-// C++ Standard Libraries
 #include <vector>
 
-// External Libraries
 #include <opencv2/core.hpp>
 
-
-
+namespace rt
+{
 /**
- * @brief Isolates individual disegni images from an image containing multiple disegni
+ * @brief Split a single image of multiple disegni into multiple images of
+ single disegni
  *
- * [This algorithm takes an input Mat image and inserts it into a private class
- * member. This private class member is ran through a watershed algorithm where
- * it's differing color intensities are used to segment the image. After being
- * ran through the watershed algorithm, the image is segmented into different
- * pixel subregions that can be manipulated and displayed through various
- * methods. Next the watersheded image is ran through a split and merge
- * function. The split and merge function took advantage of the differing pixel
- * subregions to insert them into each of their own Mat image. Finally the split
- * Mat images are inserted into a vector and returned as a vector. This vector
- * being the output of the algorithm.]
+ * This class uses OpenCV's watershed algorithm to split
+ *  This method is heavily based off of the OpenCv tutorial "Image Segmentation
+ with Distance Transform and Watershed Algorithm" available at :
+ https://docs.opencv.org/3.4/d2/dbd/tutorial_distance_transform.html
  */
 class DisegniSegmenter
 {
-
 public:
-    /** @brief Inserts the src image as an input for the algorithm */
-    void setInputImage(cv::Mat i);
-    /** @brief This calls for segmentation of the src image outputting the fragmented pieces */
+    /** @brief Set the input disegni image */
+    void setInputImage(const cv::Mat& i);
+
+    /** @brief Convert white pixels to black pixels prior to segmentation */
+    void setPreprocessWhiteToBlack(bool b);
+    /** @brief Laplacian sharpen input image prior to segmentation */
+    void setPreprocessSharpen(bool b);
+    /** @brief Median blur input image prior to segmentation */
+    void setPreprocessBlur(bool b);
+
+    /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
-    /** @brief This retrieves your subregions stored in a vector */
+    /** @brief Get segmented disegni images */
     std::vector<cv::Mat> getOutputImages() const;
 
 private:
-    /** This contains the src image to be segmented */
-    cv::Mat inputImage_;
-    /** This contains the segmented subregions */
-    std::vector<cv::Mat> resultImages_;
+    /** Source image */
+    cv::Mat input_;
+    /** Labeled image */
+    cv::Mat labeled_;
+    /** Segmented subregions */
+    std::vector<cv::Mat> results_;
 
-    /**This conducts the image segmentation using the Watershed Method */
-    cv::Mat watershed_image_();
-    /**This separates the segmented subregions from the src image into their own images */
-    std::vector<cv::Mat> split_(cv::Mat labeledImage);
+    /** Preprocessing: White-to-black */
+    bool whiteToBlack_{false};
+    /** Preprocessing: Sharpen */
+    bool sharpen_{false};
+    /** Preprocessing: Blur */
+    bool blur_{false};
+
+    /** Preprocessing */
+    cv::Mat preprocess_();
+
+    /** Run watershed on image */
+    static cv::Mat watershed_image_(const cv::Mat& input);
+
+    /** Use labeled image to convert input into several images */
+    static std::vector<cv::Mat> split_labeled_image_(
+        const cv::Mat& input, const cv::Mat& labeled);
 };
+}  // namespace rt
