@@ -1,7 +1,9 @@
 #include "rt/DisegniSegmenter.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <map>
+#include <set>
 
 #include <opencv2/imgproc.hpp>
 
@@ -24,16 +26,49 @@ void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
 void DisegniSegmenter::setPreprocessBlur(bool b) { blur_ = b; }
 
-std::vector<cv::Mat> DisegniSegmenter::getOutputImages() const
-{
-    return results_;
-}
-
 std::vector<cv::Mat> DisegniSegmenter::compute()
 {
     auto processed = preprocess_();
     labeled_ = watershed_image_(processed);
     results_ = split_labeled_image_(input_, labeled_);
+    return results_;
+}
+
+cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
+{
+    if (!colored) {
+        return labeled_;
+    }
+
+    // Get the unique labels
+    std::set<int32_t> unique_labels(
+        labeled_.begin<int32_t>(), labeled_.end<int32_t>());
+
+    // Generate random colors for each label
+    std::map<int32_t, cv::Vec3b> colors;
+    for (const auto& l : unique_labels) {
+        auto b = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+        auto g = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+        auto r = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+        colors[l] = cv::Vec3b{b, g, r};
+    }
+
+    // Fill labeled objects with random colors
+    cv::Mat dst = cv::Mat::zeros(labeled_.size(), CV_8UC3);
+    for (int y = 0; y < labeled_.rows; y++) {
+        for (int x = 0; x < labeled_.cols; x++) {
+            auto index = labeled_.at<int>(y, x);
+            if (index > 0 && colors.count(index) > 0) {
+                dst.at<cv::Vec3b>(y, x) = colors.at(index);
+            }
+        }
+    }
+
+    return dst;
+}
+
+std::vector<cv::Mat> DisegniSegmenter::getOutputImages() const
+{
     return results_;
 }
 
@@ -100,6 +135,7 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(
         dist_8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
     // Create the marker image for the watershed algorithm
     cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32S);
     // Draw the foreground markers
@@ -110,14 +146,10 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     }
     // Draw the background marker
     cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
-    markers.convertTo(markers, CV_8U);
     markers.convertTo(markers, CV_32S);
 
     // Perform the watershed algorithm
     cv::watershed(input, markers);
-    cv::Mat mark;
-    markers.convertTo(mark, CV_8U);
-    cv::bitwise_not(mark, mark);
 
     // Returns the watershedded Mat image as distinct pixel values
     return markers;

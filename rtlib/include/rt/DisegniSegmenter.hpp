@@ -6,15 +6,17 @@
 
 namespace rt
 {
+// clang-format off
 /**
  * @brief Split a single image of multiple disegni into multiple images of
- single disegni
+ * single disegni
  *
- * This class uses OpenCV's watershed algorithm to split
- *  This method is heavily based off of the OpenCv tutorial "Image Segmentation
- with Distance Transform and Watershed Algorithm" available at :
- https://docs.opencv.org/3.4/d2/dbd/tutorial_distance_transform.html
+ * This class makes use of OpenCV's watershed algorithm to isolate individual
+ * disegni from a single image. This implementation is heavily based off of the
+ * OpenCV tutorial
+ * <a href="https://docs.opencv.org/3.4/d2/dbd/tutorial_distance_transform.html">"Image Segmentation with Distance Transform and Watershed Algorithm"</a>.
  */
+// clang-format on
 class DisegniSegmenter
 {
 public:
@@ -30,6 +32,15 @@ public:
 
     /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
+
+    /**
+     * @brief Get labeled image
+     *
+     * @param colored If `true` (default), converts the labeled image to
+     * an RGB image (CV_8UC3). Otherwise, returns pixel labels (CV_32SC1).
+     */
+    cv::Mat getLabeledImage(bool colored = true);
+
     /** @brief Get segmented disegni images */
     std::vector<cv::Mat> getOutputImages() const;
 

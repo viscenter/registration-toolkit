@@ -82,6 +82,8 @@ target_link_libraries(rt_segment_disegni
     opencv_core
     opencv_imgcodecs
     opencv_highgui
+    Boost::filesystem
+    Boost::program_options
 )
 
 

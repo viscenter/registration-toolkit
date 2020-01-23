@@ -1,9 +1,10 @@
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/DisegniSegmenter.hpp"
@@ -18,12 +19,20 @@ int main(int argc, char* argv[])
     po::options_description required("General Options");
     required.add_options()
         ("help,h", "Show this message")
-        ("input-image,i", po::value<std::string>()->required(), "Input disegni image")
-        ("output-dir,o", po::value<std::string>()->required(),
-         "Output directory segmented disegni images");
+        ("input,i", po::value<std::string>()->required(), "Input disegni image")
+        ("output-prefix", po::value<std::string>()->default_value("disegni_"), "Filename prefix for segmented images")
+        ("output-format", po::value<std::string>()->default_value("png"), "Output image format")
+        ("output-labels", po::value<std::string>(), "The file path to save the color labels image")
+        ("output-dir,o", po::value<std::string>()->required(), "Output directory segmented disegni images");
+
+    po::options_description preproc("Preprocessing Options");
+    preproc.add_options()
+        ("white-to-black", "Convert white pixels to black pixels")
+        ("sharpen", "Apply Laplacian sharpen")
+        ("blur", "Apply median blur");
 
     po::options_description all("Usage");
-    all.add(required);
+    all.add(required).add(preproc);
     // clang-format on
 
     // Parse the cmd line
@@ -45,21 +54,45 @@ int main(int argc, char* argv[])
     }
 
     // Load input
-    fs::path inputPath = parsed["input-image"].as<std::string>();
+    fs::path inputPath = parsed["input"].as<std::string>();
     auto input = cv::imread(inputPath.string());
     if (input.empty()) {
         std::cout << "Could not open or find the image" << std::endl;
         return EXIT_FAILURE;
     }
 
+    // Run segmenter
+    std::cout << "Segmenting image..." << std::endl;
     rt::DisegniSegmenter segmenter;
     segmenter.setInputImage(input);
+    segmenter.setPreprocessWhiteToBlack(parsed.count("white-to-black") > 0);
+    segmenter.setPreprocessSharpen(parsed.count("sharpen") > 0);
+    segmenter.setPreprocessBlur(parsed.count("blur") > 0);
     auto results = segmenter.compute();
 
-    // TESTING PURPOSE
-    cv::namedWindow("Fragmented Image", 0);
-    cv::imshow("Fragmented Image", results[0]);
-    cv::waitKey(0);
+    // Setup output variables
+    fs::path outDir = parsed["output-dir"].as<std::string>();
+    auto padding = std::to_string(results.size()).size();
+    auto prefix = parsed["output-prefix"].as<std::string>();
+    auto ext = "." + parsed["output-format"].as<std::string>();
+
+    // Save the labels image
+    if (parsed.count("output-labels") > 0) {
+        std::cout << "Saving labels image..." << std::endl;
+        cv::imwrite(
+            parsed["output-labels"].as<std::string>(),
+            segmenter.getLabeledImage(true));
+    }
+
+    // Save the subimages
+    std::cout << "Saving disegni images..." << std::endl;
+    size_t index = 0;
+    for (const auto& r : results) {
+        std::stringstream ss;
+        ss << prefix << std::setw(padding) << std::setfill('0') << index << ext;
+        cv::imwrite((outDir / ss.str()).string(), r);
+        index++;
+    }
+
     return EXIT_SUCCESS;
-    // TESTING PURPOSE
 }
