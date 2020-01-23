@@ -43,7 +43,7 @@ target_link_libraries(${target}
     PRIVATE
         opencv_calib3d
         opencv_features2d
-        opencv_highgui
+        opencv_imgcodecs
         opencv_imgproc
         ITKOptimizers
         vtkCommonTransforms

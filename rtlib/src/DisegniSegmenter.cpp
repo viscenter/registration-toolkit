@@ -36,6 +36,7 @@ std::vector<cv::Mat> DisegniSegmenter::compute()
 
 cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
 {
+    // Return the raw labels if we don't want a colored image
     if (!colored) {
         return labeled_;
     }
@@ -53,7 +54,7 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
         colors[l] = cv::Vec3b{b, g, r};
     }
 
-    // Fill labeled objects with random colors
+    // Fill output image with color labels
     cv::Mat dst = cv::Mat::zeros(labeled_.size(), CV_8UC3);
     for (int y = 0; y < labeled_.rows; y++) {
         for (int x = 0; x < labeled_.cols; x++) {
