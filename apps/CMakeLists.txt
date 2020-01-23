@@ -76,6 +76,17 @@ target_link_libraries(rt_swap_landmarks
     Boost::program_options
 )
 
+add_executable(rt_segment_disegni src/SegmentDisegni.cpp)
+target_link_libraries(rt_segment_disegni
+    rt::rtlib
+    opencv_core
+    opencv_imgcodecs
+    opencv_highgui
+    Boost::filesystem
+    Boost::program_options
+)
+
+
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
     target_link_libraries(rt_dewarp
@@ -95,6 +106,7 @@ install(
         rt_generate_landmarks
         rt_plot_landmarks
         rt_swap_landmarks
+        rt_segment_disegni
     RUNTIME DESTINATION bin
     COMPONENT Programs
 )

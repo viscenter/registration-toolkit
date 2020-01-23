@@ -83,7 +83,6 @@ void LandmarkReader::readRaw()
     movingLandmarks_.clear();
 
     // Read the landmarks file
-    rt::Landmark fixedPoint, movingPoint;
     itk::ContinuousIndex<double, 2> fixedIndex, movingIndex;
 
     std::ifstream ifs(landmarksPath_.string());

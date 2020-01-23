@@ -22,6 +22,7 @@ set(srcs
     src/AffineLandmarkRegistration.cpp
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
+    src/DisegniSegmenter.cpp
 )
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
@@ -42,7 +43,7 @@ target_link_libraries(${target}
     PRIVATE
         opencv_calib3d
         opencv_features2d
-        opencv_highgui
+        opencv_imgcodecs
         opencv_imgproc
         ITKOptimizers
         vtkCommonTransforms
