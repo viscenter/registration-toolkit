@@ -16,7 +16,7 @@ if(NOT envi-tools_POPULATED)
     #Override default options
 
     FetchContent_Populate(envi-tools)
-
+endif()
 
 # For compiler sanitizers. Taken from:
 # https://github.com/arsenm/sanitizers-cmake/blob/master/README.md
