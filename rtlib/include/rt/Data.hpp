@@ -26,9 +26,10 @@ namespace Data {
      */
     class Data
     {
-        using Pointer = std::shared_ptr<Data>; //DOES THIS GO HERE?
 
     public:
+        using Pointer = std::shared_ptr<Data>;
+
         /** @brief Load the data type from the given file */
         static Pointer Load(const fs::path& path);
 
