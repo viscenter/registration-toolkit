@@ -7,7 +7,7 @@
 #include "rt/Data.hpp"
 #include "rt/io/OBJReader.hpp"
 
-
+namespace et = envitools;
 using namespace Data;
 
 // IO
