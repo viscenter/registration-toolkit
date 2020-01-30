@@ -17,7 +17,7 @@ namespace et = envitools;
 namespace fs = boost::filesystem;
 
 
-namespace Data {
+namespace rt {
     /**
      * @class Data
      * @brief Abstract data structure class to represents the input and
