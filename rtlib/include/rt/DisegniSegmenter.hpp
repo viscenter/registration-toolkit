@@ -68,5 +68,8 @@ private:
     /** Use labeled image to convert input into several images */
     static std::vector<cv::Mat> split_labeled_image_(
         const cv::Mat& input, const cv::Mat& labeled);
+
+    //Otsu Image Segmentation
+    cv::Mat otsu_segmentation_(const cv::Mat& input);
 };
 }  // namespace rt

@@ -1,4 +1,5 @@
 #include "rt/DisegniSegmenter.hpp"
+#include "itkOtsuMultipleThresholdsCalculator.h"
 
 #include <algorithm>
 #include <limits>
@@ -6,6 +7,9 @@
 #include <set>
 
 #include <opencv2/imgproc.hpp>
+#include <ITK-5.0/itkOpenCVImageBridge.h>
+#include <rt/ImageTypes.hpp>
+#include <ITK-5.0/itkScalarImageToHistogramGenerator.h>
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -13,6 +17,8 @@ static const cv::Vec3b WHITE = {255, 255, 255};
 static const cv::Vec3b BLACK = {0, 0, 0};
 
 using namespace rt;
+using OCVB = itk::OpenCVImageBridge;
+
 
 // Bounding box
 struct BoundingBox {
@@ -205,4 +211,15 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     }
 
     return subimgs;
+}
+
+cv::Mat otsu_segmentation_(const cv::Mat& input) {
+
+    //Conversion of OpenCV Mat to ITK Image
+    auto inputImage = OCVB::CVMatToITKImage<Image8UC3>(input);
+
+    //Generation of Histograms
+    typedef itk::Statistics::ScalarImageToHistogramGenerator< inputImage > ScalarImageToHistogramGeneratorType;
+
+    //Trying to figure out how to get the above function to work
 }
