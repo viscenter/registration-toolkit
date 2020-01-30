@@ -23,11 +23,11 @@ Data::Pointer Data::Load(const fs::path& path)
     //Select type of object based on this file's type
     switch(metadata.type){
         case "image":
-            return new Image(path); //SHOULD THESE BE SHARED POINTERS INSTEAD OF "new"? e.g. return std::make_unique<Image>(path);?
+            return std::make_shared<Image>(path); //SHOULD THESE BE SHARED POINTERS INSTEAD OF "new"? e.g. return std::make_unique<Image>(path);?
         case "envi":
-            return new ENVI(path);
+            return std::make_shared<ENVI>(path);
         case "mesh":
-            return new Mesh(path);
+            return std::make_shared<Mesh>(path);
     }
 }
 
