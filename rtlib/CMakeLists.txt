@@ -24,7 +24,7 @@ set(srcs
     src/BSplineLandmarkWarping.cpp
     src/DisegniSegmenter.cpp
     src/Data.cpp
-)
+        src/Image.cpp src/Envi.cpp src/Mesh.cpp)
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
 add_library("${namespace}${module}" ALIAS "${target}")
