@@ -10,6 +10,7 @@
 #include <ITK-5.0/itkOpenCVImageBridge.h>
 #include <rt/ImageTypes.hpp>
 #include <ITK-5.0/itkScalarImageToHistogramGenerator.h>
+#include <ITK-5.0/itkBinaryThresholdImageFilter.h>
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -213,13 +214,52 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     return subimgs;
 }
 
-cv::Mat otsu_segmentation_(const cv::Mat& input) {
+cv::Mat otsu_segmentation_(const cv::Mat& input, int thresholdNumber) {
 
-    //Conversion of OpenCV Mat to ITK Image
+    //Conversion from Mat Image to Itk Image (Image8UC3)
     auto inputImage = OCVB::CVMatToITKImage<Image8UC3>(input);
 
     //Generation of Histograms
-    typedef itk::Statistics::ScalarImageToHistogramGenerator< inputImage > ScalarImageToHistogramGeneratorType;
+    using ScalarImageToHistogramGeneratorType = itk::Statistics::ScalarImageToHistogramGenerator<Image8UC3>;
+    using HistogramType = ScalarImageToHistogramGeneratorType::HistogramType;
+    using CalculatorType = itk::OtsuMultipleThresholdsCalculator<ScalarImageToHistogramGeneratorType>;
 
-    //Trying to figure out how to get the above function to work
+    //Segments the input image into segments
+    using Filtertype = itk::BinaryThresholdImageFilter< Image8UC3, Image8UC3 >;
+
+    //Creates a histogram generator and calculator using the standard New() method
+    ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
+    itk::OtsuMultipleThresholdsCalculator<ScalarImageToHistogramGeneratorType>::Pointer calculator = CalculatorType::New();
+    Filtertype::Pointer filter = Filtertype::New();
+
+    //Setting the number of thresholds from the command line
+    scalarImageToHistogramGenerator->SetNumberOfBins(128);
+    calculator->SetNumberOfThresholds(thresholdNumber);
+
+    //
+    scalarImageToHistogramGenerator->SetInput(reader->GetOutput());
+    calculator->SetNumberOfThresholds(scalarImageToHistogramGenerator->GetOutput());
+    filter->SetInput(reader->GetOutput());
+    writer->SetInput(filter->GetOutput());
+
+    //Thresholds are obtained using the GetOutput method
+    const CalculatorType::OutputType &thresholdVector = calculator->GetOutput();
+    CalculatorType::OutputType::const_iterator itNum = thresholdVector.begin();
+
+    //Threshold into separate segments and write out as binary images
+    for(; itNume < thresholdVector.end(); itNum++) {
+        std::cout << "OtsuThreshold["
+                  << (int) (itNum - thresholdVector.begin())
+                  << "] = "
+                  << static_cast<itk::NumericTraits< CalculatorType::MeasurmentType>::PrintType>(*itNum)
+                  << std::endl;
+    }
+
+    //Writes out the image thresholded between the upper threshold and the max intensity
+    upperThreshold = itk::NumericTraits<InputPixelType>::max();
+    filter->SetLowerThreshold(lowerThreshold);
+    filter->SetUpperThreshold(upperThreshold);
+    
+
+
 }
