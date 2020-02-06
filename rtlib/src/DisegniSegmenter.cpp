@@ -40,7 +40,7 @@ void DisegniSegmenter::setPreprocessBlur(bool b) { blur_ = b; }
 std::vector<cv::Mat> DisegniSegmenter::compute()
 {
     auto processed = preprocess_();
-    labeled_ = watershed_image_(processed);
+    labeled_ = otsu_segmentation_(processed);
     results_ = split_labeled_image_(input_, labeled_);
     return results_;
 }
@@ -218,17 +218,19 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     return subimgs;
 }
 
-cv::Mat otsu_segmentation_(const cv::Mat& input, int binNumber, int thresholdNumber) {
+cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
+
+    int binNumber = 10;
+    int thresholdNumber = 150;
 
     //Conversion of Mat Image into Itk Image (Image8UC3)
     auto inputImage = OCVB::CVMatToITKImage<Image8UC3>(input);
 
-    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC3, Image8UC3>;
+    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC3, Image8UC1>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(inputImage);
     filter->SetNumberOfHistogramBins(binNumber);
     filter->SetNumberOfThresholds(thresholdNumber);
-    filter->SetLabelOffset(0);
 
     FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
 
@@ -240,14 +242,5 @@ cv::Mat otsu_segmentation_(const cv::Mat& input, int binNumber, int thresholdNum
 
     std::cout << std::endl;
 
-    using RescaleType = itk::RescaleIntensityImageFilter<Image8UC3, Image8UC3>;
-    RescaleType::Pointer rescaler = RescaleType::New();
-    rescaler->SetInput(filter->GetOutput());
-    itk::OtsuMultipleThresholdsImageFilter<Image8UC3, Image8UC3>;
-
-
-
-
-
-
+    return OCVB::ITKImageToCVMat(filter->GetOutput());
 }
