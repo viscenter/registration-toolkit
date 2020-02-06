@@ -70,6 +70,6 @@ private:
         const cv::Mat& input, const cv::Mat& labeled);
 
     //Otsu Image Segmentation
-    cv::Mat otsu_segmentation_(const cv::Mat& input, int thresholdNumber);
+    cv::Mat otsu_segmentation_(const cv::Mat& input);
 };
 }  // namespace rt
