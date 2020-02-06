@@ -30,6 +30,10 @@ public:
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
 
+    //Otsu Private Data members
+    void setBinNumber(int binNum);
+    void setThresholdNumber(int thresNum);
+
     /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
 
@@ -51,6 +55,10 @@ private:
     cv::Mat labeled_;
     /** Segmented subregions */
     std::vector<cv::Mat> results_;
+
+    //Otsu private Data Members
+    int binNumber_;
+    int thresholdNumber_;
 
     /** Preprocessing: White-to-black */
     bool whiteToBlack_{false};
