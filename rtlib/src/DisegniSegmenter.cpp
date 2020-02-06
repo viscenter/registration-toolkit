@@ -37,6 +37,9 @@ void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
 void DisegniSegmenter::setPreprocessBlur(bool b) { blur_ = b; }
 
+void DisegniSegmenter::setBinNumber(int binNum){ binNumber_ = binNum;};
+void DisegniSegmenter::setThresholdNumber(int thresNum){ thresholdNumber_ = thresNum;};
+
 std::vector<cv::Mat> DisegniSegmenter::compute()
 {
     auto processed = preprocess_();
@@ -220,17 +223,18 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
 
 cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
 
-    int binNumber = 10;
-    int thresholdNumber = 150;
+    //Testing Purposes
+    binNumber_ = 10;
+    thresholdNumber_ = 150;
 
     //Conversion of Mat Image into Itk Image (Image8UC3)
-    auto inputImage = OCVB::CVMatToITKImage<Image8UC3>(input);
+    auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
 
-    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC3, Image8UC1>;
+    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(inputImage);
-    filter->SetNumberOfHistogramBins(binNumber);
-    filter->SetNumberOfThresholds(thresholdNumber);
+    filter->SetNumberOfHistogramBins(binNumber_);
+    filter->SetNumberOfThresholds(thresholdNumber_);
 
     FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
 
