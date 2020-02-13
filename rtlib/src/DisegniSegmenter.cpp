@@ -1,9 +1,4 @@
 #include "rt/DisegniSegmenter.hpp"
-#include "itkOtsuMultipleThresholdsCalculator.h"
-#include "itkImageFileReader.h"
-#include "itkOtsuMultipleThresholdsImageFilter.h"
-#include "itkRescaleIntensityImageFilter.h"
-#include "itkImageFileWriter.h"
 
 #include <algorithm>
 #include <limits>
@@ -11,10 +6,20 @@
 #include <set>
 
 #include <opencv2/imgproc.hpp>
-#include <ITK-5.0/itkOpenCVImageBridge.h>
+#include <itkOpenCVImageBridge.h>
 #include <rt/ImageTypes.hpp>
-#include <ITK-5.0/itkScalarImageToHistogramGenerator.h>
-#include <ITK-5.0/itkBinaryThresholdImageFilter.h>
+#include <itkScalarImageToHistogramGenerator.h>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkOtsuMultipleThresholdsCalculator.h>
+#include <itkOtsuMultipleThresholdsImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <highgui.h>
+
+//Testing Purposes
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <iostream>
+//Testing Purposes
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -221,29 +226,29 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     return subimgs;
 }
 
+
 cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
 
-    //Testing Purposes
-    binNumber_ = 10;
-    thresholdNumber_ = 150;
+        //Testing Purposes
+        thresholdNumber_ = 20;
 
-    //Conversion of Mat Image into Itk Image (Image8UC3)
-    auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
+        //Conversion of Mat Image into Itk Image (Image8UC3)
+        auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
 
-    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(inputImage);
-    filter->SetNumberOfHistogramBins(binNumber_);
-    filter->SetNumberOfThresholds(thresholdNumber_);
+        using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
+        FilterType::Pointer filter = FilterType::New();
+        filter->SetInput(inputImage);
+        filter->SetNumberOfHistogramBins(binNumber_);
+        filter->SetNumberOfThresholds(thresholdNumber_);
+        filter->Update();
 
-    FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
+        FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
 
-    std::cout << "Thresholds:" << std::endl;
+        std::cout << "Thresholds:" << std::endl;
 
-    for (double threshold : thresholds) {
-        std::cout << threshold << std::endl;
-    }
-
+        for (double threshold : thresholds) {
+            std::cout << threshold << std::endl;
+        }
     std::cout << std::endl;
 
     return OCVB::ITKImageToCVMat(filter->GetOutput());
