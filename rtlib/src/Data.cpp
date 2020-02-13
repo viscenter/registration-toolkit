@@ -15,6 +15,7 @@ using OCVBridge = itk::OpenCVImageBridge;
 
 
 Data::Pointer Data::Load(const fs::path& path)
+
 {
     //HOW TO GET METADATA AKA FILE TYPE? Could just read the 'metadata.json' file from the current directory right? Since each
     //input data thing in the RegPkg is a sub-folder that contains only the data and then the metadata file.

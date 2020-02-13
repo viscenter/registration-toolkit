@@ -9,9 +9,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include "envi-tools/ENVI.hpp" //IS THIS THE RIGHT WAY TO INCLUDE THIS HEADER?
 
-namespace et = envitools;
-namespace fs = boost::filesystem;
 
 
 namespace rt {
@@ -28,7 +27,7 @@ namespace rt {
         using Pointer = std::shared_ptr<Data>;
 
         /** @brief Load the data type from the given file */
-        static Pointer Load(const fs::path& path);
+        static Pointer Load(const boost::filesystem::path& path);
 
         /** @brief Return a single image from the input data */
         virtual cv::Mat getImage(int idx = 0) = 0;
@@ -37,6 +36,6 @@ namespace rt {
         Data() = default;
 
         /** Constructor */
-        Data(const fs::path& path) {}
+        Data(const boost::filesystem::path& path) {}
     };
 }
