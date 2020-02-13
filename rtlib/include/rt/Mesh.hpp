@@ -24,13 +24,8 @@ namespace rt {
         Mesh(const boost::filesystem::path& path){}
 
         /** @brief Return the fixed image (texture) of the input data */
-        cv::Mat getCVImage() { return cvFixedImage_; }
+        cv::Mat getImage() { return cvFixedImage_; }
 
-        /** @brief Return the fixed image of the input data */
-        rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
-
-        /** @brief Return the 3D mesh */
-        rt::ITKMesh::Pointer getMesh() { return origMesh_; }
     private:
         /** Fixed texture image of the mesh */
         cv::Mat cvFixedImage_;
