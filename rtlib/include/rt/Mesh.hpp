@@ -21,7 +21,7 @@ namespace rt {
     {
     public:
         /** Constructor */
-        Mesh(const fs::path& path){ /* Do something to load */ }
+        Mesh(const boost::filesystem::path& path){}
 
         /** @brief Return the fixed image (texture) of the input data */
         cv::Mat getCVImage() { return cvFixedImage_; }

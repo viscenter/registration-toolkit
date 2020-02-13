@@ -9,7 +9,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "envi-tools/ENVI.hpp" //IS THIS THE RIGHT WAY TO INCLUDE THIS HEADER?
+//#include "envi-tools/ENVI.hpp" //IS THIS THE RIGHT WAY TO INCLUDE THIS HEADER?
 
 
 
@@ -31,6 +31,15 @@ namespace rt {
 
         /** @brief Return a single image from the input data */
         virtual cv::Mat getImage(int idx = 0) = 0;
+
+        /** @brief Return a single mesh from the input data */
+        virtual cv::Mat getMesh(int idx = 0) = 0;
+
+        /** @brief Return a single image from the input data */
+        virtual int getNumImages() = 0;
+
+        /** @brief Return a single image from the input data */
+        virtual int getNumMeshes() = 0;
 
     protected:
         Data() = default;

@@ -22,6 +22,10 @@ namespace rt {
 
         /** @brief Return a single image */
         cv::Mat getImage() { return img_; }
+
+        /** @brief Return the number of images we have. Only 1 because Image object represents 1 image */
+        int getNumImages() { return 1; }
+
     private:
         /** Image */
         cv::Mat img_;

@@ -25,6 +25,10 @@ namespace rt {
 
         /** @brief Return a single image from the input data */
         cv::Mat getImage(int idx = 0) {}
+
+        /** @brief Return the number of images we have available */
+        int getNumImages() { return envi_.getWavelengths.size(); }
+
     private:
         //std::vector<cv::Mat> bands_; //Could use to store bands we have read in memory?
         /** ENVI object */
