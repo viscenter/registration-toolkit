@@ -4,16 +4,11 @@
 
 #include "rt/Envi.hpp"
 
+namespace et = envitools;
 using namespace rt;
 
 
-Data::ENVI(const fs::path& path)
-{
-    //Read in ENVI file from the file path, set the object to the envi_ private member
-    envi_ = et::ENVI envi(path); //or does it need to be envitools::ENVI envi(path);
-    //or is it et::ENVI envi_(path);
-
-}
+Data::ENVI(const fs::path& path) : envi_{path} {}
 
 cv::Mat Data::ENVI::getImage(int idx)
 {

@@ -7,6 +7,8 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
+#include "envi-tools/ENVI.hpp" //IS THIS THE RIGHT WAY TO INCLUDE THIS HEADER?
+
 
 namespace rt {
     /**
@@ -18,7 +20,7 @@ namespace rt {
     {
     public:
         /** Constructor */
-        ENVI(const fs::path& path){ /* Do something to load */ }
+        ENVI(const fs::path& path){}
         //cv::Mat getImage(int idx = 0) { return bands_[idx]; } //Could use this if we read bands into vector. But would also need functions to load into vector, and access vector.
 
         /** @brief Return a single image from the input data */
