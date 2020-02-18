@@ -7,7 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
-#include "envi-tools/ENVI.hpp" //IS THIS THE RIGHT WAY TO INCLUDE THIS HEADER?
+#include <envi-tools/ENVI.hpp>
 
 
 namespace rt {

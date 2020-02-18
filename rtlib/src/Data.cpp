@@ -21,10 +21,11 @@ Data::Pointer Data::Load(const fs::path& path)
     //input data thing in the RegPkg is a sub-folder that contains only the data and then the metadata file.
     //Read in metadata file
 
+
     //Select type of object based on this file's type
     switch(metadata.type){
         case "image":
-            return std::make_shared<Image>(path); //SHOULD THESE BE SHARED POINTERS INSTEAD OF "new"? e.g. return std::make_unique<Image>(path);?
+            return std::make_shared<Image>(path);
         case "envi":
             return std::make_shared<ENVI>(path);
         case "mesh":
