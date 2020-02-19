@@ -238,7 +238,7 @@ cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
         using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
         FilterType::Pointer filter = FilterType::New();
         filter->SetInput(inputImage);
-        filter->SetNumberOfHistogramBins(binNumber_);
+        //filter->SetNumberOfHistogramBins(binNumber_);
         filter->SetNumberOfThresholds(thresholdNumber_);
         filter->Update();
 
