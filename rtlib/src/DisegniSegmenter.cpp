@@ -74,7 +74,7 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     }
 
     // Fill output image with color labels
-    cv::Mat dst = cv::Mat::zeros(labeled_.size(), CV_8UC3);
+    cv::Mat dst = cv::Mat::zeros(labeled_.rows, labeled_.cols, CV_8UC3);
     for (int y = 0; y < labeled_.rows; y++) {
         for (int x = 0; x < labeled_.cols; x++) {
             auto index = labeled_.at<int>(y, x);
@@ -194,7 +194,6 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
             // Init new bb if we don't have one
             if (labelBBs.count(label) == 0) {
                 labelBBs[label] = BoundingBox();
-                continue;
             }
 
             // Update the top-left and bottom-right position for each subimage
@@ -215,13 +214,16 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
 
     // Use bounding boxes to create ROI images
     std::vector<cv::Mat> subimgs;
+    int idx = 0;
     for (const auto& i : labelBBs) {
         auto height = i.second.br.y - i.second.tl.y;
         auto width = i.second.br.x - i.second.tl.x;
+        std::cout << idx++ << ": " << i.second.tl.x << " " << i.second.tl.y << " " << width << " " << height << std::endl;
         cv::Rect roi(i.second.tl.x, i.second.tl.y, width, height);
         cv::Mat subimg = input(roi).clone();
         subimgs.push_back(subimg);
     }
+    std::cout << std::endl;
 
     return subimgs;
 }
@@ -230,7 +232,7 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
 cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
 
         //Testing Purposes
-        thresholdNumber_ = 20;
+        thresholdNumber_ = 2;
 
         //Conversion of Mat Image into Itk Image (Image8UC3)
         auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
@@ -250,6 +252,9 @@ cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
             std::cout << threshold << std::endl;
         }
     std::cout << std::endl;
+    auto itkLabel = filter->GetOutput();
+    cv::Mat cvLabel = OCVB::ITKImageToCVMat(itkLabel);
+    cvLabel.convertTo(cvLabel, CV_32S);
 
-    return OCVB::ITKImageToCVMat(filter->GetOutput());
+    return cvLabel;
 }
