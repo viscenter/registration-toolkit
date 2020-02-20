@@ -30,6 +30,10 @@ public:
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
 
+    //Otsu Private Data members
+    void setBinNumber(int binNum);
+    void setThresholdNumber(int thresNum);
+
     /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
 
@@ -52,6 +56,10 @@ private:
     /** Segmented subregions */
     std::vector<cv::Mat> results_;
 
+    //Otsu private Data Members
+    int binNumber_;
+    int thresholdNumber_;
+
     /** Preprocessing: White-to-black */
     bool whiteToBlack_{false};
     /** Preprocessing: Sharpen */
@@ -64,6 +72,9 @@ private:
 
     /** Run watershed on image */
     static cv::Mat watershed_image_(const cv::Mat& input);
+
+    //Otsu Image Segmentation
+    cv::Mat otsu_segmentation_(const cv::Mat& input);
 
     /** Use labeled image to convert input into several images */
     static std::vector<cv::Mat> split_labeled_image_(
