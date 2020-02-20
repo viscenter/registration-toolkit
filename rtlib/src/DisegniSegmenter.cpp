@@ -7,6 +7,16 @@
 #include <iostream>
 
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <itkOpenCVImageBridge.h>
+#include <rt/ImageTypes.hpp>
+#include <itkScalarImageToHistogramGenerator.h>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkOtsuMultipleThresholdsCalculator.h>
+#include <itkOtsuMultipleThresholdsImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <highgui.h>
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -14,6 +24,7 @@ static const cv::Vec3b WHITE = {255, 255, 255};
 static const cv::Vec3b BLACK = {0, 0, 0};
 
 using namespace rt;
+using OCVB = itk::OpenCVImageBridge;
 
 // Bounding box
 struct BoundingBox {
@@ -155,6 +166,36 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 
     // Returns the watershedded Mat image as distinct pixel values
     return markers;
+}
+
+cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
+
+    //Testing Purposes
+    thresholdNumber_ = 2;
+
+    //Conversion of Mat Image into Itk Image (Image8UC3)
+    auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
+
+    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
+    FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(inputImage);
+    //filter->SetNumberOfHistogramBins(binNumber_);
+    filter->SetNumberOfThresholds(thresholdNumber_);
+    filter->Update();
+
+    FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
+
+    std::cout << "Thresholds:" << std::endl;
+
+    for (double threshold : thresholds) {
+        std::cout << threshold << std::endl;
+    }
+    std::cout << std::endl;
+    auto itkLabel = filter->GetOutput();
+    cv::Mat cvLabel = OCVB::ITKImageToCVMat(itkLabel);
+    cvLabel.convertTo(cvLabel, CV_32S);
+
+    return cvLabel;
 }
 
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
