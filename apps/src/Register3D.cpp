@@ -87,28 +87,37 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
-    // Read the OBJ file and static image
+
     /* PREVIOUS CODE
+    // Read the OBJ file and static image
     io::OBJReader reader;
     reader.setPath(fixedPath);
     ITKMesh::Pointer origMesh;
     cv::Mat cvFixedImage;
     try {
         origMesh = reader.read();
-        cvFixedImage = reader.getTextureMat();
+        //cvFixedImage = reader.getTextureMat();
         fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
      */
+    io::OBJReader reader;
+    reader.setPath(fixedPath);
     ITKMesh::Pointer origMesh;
     cv::Mat cvFixedImage;
 
-    auto meshObj = Data::Data::Load(fixedPath);
-    origMesh = meshObj.getMesh();
-    cvFixedImage = meshObj.getCVImage();
-    fixedImage = meshObj.getFixedImage();
+    //WE KNOW THIS WILL BE A MESH OBJECT BECAUSE 3D REGISTRATION. SHOULD WE JUST SAY IT IS A MESH
+    //RATHER THAN A DATA OBJ? THIS WILL FIX THE ISSUE OF DATA OBJ NOT HAVING GETFIXEDIMAGE() FUNCTION,
+    //BECAUSE ITS EXCLUSIVE TO MESH.
+    //OR, this is just a conversion of the cvFixedImage. Can just write function in class to convert when the get()
+    //function is called for fixedImage...
+    auto meshObj = rt::Data::Load(fixedPath);
+    cvFixedImage = meshObj->getImage();
+    origMesh = meshObj->getMesh();
+    fixedImage = meshObj->getFixedImage(); //DO I NEED TO ADD A VIRTUAL FUNCTION TO PERMIT THIS?
+
 
 
     // Read the moving image

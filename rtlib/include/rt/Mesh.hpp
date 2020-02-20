@@ -26,6 +26,12 @@ namespace rt {
         /** @brief Return the fixed image (texture) of the input data */
         cv::Mat getImage() { return cvFixedImage_; }
 
+        /** @brief Return the fixed image of the input data */
+        rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
+
+        /** @brief Return the 3-D mesh of the input data */
+        rt::ITKMesh::Pointer getMesh() { return origMesh_; }
+
     private:
         /** Fixed texture image of the mesh */
         cv::Mat cvFixedImage_;

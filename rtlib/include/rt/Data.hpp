@@ -8,8 +8,9 @@
 #include <string>
 
 #include <boost/filesystem.hpp>
+#include <opencv2/core.hpp>
 
-
+#include "rt/types/ITKMesh.hpp"
 
 
 namespace rt {
@@ -32,7 +33,7 @@ namespace rt {
         virtual cv::Mat getImage(int idx = 0) = 0;
 
         /** @brief Return a single mesh from the input data */
-        virtual cv::Mat getMesh(int idx = 0) = 0;
+        virtual rt::ITKMesh::Pointer getMesh(int idx = 0) = 0;
 
         /** @brief Return a single image from the input data */
         virtual int getNumImages() = 0;
