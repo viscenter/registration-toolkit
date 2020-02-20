@@ -121,6 +121,7 @@ cv::Mat DisegniSegmenter::preprocess_()
 
 cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 {
+
     // Create binary image from source image
     cv::Mat bw;
     cv::cvtColor(input, bw, cv::COLOR_BGR2GRAY);
@@ -139,6 +140,7 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     // Dilate a bit the dist image
     cv::Mat kernel1 = cv::Mat::ones(3, 3, CV_8U);
     cv::dilate(dist, dist, kernel1);
+
 
     // Create the CV_8U version of the distance image
     // It is needed for findContours()
