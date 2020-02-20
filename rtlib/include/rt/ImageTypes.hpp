@@ -49,4 +49,12 @@ using Vector = itk::Vector<double, 2>;
 /** @brief 64-bit, floating point, 2D vector image */
 using DeformationField = itk::Image<Vector, 2>;
 /**@}*/
+
+/**@{*/
+/** @ingroup types */
+/** @brief 8-bit, unsigned, single channel pixel */
+using Pixel32SC1 = int32_t ;
+/** @brief 8-bit, unsigned, single channel image */
+using Image32SC1 = itk::Image<Pixel32SC1, 2>;
+/**@}*/
 }
