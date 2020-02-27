@@ -26,7 +26,7 @@ namespace rt {
     public:
         using Pointer = std::shared_ptr<Data>;
 
-        /** @brief Load the data type from the given file. This path should be the root path of a Registration Package */
+        /** @brief Load the data type from the given file. This path should be the root path of a SpatialObject object from the SpatialObject subdirectory of a Registration Package*/
         static Pointer Load(const boost::filesystem::path& path);
 
         /** @brief Return a single image from the input data */

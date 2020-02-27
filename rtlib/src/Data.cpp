@@ -8,27 +8,40 @@
 #include "rt/io/OBJReader.hpp"
 
 namespace et = envitools;
+namespace fs = boost::filesystem;
 using namespace rt;
 
 // IO
 using OCVBridge = itk::OpenCVImageBridge;
 
+enum class Type { Image, Envi, Mesh };
 
 Data::Pointer Data::Load(const fs::path& path)
-
 {
-    //HOW TO GET METADATA AKA FILE TYPE? Could just read the 'metadata.json' file from the current directory right? Since each
-    //input data thing in the RegPkg is a sub-folder that contains only the data and then the metadata file.
-    //Read in metadata file
+    fs::path metadata_file;
+
+    //Find this file path's metadata file
+    for (fs::directory_entry& entry : fs::directory_iterator(path){
+        if(entry.path().stem() == "metadata" && entry.path().extension() !== "json") {
+            metadata_file = entry.path();
+        }
+    }
+
+    //Read "spatial object type" of the metadata file into JSON object
+    std::ifstream i(metadata_file);
+    json j;
+    i >> j;
+
+    Type metadata_type = j["type"];
 
 
     //Select type of object based on this file's type
-    switch(metadata.type){
-        case "image":
+    switch(metadata_type){
+        case Image:
             return std::make_shared<Image>(path);
-        case "envi":
+        case Envi:
             return std::make_shared<ENVI>(path);
-        case "mesh":
+        case Mesh:
             return std::make_shared<Mesh>(path);
     }
 }
