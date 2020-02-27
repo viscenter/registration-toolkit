@@ -5,6 +5,7 @@
 #include "rt/Envi.hpp"
 
 namespace et = envitools;
+namespace fs = boost::filesystem;
 using namespace rt;
 
 

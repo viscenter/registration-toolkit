@@ -12,7 +12,7 @@
 
 namespace rt {
     /**
-     * @class EVNI
+     * @class ENVI
      * @brief Represent an ENVI hyperspectral image for the registration pipeline
      * @ingroup data
      */
@@ -20,7 +20,7 @@ namespace rt {
     {
     public:
         /** Constructor */
-        ENVI(const fs::path& path){}
+        ENVI(const boost::filesystem::path& path){}
         //cv::Mat getImage(int idx = 0) { return bands_[idx]; } //Could use this if we read bands into vector. But would also need functions to load into vector, and access vector.
 
         /** @brief Return a single image from the input data */

@@ -5,6 +5,7 @@
 #include "rt/Mesh.hpp"
 
 using namespace rt;
+namespace fs = boost::filesystem;
 
 
 Data::Mesh(const fs::path& path)
