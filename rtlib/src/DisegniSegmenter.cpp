@@ -145,28 +145,30 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     // Create the CV_8U version of the distance image
     // It is needed for findContours()
     cv::Mat dist_8u;
-    dist.convertTo(dist_8u, CV_8U);
+    bw.convertTo(dist_8u, CV_8U);
+
+
     // Find total markers
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(
         dist_8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
     // Create the marker image for the watershed algorithm
-    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32S);
+    cv::Mat markers = cv::Mat::zeros(bw.size(), CV_32S);
     // Draw the foreground markers
     for (size_t i = 0; i < contours.size(); i++) {
         cv::drawContours(
             markers, contours, static_cast<int>(i),
             cv::Scalar(static_cast<int>(i) + 1), -1);
     }
+
     // Draw the background marker
     cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
-    markers.convertTo(markers, CV_32S);
 
     // Perform the watershed algorithm
     cv::watershed(input, markers);
 
-    // Returns the watershedded Mat image as distinct pixel values
+    // Returns the watershedded Mat image as distinct pixel valuesdfsdfsfsdsfsfdsf
     return markers;
 }
 
