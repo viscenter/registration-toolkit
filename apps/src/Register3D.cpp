@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
@@ -116,7 +115,12 @@ int main(int argc, char* argv[])
     auto meshObj = rt::Data::Load(fixedPath);
     cvFixedImage = meshObj->getImage();
     origMesh = meshObj->getMesh();
-    fixedImage = meshObj->getFixedImage(); //DO I NEED TO ADD A VIRTUAL FUNCTION TO PERMIT THIS?
+    try {
+        fixedImage = meshObj->getFixedImage();
+    } catch (const std::exception& e) {
+        std::cerr << "ERROR: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
 
 
