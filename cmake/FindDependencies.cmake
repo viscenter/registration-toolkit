@@ -7,8 +7,7 @@ include(FetchContent)
 ## Envi-tools ##
 FetchContent_Declare(
         envi-tools
-        GIT_REPOSITORY
-        GIT_TAG release-
+        GIT_REPOSITORY https://github.com/viscenter/envi-tools.git
 )
 
 FetchContent_GetProperties(envi-tools)
