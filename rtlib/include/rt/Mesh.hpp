@@ -7,6 +7,7 @@
 #include <opencv2/core.hpp>
 #include <boost/filesystem.hpp>
 
+#include "rt/Data.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/types/ITKMesh.hpp"
 

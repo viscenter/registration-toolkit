@@ -7,6 +7,8 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
+#include "rt/Data.hpp"
+
 
 namespace rt {
     /**

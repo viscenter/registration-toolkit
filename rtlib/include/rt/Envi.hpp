@@ -8,6 +8,7 @@
 #include <opencv2/core.hpp>
 
 #include <envi-tools/ENVI.hpp>
+#include "rt/Data.hpp"
 
 
 namespace rt {
@@ -16,7 +17,7 @@ namespace rt {
      * @brief Represent an ENVI hyperspectral image for the registration pipeline
      * @ingroup data
      */
-    class ENVI : public Data
+class ENVI : public Data
     {
     public:
         /** Constructor */
