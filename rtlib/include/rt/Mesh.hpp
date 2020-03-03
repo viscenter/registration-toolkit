@@ -29,6 +29,9 @@ namespace rt {
         /** @brief Return the fixed image of the input data */
         rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
 
+        /** @brief Return whether or not this object has a mesh */
+        bool hasMesh() { return origMesh_ != nullptr; }
+
         /** @brief Return the 3-D mesh of the input data */
         rt::ITKMesh::Pointer getMesh() { return origMesh_; }
 
@@ -40,6 +43,6 @@ namespace rt {
         rt::Image8UC3::Pointer fixedImage_;
 
         /** 3D mesh of the input data */
-        rt::ITKMesh::Pointer origMesh_;
+        rt::ITKMesh::Pointer origMesh_ = nullptr;
     };
 }

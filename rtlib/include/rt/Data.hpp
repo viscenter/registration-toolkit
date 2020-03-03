@@ -38,6 +38,9 @@ namespace rt {
         /** @brief Return a single image from the input data */
         virtual int getNumImages() = 0;
 
+        /** @brief Return whether or not this object has a mesh */
+        virtual bool hasMesh() = 0;
+
         /** @brief Return a single image from the input data */
         virtual int getNumMeshes() = 0;
 

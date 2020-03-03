@@ -29,6 +29,9 @@ namespace rt {
         /** @brief Return the number of images we have available */
         int getNumImages() { return envi_.getWavelengths.size(); }
 
+        /** @brief Return whether or not this object has a mesh */
+        bool hasMesh() { return false; }
+
     private:
         //std::vector<cv::Mat> bands_; //Could use to store bands we have read in memory?
         /** ENVI object */

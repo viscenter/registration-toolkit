@@ -26,6 +26,9 @@ namespace rt {
         /** @brief Return the number of images we have. Only 1 because Image object represents 1 image */
         int getNumImages() { return 1; }
 
+        /** @brief Return whether or not this object has a mesh */
+        bool hasMesh() { return false; }
+
     private:
         /** Image */
         cv::Mat img_;

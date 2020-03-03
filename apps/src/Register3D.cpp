@@ -107,18 +107,23 @@ int main(int argc, char* argv[])
     ITKMesh::Pointer origMesh;
     cv::Mat cvFixedImage;
 
-    //WE KNOW THIS WILL BE A MESH OBJECT BECAUSE 3D REGISTRATION. SHOULD WE JUST SAY IT IS A MESH
-    //RATHER THAN A DATA OBJ? THIS WILL FIX THE ISSUE OF DATA OBJ NOT HAVING GETFIXEDIMAGE() FUNCTION,
-    //BECAUSE ITS EXCLUSIVE TO MESH.
-    //OR, this is just a conversion of the cvFixedImage. Can just write function in class to convert when the get()
-    //function is called for fixedImage...
+
+
     auto meshObj = rt::Data::Load(fixedPath);
     cvFixedImage = meshObj->getImage();
     origMesh = meshObj->getMesh();
+    /*
     try {
         fixedImage = meshObj->getFixedImage();
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+     */
+    if(meshObj->hasMesh()){
+        fixedImage = meshObj->getFixedImage();
+    }
+    else{
         return EXIT_FAILURE;
     }
 
