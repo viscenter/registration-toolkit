@@ -29,6 +29,10 @@ public:
     void setPreprocessSharpen(bool b);
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
+    //Set for Contours
+    void setContours(std::vector<cv::Point> b);
+    //Set Background Coord
+    void setBackgroundCoord(cv::Point b);
 
     //Otsu Private Data members
     void setBinNumber(int binNum);
@@ -55,6 +59,10 @@ private:
     cv::Mat labeled_;
     /** Segmented subregions */
     std::vector<cv::Mat> results_;
+    //Contours boundary vector
+    std::vector<cv::Point> contours_;
+    //Background Point
+    cv::Point bgCoord_;
 
     //Otsu private Data Members
     int binNumber_;
@@ -71,7 +79,7 @@ private:
     cv::Mat preprocess_();
 
     /** Run watershed on image */
-    static cv::Mat watershed_image_(const cv::Mat& input);
+    cv::Mat watershed_image_(const cv::Mat& input);
 
     //Otsu Image Segmentation
     cv::Mat otsu_segmentation_(const cv::Mat& input);

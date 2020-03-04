@@ -61,9 +61,19 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+
+
     // Run segmenter
     std::cout << "Segmenting image..." << std::endl;
     rt::DisegniSegmenter segmenter;
+
+    //Testing Purpose (Manual Vector Points Given)
+    std::vector<cv::Point> manualPoints = {{2, 3}, {3, 4}};
+    cv::Point backgroundPoint = {1,1};
+    segmenter.setContours(manualPoints);
+    segmenter.setBackgroundCoord(backgroundPoint);
+    //Testing Purpose
+
     segmenter.setInputImage(input);
     segmenter.setPreprocessWhiteToBlack(parsed.count("white-to-black") > 0);
     segmenter.setPreprocessSharpen(parsed.count("sharpen") > 0);

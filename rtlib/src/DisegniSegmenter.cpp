@@ -33,6 +33,8 @@ struct BoundingBox {
 };
 
 void DisegniSegmenter::setInputImage(const cv::Mat& i) { input_ = i; }
+void DisegniSegmenter::setContours(std::vector<cv::Point> b){ contours_ = b; }
+void DisegniSegmenter::setBackgroundCoord(cv::Point b){ bgCoord_ = b; }
 
 void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
@@ -122,53 +124,21 @@ cv::Mat DisegniSegmenter::preprocess_()
 cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 {
 
-    // Create binary image from source image
-    cv::Mat bw;
-    cv::cvtColor(input, bw, cv::COLOR_BGR2GRAY);
-    cv::threshold(bw, bw, 40, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-
-    // Perform the distance transform algorithm
-    cv::Mat dist;
-    cv::distanceTransform(bw, dist, cv::DIST_L2, 3);
-    // Normalize the distance image for range = {0.0, 1.0}
-    // so we can visualize and threshold it
-    cv::normalize(dist, dist, 0, 1.0, cv::NORM_MINMAX);
-
-    // Threshold to obtain the peaks
-    // This will be the markers for the foreground objects
-    cv::threshold(dist, dist, 0.4, 1.0, cv::THRESH_BINARY);
-    // Dilate a bit the dist image
-    cv::Mat kernel1 = cv::Mat::ones(3, 3, CV_8U);
-    cv::dilate(dist, dist, kernel1);
-
-
-    // Create the CV_8U version of the distance image
-    // It is needed for findContours()
-    cv::Mat dist_8u;
-    bw.convertTo(dist_8u, CV_8U);
-
-
-    // Find total markers
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(
-        dist_8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
     // Create the marker image for the watershed algorithm
-    cv::Mat markers = cv::Mat::zeros(bw.size(), CV_32S);
-    // Draw the foreground markers
-    for (size_t i = 0; i < contours.size(); i++) {
-        cv::drawContours(
-            markers, contours, static_cast<int>(i),
-            cv::Scalar(static_cast<int>(i) + 1), -1);
+    cv::Mat markers = cv::Mat::zeros(input.size(), CV_32S);
+
+    // Draw the foreground markers with circles
+    for (size_t i = 0; i < contours_.size(); i++) {
+        cv::circle(markers, contours_[i], 1, cv::Scalar(static_cast<int>(i) + 1), -1);
     }
 
-    // Draw the background marker
-    cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
+    // Draw the background marker with circles
+    cv::circle(markers, bgCoord_, 1, cv::Scalar(255), -1);
 
     // Perform the watershed algorithm
     cv::watershed(input, markers);
 
-    // Returns the watershedded Mat image as distinct pixel valuesdfsdfsfsdsfsfdsf
+    // Returns the watershedded Mat image as distinct pixel values
     return markers;
 }
 
