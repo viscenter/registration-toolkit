@@ -68,8 +68,8 @@ int main(int argc, char* argv[])
     rt::DisegniSegmenter segmenter;
 
     //Testing Purpose (Manual Vector Points Given)
-    std::vector<cv::Point> manualPoints = {{2, 3}, {3, 4}};
-    cv::Point backgroundPoint = {1,1};
+    std::vector<cv::Point> manualPoints = {{115,178}, {214, 159}};
+    cv::Point backgroundPoint = {57,55};
     segmenter.setContours(manualPoints);
     segmenter.setBackgroundCoord(backgroundPoint);
     //Testing Purpose
