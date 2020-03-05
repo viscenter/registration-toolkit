@@ -17,8 +17,8 @@ static cv::Mat ITKImageToCVMat(const ITKImageType* img)
 
     cv::Mat out;
 
-    typename ITKImageType::RegionType region = img->GetLargestRegionPossible();
-    typename ITKImageType::SizeType size = region.GetSize();
+    auto region = img->GetLargestRegionPossible();
+    auto size = img->GetLargestPossibleRegion().GetSize();
 
     return out;
 }
