@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     }
      */
     if(meshObj->hasMesh()){
-        fixedImage = meshObj->getFixedImage();
+        fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
     }
     else{
         return EXIT_FAILURE;
