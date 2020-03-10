@@ -7,7 +7,6 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
-#include <envi-tools/ENVI.hpp>
 #include "rt/Data.hpp"
 
 
@@ -36,6 +35,6 @@ class ENVI : public Data
     private:
         //std::vector<cv::Mat> bands_; //Could use to store bands we have read in memory?
         /** ENVI object */
-        et::ENVI envi_;
+        envitools::ENVI envi_;
     };
 }

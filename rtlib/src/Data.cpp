@@ -21,16 +21,16 @@ Data::Pointer Data::Load(const fs::path& path)
     fs::path metadata_file;
 
     //Find this file path's metadata file
-    for (fs::directory_entry& entry : fs::directory_iterator(path){
-        if(entry.path().stem() == "metadata" && entry.path().extension() !== "json") {
+    for (fs::directory_entry& entry : fs::directory_iterator(path)){
+        if(entry.path().stem() == "metadata" && entry.path().extension() != "json") {
             metadata_file = entry.path();
         }
     }
 
     //Read "spatial object type" of the metadata file into JSON object
-    std::ifstream i(metadata_file);
-    json j;
-    i >> j;
+    std::ifstream input_stream(metadata_file.string());
+    nlohmann::json j;
+    input_stream >> j;
 
     Type metadata_type = j["type"];
 
@@ -40,7 +40,7 @@ Data::Pointer Data::Load(const fs::path& path)
         case Image:
             return std::make_shared<Image>(path);
         case Envi:
-            return std::make_shared<ENVI>(path);
+            return std::make_shared<Envi>(path);
         case Mesh:
             return std::make_shared<Mesh>(path);
     }

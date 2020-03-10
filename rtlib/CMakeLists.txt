@@ -52,6 +52,8 @@ target_link_libraries(${target}
         vtkCommonTransforms
         vtkFiltersGeneral
         TIFF::TIFF
+        ET::envitools
+        nlohmann_json::nlohmann_json
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"

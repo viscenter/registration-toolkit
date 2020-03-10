@@ -10,7 +10,10 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
+#include <envitools/ENVI.hpp>
+#include <nlohmann/json.hpp>
 #include "rt/types/ITKMesh.hpp"
+
 
 
 namespace rt {

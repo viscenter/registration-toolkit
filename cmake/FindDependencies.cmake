@@ -6,16 +6,21 @@ include(FetchContent)
 
 ## Envi-tools ##
 FetchContent_Declare(
-        envi-tools
-        GIT_REPOSITORY https://github.com/viscenter/envi-tools.git
+    envi-tools
+    GIT_REPOSITORY https://github.com/viscenter/envi-tools.git
+    GIT_TAG develop
 )
 
-FetchContent_GetProperties(envi-tools)
-if(NOT envi-tools_POPULATED)
-    #Override default options
+FetchContent_MakeAvailable(envi-tools)
 
-    FetchContent_Populate(envi-tools)
-endif()
+## Nlohmann ##
+FetchContent_Declare(
+        nlohmann
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG develop
+)
+
+FetchContent_MakeAvailable(nlohmann)
 
 # For compiler sanitizers. Taken from:
 # https://github.com/arsenm/sanitizers-cmake/blob/master/README.md
