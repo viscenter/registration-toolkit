@@ -64,7 +64,7 @@ install(
     RUNTIME DESTINATION "bin"
 )
 install(
-    DIRECTORY "include/${module}"
+    DIRECTORY "include/rt/"
     DESTINATION "${include_install_dir}"
     FILES_MATCHING REGEX ".*\.(h|hpp)$"
 )
