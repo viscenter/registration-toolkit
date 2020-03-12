@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
     std::vector<cv::Mat> imgs;
     for (int i = 0; i < images.size(); i++) {
         cv::Mat img = cv::imread(images[i]);
-        if (divide_images) {
+        /*if (divide_images) {
             cv::Rect rect(0, 0, img.cols / 2, img.rows);
             imgs.push_back(img(rect).clone());
             rect.x = img.cols / 3;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
             imgs.push_back(img(rect).clone());
         } else {
             imgs.push_back(img);
-        }
+        }*/
         imgs.push_back(img);
     }
 
