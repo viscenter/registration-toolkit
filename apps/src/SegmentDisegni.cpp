@@ -52,7 +52,6 @@ int main(int argc, char* argv[])
         std::cerr << "ERROR: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-
     // Load input
     fs::path inputPath = parsed["input"].as<std::string>();
     auto input = cv::imread(inputPath.string());
@@ -68,7 +67,7 @@ int main(int argc, char* argv[])
     rt::DisegniSegmenter segmenter;
 
     //Testing Purpose (Manual Vector Points Given)
-    std::vector<cv::Point> manualPoints = {{115,178}, {214, 159}};
+    std::vector<cv::Point> manualPoints = {{181,370}};
     cv::Point backgroundPoint = {57,55};
     segmenter.setContours(manualPoints);
     segmenter.setBackgroundCoord(backgroundPoint);
