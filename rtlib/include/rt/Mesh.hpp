@@ -22,10 +22,10 @@ namespace rt {
     {
     public:
         /** Constructor */
-        Mesh(const boost::filesystem::path& path){}
+        explicit Mesh(const boost::filesystem::path& path);
 
         /** @brief Return the fixed image (texture) of the input data */
-        cv::Mat getImage() { return cvFixedImage_; }
+        cv::Mat getImage(int idx = 0) { return cvFixedImage_; }
 
         /** @brief Return the fixed image of the input data */
         rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }

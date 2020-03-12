@@ -8,7 +8,7 @@ using namespace rt;
 namespace fs = boost::filesystem;
 
 
-Data::Mesh(const fs::path& path)
+rt::Mesh::Mesh(const fs::path& path)
 {
     //Read in mesh along with its texture
     io::OBJReader reader;

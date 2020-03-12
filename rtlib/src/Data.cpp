@@ -3,12 +3,16 @@
 //
 
 #include <itkOpenCVImageBridge.h>
+#include <rt/Envi.hpp>
+#include <rt/Image.hpp>
+#include <rt/Mesh.hpp>
 
 #include "rt/Data.hpp"
 #include "rt/io/OBJReader.hpp"
 
 namespace et = envitools;
 namespace fs = boost::filesystem;
+namespace json = nlohmann::json;
 using namespace rt;
 
 // IO
@@ -29,7 +33,7 @@ Data::Pointer Data::Load(const fs::path& path)
 
     //Read "spatial object type" of the metadata file into JSON object
     std::ifstream input_stream(metadata_file.string());
-    nlohmann::json j;
+    json j;
     input_stream >> j;
 
     Type metadata_type = j["type"];
@@ -37,11 +41,11 @@ Data::Pointer Data::Load(const fs::path& path)
 
     //Select type of object based on this file's type
     switch(metadata_type){
-        case Image:
-            return std::make_shared<Image>(path);
-        case Envi:
-            return std::make_shared<Envi>(path);
-        case Mesh:
-            return std::make_shared<Mesh>(path);
+        case Type::Image:
+            return std::make_shared<rt::Image>(path);
+        case Type::Envi:
+            return std::make_shared<rt::ENVI>(path);
+        case Type::Mesh:
+            return std::make_shared<rt::Mesh>(path);
     }
 }

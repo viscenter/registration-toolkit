@@ -20,7 +20,7 @@ namespace rt {
     {
     public:
         /** Constructor */
-        Image(const boost::filesystem::path& path){ /* Do something to load */}
+        explicit Image(const boost::filesystem::path& path);
 
         /** @brief Return a single image */
         cv::Mat getImage() { return img_; }

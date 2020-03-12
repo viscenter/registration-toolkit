@@ -9,9 +9,9 @@ namespace fs = boost::filesystem;
 using namespace rt;
 
 
-Data::ENVI(const fs::path& path) : envi_{path} {}
+rt::ENVI::ENVI(const fs::path& path) : envi_{path} {}
 
-cv::Mat Data::ENVI::getImage(int idx)
+cv::Mat rt::ENVI::getImage(int idx)
 {
     //Get image of particular spectral band
     cv::Mat img = envi_.getBand(idx);

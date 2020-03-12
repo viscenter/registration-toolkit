@@ -20,14 +20,14 @@ class ENVI : public Data
     {
     public:
         /** Constructor */
-        ENVI(const boost::filesystem::path& path){}
+        explicit ENVI(const boost::filesystem::path& path);
         //cv::Mat getImage(int idx = 0) { return bands_[idx]; } //Could use this if we read bands into vector. But would also need functions to load into vector, and access vector.
 
         /** @brief Return a single image from the input data */
         cv::Mat getImage(int idx = 0) {}
 
         /** @brief Return the number of images we have available */
-        int getNumImages() { return envi_.getWavelengths.size(); }
+        int getNumImages() { return envi_.getWavelengths().size(); }
 
         /** @brief Return whether or not this object has a mesh */
         bool hasMesh() { return false; }
