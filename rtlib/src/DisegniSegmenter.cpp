@@ -144,26 +144,30 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 
 cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
 
-    //Testing Purposes
+    //Assigns the number of regions of interest you wish to segment
     thresholdNumber_ = 2;
 
     //Conversion of Mat Image into Itk Image (Image8UC3)
     auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
-
+    
+    //Inputs the Otsu algorithm paramets
     using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(inputImage);
     //filter->SetNumberOfHistogramBins(binNumber_);
     filter->SetNumberOfThresholds(thresholdNumber_);
     filter->Update();
-
+    
+    //Finds the optimal threshold value and it segments the image
     FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
-
+    
+    //Outputs optimized threshold numbers 
     std::cout << "Thresholds:" << std::endl;
-
     for (double threshold : thresholds) {
         std::cout << threshold << std::endl;
     }
+    
+    //This updates the itkLabel and converts to a Mat image
     std::cout << std::endl;
     auto itkLabel = filter->GetOutput();
     cv::Mat cvLabel = OCVB::ITKImageToCVMat(itkLabel);
