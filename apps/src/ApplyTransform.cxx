@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
         tfmReader->GetTransformList()->begin()->GetPointer());
 
     // Load the moving image at full depth and resample it
-    auto cvFixed = Data::Data::Load(fixedPath);
-    auto cvMoving = Data::Data::Load(movingPath);
+    auto cvFixed = rt::Data::Load(fixedPath);
+    auto cvMoving = rt::Data::Load(movingPath);
     cv::Mat cvFixedImg = cvFixed->getImage();
     cv::Mat cvMovingImg = cvMoving->getImage(-1);
     //auto cvFixed = cv::imread(fixedPath.string());

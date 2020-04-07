@@ -20,7 +20,6 @@ rt::Mesh::Mesh(const fs::path& path)
         fixedImage_ = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage_);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
     }
 }
 
