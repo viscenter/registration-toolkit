@@ -12,7 +12,7 @@
 
 namespace et = envitools;
 namespace fs = boost::filesystem;
-namespace json = nlohmann::json;
+using json = nlohmann::json;
 using namespace rt;
 
 // IO

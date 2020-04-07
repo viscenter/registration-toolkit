@@ -27,14 +27,22 @@ namespace rt {
         /** @brief Return the fixed image (texture) of the input data */
         cv::Mat getImage(int idx = 0) { return cvFixedImage_; }
 
-        /** @brief Return the fixed image of the input data */
-        rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
+        /** @brief Return a single image from the input data */
+        virtual int getNumImages() { return 1; }
 
         /** @brief Return whether or not this object has a mesh */
         bool hasMesh() { return origMesh_ != nullptr; }
 
-        /** @brief Return the 3-D mesh of the input data */
-        rt::ITKMesh::Pointer getMesh() { return origMesh_; }
+        /** @brief Return a single mesh from the input data */
+        rt::ITKMesh::Pointer getMesh(int idx = 0) { return origMesh_; }
+
+        /** @brief Return a single image from the input data */
+        int getNumMeshes() { return 0; }
+
+
+
+        /** @brief Return the fixed image of the input data */
+        rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
 
     private:
         /** Fixed texture image of the mesh */
