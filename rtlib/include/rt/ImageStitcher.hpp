@@ -3,6 +3,8 @@
 #include <vector>
 #include <iostream>
 
+#include <boost/filesystem.hpp>
+
 #include <opencv2/core.hpp>
 
 #include <opencv2/stitching/detail/matchers.hpp>
@@ -27,25 +29,34 @@ public:
 
     // Sets the user generated landmarks
     // This will probably need to change so that there can be more than 2 images
-    void setLandmarks(std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
+    void setLandmarks(std::vector<std::string> ldmFiles);
 
     // Sets the bool to whether or not landmarks should be generated
     void setGenerateLandmarks(bool generate){ generateLandmarks_ = generate; }
 
+    void printFeatures();
+
+    void printMatches();
+
+    struct LandmarkPair{
+        int src_idx;
+        int dst_idx;
+        std::vector<std::pair<float, float> > src_ldms;
+        std::vector<std::pair<float, float> > dst_ldms;
+    };
+
 private:
     std::vector<cv::UMat> imgs_;
     std::vector<cv::UMat> masks_;
-    std::vector<std::pair<float, float> > features1_;
-    std::vector<std::pair<float, float> > features2_;
     std::vector<cv::detail::ImageFeatures> all_features_;
     std::vector<cv::detail::MatchesInfo> all_pairwise_matches_;
     bool generateLandmarks_ = true;
-    //double registr_resol_{0.6};
-    //double work_scale_;
-    //std::vector<cv::Size> full_img_sizes_;
+    std::vector<LandmarkPair> landmarks;
+
+    void insertUserMatches(const LandmarkPair& landmarks);
 
     // Automatically finds features for the images
-    std::vector<cv::detail::ImageFeatures> findFeatures(double& work_scale_, double seam_work_aspect_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_);
+    std::vector<cv::detail::ImageFeatures> findFeatures(double& work_scale_);
 
     // Automatically finds the matches between features for the images
     std::vector<cv::detail::MatchesInfo> findMatches(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_, std::vector<cv::detail::ImageFeatures>& features_);
@@ -71,7 +82,9 @@ private:
 
     void reduceImgPoints(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
 
-    void calcSeamEstImages(std::vector<cv::UMat>& seam_est_imgs_);
+    int searchMatches(int src, int dst);
+
+    void createMatches();
 
     template <typename T>
     void PrintMat(const cv::UMat& m) {

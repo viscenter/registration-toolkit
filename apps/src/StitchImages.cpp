@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
             ("images,imgs", po::value<std::vector<std::string> >()->multitoken()->required(), "Images to be stitched")
             ("output-file,o", po::value<std::string>()->required(),
              "Output image")
-            ("input-ldm,ldm", po::value<std::string>(), "User generated landmarks file")
+            ("input-ldm,ldm", po::value<std::vector<std::string> >()->multitoken(), "User generated landmarks file")
             ("disable-auto-ldm", "Disable automatically generated landmarks");
 
     // Sets the program options
@@ -83,35 +83,12 @@ int main(int argc, char* argv[])
     // landmarks for more than 2 images
     // Read in the landmarks if the user provides them
     if(parsed.count("input-ldm")) {
-        // Get landmarks file path
-        std::string ldmFile = parsed["input-ldm"].as<std::string>();
+        // Get landmarks file paths
+        std::vector<std::string> ldmFiles = parsed["input-ldm"].as<std::vector<std::string>>();
 
-        std::vector<std::pair<float, float> > img1_points;
-        std::vector<std::pair<float, float> > img2_points;
-        std::ifstream landmarkFile;
-        // Open the landmarks file
-        landmarkFile.open(ldmFile);
-        // Check that the landmarks file opened
-        if (!landmarkFile.is_open()) {
-            return 1;
-        }
-
-        std::pair<float, float> point1;
-        std::pair<float, float> point2;
-        // Read in the landmarks and store them
-        landmarkFile >> point1.first;
-        while (!landmarkFile.eof()) {
-            landmarkFile >> point1.second;
-            img1_points.push_back(point1);
-            landmarkFile >> point2.first;
-            landmarkFile >> point2.second;
-            img2_points.push_back(point2);
-            landmarkFile >> point1.first;
-        }
-        // Close the landmarks file
-        landmarkFile.close();
         // Set the user specified landmarks for the stitcher
-        stitcher.setLandmarks(img1_points, img2_points);
+        stitcher.setLandmarks(ldmFiles);
+        //stitcher.setLandmarks(img1_points, img2_points);
     }
 
     // Set the bool that tells the program if landmarks should automatically be generated
