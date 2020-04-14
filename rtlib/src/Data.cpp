@@ -2,15 +2,16 @@
 // Created by Anthony Tamasi on 2019-10-31.
 //
 
-#include <itkOpenCVImageBridge.h>
-#include <rt/Envi.hpp>
-#include <rt/Image.hpp>
-#include <rt/Mesh.hpp>
-
 #include "rt/Data.hpp"
-#include "rt/io/OBJReader.hpp"
 
-namespace et = envitools;
+#include <itkOpenCVImageBridge.h>
+#include <nlohmann/json.hpp>
+
+#include "rt/Envi.hpp"
+#include "rt/Image.hpp"
+#include "rt/Mesh.hpp"
+
+
 namespace fs = boost::filesystem;
 using json = nlohmann::json;
 using namespace rt;

@@ -4,7 +4,13 @@
 
 #include "rt/Mesh.hpp"
 
+#include <itkOpenCVImageBridge.h>
+
+#include "rt/io/OBJReader.hpp"
+#include "rt/types/ITKMesh.hpp"
+
 using namespace rt;
+using OCVBridge = itk::OpenCVImageBridge;
 namespace fs = boost::filesystem;
 
 

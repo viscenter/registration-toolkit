@@ -2,6 +2,8 @@
 // Created by Anthony Tamasi on 2020-02-04.
 //
 
+#include <opencv2/opencv.hpp>
+
 #include "rt/Image.hpp"
 
 using namespace rt;

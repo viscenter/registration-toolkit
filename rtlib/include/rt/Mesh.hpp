@@ -4,17 +4,13 @@
 
 #pragma once
 
-#include <boost/filesystem.hpp>
-#include <itkOpenCVImageBridge.h>
-#include <opencv2/core.hpp>
+#include <boost/filesystem.hpp> //
+#include <opencv2/core.hpp> //
 
 
-#include "rt/Data.hpp"
-#include "rt/ImageTypes.hpp"
-#include "rt/io/OBJReader.hpp"
-#include "rt/types/ITKMesh.hpp"
+#include "rt/Data.hpp" //
+#include "rt/ImageTypes.hpp" //
 
-using OCVBridge = itk::OpenCVImageBridge;
 
 namespace rt {
     /**

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
+#include <envitools/ENVI.hpp>
 #include <opencv2/core.hpp>
 
 #include "rt/Data.hpp"
