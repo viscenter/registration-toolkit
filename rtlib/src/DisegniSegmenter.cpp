@@ -5,16 +5,16 @@
 #include <map>
 #include <set>
 
-#include <opencv2/imgproc.hpp>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkOpenCVImageBridge.h>
+#include <itkOtsuMultipleThresholdsImageFilter.h>
+#include <itkOtsuMultipleThresholdsCalculator.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itkScalarImageToHistogramGenerator.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-#include <itkOpenCVImageBridge.h>
+#include <opencv2/imgproc.hpp>
 #include <rt/ImageTypes.hpp>
-#include <itkScalarImageToHistogramGenerator.h>
-#include <itkBinaryThresholdImageFilter.h>
-#include <itkOtsuMultipleThresholdsCalculator.h>
-#include <itkOtsuMultipleThresholdsImageFilter.h>
-#include <itkRescaleIntensityImageFilter.h>
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -142,40 +142,6 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 
     // Returns the watershedded Mat image as distinct pixel values
     return markers;
-}
-
-cv::Mat DisegniSegmenter::otsu_segmentation_(const cv::Mat& input) {
-
-    //Assigns the number of regions of interest you wish to segment
-    thresholdNumber_ = 2;
-
-    //Conversion of Mat Image into Itk Image (Image8UC3)
-    auto inputImage = OCVB::CVMatToITKImage<Image8UC1>(input);
-    
-    //Inputs the Otsu algorithm paramets
-    using FilterType = itk::OtsuMultipleThresholdsImageFilter<Image8UC1, Image8UC1>;
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(inputImage);
-    //filter->SetNumberOfHistogramBins(binNumber_);
-    filter->SetNumberOfThresholds(thresholdNumber_);
-    filter->Update();
-    
-    //Finds the optimal threshold value and it segments the image
-    FilterType::ThresholdVectorType thresholds = filter->GetThresholds();
-    
-    //Outputs optimized threshold numbers 
-    std::cout << "Thresholds:" << std::endl;
-    for (double threshold : thresholds) {
-        std::cout << threshold << std::endl;
-    }
-    
-    //This updates the itkLabel and converts to a Mat image
-    std::cout << std::endl;
-    auto itkLabel = filter->GetOutput();
-    cv::Mat cvLabel = OCVB::ITKImageToCVMat(itkLabel);
-    cvLabel.convertTo(cvLabel, CV_32S);
-
-    return cvLabel;
 }
 
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
