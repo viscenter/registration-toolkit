@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
     //Testing Purpose (Manual Vector Points Given)
     std::vector<cv::Point> manualPoints{{181,370}};
     cv::Point backgroundPoint{57,55};
-    segmenter.setContours(manualPoints);
+    segmenter.setForegroundCoords(manualPoints);
     segmenter.setBackgroundCoord(backgroundPoint);
     //Testing Purpose
 
@@ -103,3 +103,4 @@ int main(int argc, char* argv[])
 
     return EXIT_SUCCESS;
 }
+

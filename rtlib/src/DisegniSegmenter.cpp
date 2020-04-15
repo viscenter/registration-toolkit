@@ -31,7 +31,7 @@ struct BoundingBox {
 };
 
 void DisegniSegmenter::setInputImage(const cv::Mat& i) { input_ = i; }
-void DisegniSegmenter::setContours(std::vector<cv::Point> b){ contours_ = b; }
+void DisegniSegmenter::setForegroundCoords(std::vector<cv::Point> b){ fgCoords_ = b;};
 void DisegniSegmenter::setBackgroundCoord(cv::Point b){ bgCoord_ = b; }
 
 void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
@@ -144,10 +144,11 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     return markers;
 }
 
+
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
-    const cv::Mat& input, const cv::Mat& labeled)
+        const cv::Mat& input, const cv::Mat& labeled)
 {
-        // Find subimage bounding boxes using pixel labels
+   // Find subimage bounding boxes using pixel labels
         std::map<int32_t, BoundingBox> labelBBs;
         for (int y = 0; y < labeled.rows; y++) {
             for (int x = 0; x < labeled.cols; x++) {
@@ -180,8 +181,7 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
                 }
             }
         }
-
-        // Use bounding boxes to create ROI images
+// Use bounding boxes to create ROI images
         std::vector<cv::Mat> subimgs;
         int idx = 0;
         for (const auto& i : labelBBs) {
@@ -193,6 +193,5 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
             subimgs.push_back(subimg);
         }
         std::cout << std::endl;
-
         return subimgs;
-}
+} 
