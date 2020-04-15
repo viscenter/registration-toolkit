@@ -29,14 +29,10 @@ public:
     void setPreprocessSharpen(bool b);
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
-    //Set for Contours
-    void setContours(std::vector<cv::Point> b);
-    //Set Background Coord
+    /** @brief Sets Foreground Coordinate points */
+    void setForegroundCoords(std::vector<cv::Point> b);
+    /** @brief Sets Background Coordinate points */
     void setBackgroundCoord(cv::Point b);
-
-    //Otsu Private Data members
-    void setBinNumber(int binNum);
-    void setThresholdNumber(int thresNum);
 
     /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
@@ -59,14 +55,10 @@ private:
     cv::Mat labeled_;
     /** Segmented subregions */
     std::vector<cv::Mat> results_;
-    //Contours boundary vector
-    std::vector<cv::Point> contours_;
-    //Background Point
+    /** Foreground boundary vector */
+    std::vector<cv::Point> fgCoords_;
+    /** Background boundary coordinate */
     cv::Point bgCoord_;
-
-    //Otsu private Data Members
-    int binNumber_;
-    int thresholdNumber_;
 
     /** Preprocessing: White-to-black */
     bool whiteToBlack_{false};
@@ -80,9 +72,6 @@ private:
 
     /** Run watershed on image */
     cv::Mat watershed_image_(const cv::Mat& input);
-
-    //Otsu Image Segmentation
-    cv::Mat otsu_segmentation_(const cv::Mat& input);
 
     /** Use labeled image to convert input into several images */
     static std::vector<cv::Mat> split_labeled_image_(
