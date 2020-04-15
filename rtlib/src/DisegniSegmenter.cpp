@@ -4,11 +4,10 @@
 #include <limits>
 #include <map>
 #include <set>
-#include <iostream>
 
 #include <opencv2/imgproc.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 #include <itkOpenCVImageBridge.h>
 #include <rt/ImageTypes.hpp>
 #include <itkScalarImageToHistogramGenerator.h>
@@ -16,7 +15,6 @@
 #include <itkOtsuMultipleThresholdsCalculator.h>
 #include <itkOtsuMultipleThresholdsImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
-#include <highgui.h>
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -128,8 +126,12 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     cv::Mat markers = cv::Mat::zeros(input.size(), CV_32S);
 
     // Draw the foreground markers with circles
-    for (size_t i = 0; i < contours_.size(); i++) {
-        cv::circle(markers, contours_[i], 1, cv::Scalar(static_cast<int>(i) + 1), -1);
+    int label = 1;
+    
+    for (const auto& coord : fgCoords_){
+        
+        cv::circle(markers, coord, 1, cv::Scalar(label++), -1);
+        
     }
 
     // Draw the background marker with circles
