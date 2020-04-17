@@ -29,9 +29,19 @@ public:
     void setPreprocessSharpen(bool b);
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
-    /** @brief Sets Foreground Coordinate points */
+
+    /**
+     * @brief Set seed points for foreground objects
+     *
+     *  Every point in this list defines the seed for a new foreground object.
+     */
     void setForegroundCoords(const std::vector<cv::Point>& b);
-    /** @brief Sets Background Coordinate points */
+
+    /**
+     * @brief Set seed points for the background
+     *
+     *  Every point in this list defines a seed for the background of the scene.
+     */
     void setBackgroundCoords(const std::vector<cv::Point>& b);
 
     /** @brief Compute disegni segmentation */
@@ -39,6 +49,16 @@ public:
 
     /**
      * @brief Get labeled image
+     *
+     * If `colored` is true (default), returns an 8bpc RGB label image where
+     * each segmented object has a random color. Otherwise, returns a signed
+     * 32-bit single-channel image of pixel labels.
+     *
+     * Signed 32-bit label interpretation:
+     *   - -1 - Border between objects
+     *   -  0 - Unlabeled pixel
+     *   -  1 - Background object
+     *   - >1 - Label value
      *
      * @param colored If `true` (default), converts the labeled image to
      * an RGB image (CV_8UC3). Otherwise, returns pixel labels (CV_32SC1).

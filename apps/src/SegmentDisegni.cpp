@@ -27,8 +27,9 @@ int main(int argc, char* argv[])
             "Output image format")
         ("output-labels", po::value<std::string>(),
             "The file path to save the color labels image")
-        ("output-dir,o", po::value<std::string>()->required(),
-            "Output directory segmented disegni images");
+        ("output-dir,o", po::value<std::string>(),
+            "Output directory for segmented disegni images. "
+            "Default: Current working directory");
 
     po::options_description preproc("Preprocessing Options");
     preproc.add_options()
@@ -66,8 +67,8 @@ int main(int argc, char* argv[])
     }
 
     // Test data: hard-coded fg/bg pts
-    std::vector<cv::Point> fgPts{{181, 370}};
-    std::vector<cv::Point> bgPts{{57, 55}};
+    std::vector<cv::Point> fgPts{{100, 78}};
+    std::vector<cv::Point> bgPts{{10, 10}, {325, 425}};
 
     // Run segmenter
     std::cout << "Segmenting image..." << std::endl;
@@ -82,7 +83,10 @@ int main(int argc, char* argv[])
     auto results = segmenter.compute();
 
     // Setup output variables
-    fs::path outDir = parsed["output-dir"].as<std::string>();
+    auto outDir = fs::current_path();
+    if (parsed.count("output-dir")) {
+        outDir = parsed["output-dir"].as<std::string>();
+    }
     auto padding = std::to_string(results.size()).size();
     auto prefix = parsed["output-prefix"].as<std::string>();
     auto ext = "." + parsed["output-format"].as<std::string>();

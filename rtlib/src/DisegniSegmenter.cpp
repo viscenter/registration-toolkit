@@ -1,14 +1,12 @@
 #include "rt/DisegniSegmenter.hpp"
 
 #include <algorithm>
+#include <exception>
 #include <limits>
 #include <map>
 #include <set>
 
-#include <itkOpenCVImageBridge.h>
 #include <opencv2/imgproc.hpp>
-
-#include "rt/ImageTypes.hpp"
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -16,7 +14,6 @@ static const cv::Vec3b WHITE = {255, 255, 255};
 static const cv::Vec3b BLACK = {0, 0, 0};
 
 using namespace rt;
-using OCVB = itk::OpenCVImageBridge;
 
 // Bounding box
 struct BoundingBox {
@@ -62,10 +59,15 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     // Generate random colors for each label
     std::map<int32_t, cv::Vec3b> colors;
     for (const auto& l : unique_labels) {
-        auto b = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
-        auto g = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
-        auto r = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
-        colors[l] = cv::Vec3b{b, g, r};
+        // Border pixels are black
+        if (l == -1) {
+            colors[l] = cv::Vec3b{0, 0, 0};
+        } else {
+            auto b = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+            auto g = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+            auto r = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+            colors[l] = cv::Vec3b{b, g, r};
+        }
     }
 
     // Fill output image with color labels
@@ -73,7 +75,7 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     for (int y = 0; y < labeled_.rows; y++) {
         for (int x = 0; x < labeled_.cols; x++) {
             auto index = labeled_.at<int>(y, x);
-            if (index > 0 && colors.count(index) > 0) {
+            if (colors.count(index) > 0) {
                 dst.at<cv::Vec3b>(y, x) = colors.at(index);
             }
         }
@@ -126,15 +128,21 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     // Setup our label image
     cv::Mat labeled = cv::Mat::zeros(input.size(), CV_32S);
 
-    // Seed our foreground labels with user-provided coords
-    int label = 1;
-    for (const auto& coord : fgCoords_) {
-        cv::circle(labeled, coord, 1, cv::Scalar(label++), -1);
-    }
-
     // Seed our background label with user-provided coords
     for (const auto& coord : bgCoords_) {
-        cv::circle(labeled, coord, 1, cv::Scalar(255), -1);
+        cv::circle(labeled, coord, 1, cv::Scalar(1), -1);
+    }
+
+    // We have two reserved labels and cv::watershed only supports positive
+    // integer labels, so protect against too many provided seeds
+    if (fgCoords_.size() > std::numeric_limits<int32_t>::max() - 2) {
+        throw std::overflow_error("Number of object seeds exceeds maximum");
+    }
+
+    // Seed our foreground labels with user-provided coords
+    int32_t label = 2;
+    for (const auto& coord : fgCoords_) {
+        cv::circle(labeled, coord, 1, cv::Scalar(label++), -1);
     }
 
     // Perform the watershed algorithm
@@ -155,8 +163,11 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
             // Get label
             auto label = labeled.at<int32_t>(y, x);
 
-            // Skip pixels with weird labels
-            if (label == -1 || label == 255) {
+            // Reserved labels:
+            // -1: boundary between objects
+            //  0: unknown
+            //  1: background
+            if (label <= 1) {
                 continue;
             }
 
