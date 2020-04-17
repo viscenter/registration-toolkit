@@ -144,54 +144,53 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     return markers;
 }
 
-
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
-        const cv::Mat& input, const cv::Mat& labeled)
+    const cv::Mat& input, const cv::Mat& labeled)
 {
-   // Find subimage bounding boxes using pixel labels
-        std::map<int32_t, BoundingBox> labelBBs;
-        for (int y = 0; y < labeled.rows; y++) {
-            for (int x = 0; x < labeled.cols; x++) {
+    // Find subimage bounding boxes using pixel labels
+    std::map<int32_t, BoundingBox> labelBBs;
+    for (int y = 0; y < labeled.rows; y++) {
+        for (int x = 0; x < labeled.cols; x++) {
 
-                // Get label
-                auto label = labeled.at<int32_t>(y, x);
+            // Get label
+            auto label = labeled.at<int32_t>(y, x);
 
-                // Skip pixels with weird labels
-                if (label == -1 || label == 255) {
-                    continue;
-                }
+            // Skip pixels with weird labels
+            if (label == -1 || label == 255) {
+                continue;
+            }
 
-                // Init new bb if we don't have one
-                if (labelBBs.count(label) == 0) {
-                    labelBBs[label] = BoundingBox();
-                }
+            // Init new bb if we don't have one
+            if (labelBBs.count(label) == 0) {
+                labelBBs[label] = BoundingBox();
+                continue;
+            }
 
-                // Update the top-left and bottom-right position for each subimage
-                if (x < labelBBs[label].tl.x) {
-                    labelBBs[label].tl.x = x;
-                }
-                if (y < labelBBs[label].tl.y) {
-                    labelBBs[label].tl.y = y;
-                }
-                if (x > labelBBs[label].br.x) {
-                    labelBBs[label].br.x = x;
-                }
-                if (y > labelBBs[label].br.y) {
-                    labelBBs[label].br.y = y;
-                }
+            // Update the top-left and bottom-right position for each subimage
+            if (x < labelBBs[label].tl.x) {
+                labelBBs[label].tl.x = x;
+            }
+            if (y < labelBBs[label].tl.y) {
+                labelBBs[label].tl.y = y;
+            }
+            if (x > labelBBs[label].br.x) {
+                labelBBs[label].br.x = x;
+            }
+            if (y > labelBBs[label].br.y) {
+                labelBBs[label].br.y = y;
             }
         }
-// Use bounding boxes to create ROI images
-        std::vector<cv::Mat> subimgs;
-        int idx = 0;
-        for (const auto& i : labelBBs) {
-            auto height = i.second.br.y - i.second.tl.y;
-            auto width = i.second.br.x - i.second.tl.x;
-            std::cout << idx++ << ": " << i.second.tl.x << " " << i.second.tl.y << " " << width << " " << height << std::endl;
-            cv::Rect roi(i.second.tl.x, i.second.tl.y, width, height);
-            cv::Mat subimg = input(roi).clone();
-            subimgs.push_back(subimg);
-        }
-        std::cout << std::endl;
-        return subimgs;
-} 
+    }
+
+    // Use bounding boxes to create ROI images
+    std::vector<cv::Mat> subimgs;
+    for (const auto& i : labelBBs) {
+        auto height = i.second.br.y - i.second.tl.y;
+        auto width = i.second.br.x - i.second.tl.x;
+        cv::Rect roi(i.second.tl.x, i.second.tl.y, width, height);
+        cv::Mat subimg = input(roi).clone();
+        subimgs.push_back(subimg);
+    }
+
+    return subimgs;
+}
