@@ -5,16 +5,10 @@
 #include <map>
 #include <set>
 
-#include <itkBinaryThresholdImageFilter.h>
 #include <itkOpenCVImageBridge.h>
-#include <itkOtsuMultipleThresholdsImageFilter.h>
-#include <itkOtsuMultipleThresholdsCalculator.h>
-#include <itkRescaleIntensityImageFilter.h>
-#include <itkScalarImageToHistogramGenerator.h>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <rt/ImageTypes.hpp>
+
+#include "rt/ImageTypes.hpp"
 
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
@@ -31,8 +25,16 @@ struct BoundingBox {
 };
 
 void DisegniSegmenter::setInputImage(const cv::Mat& i) { input_ = i; }
-void DisegniSegmenter::setForegroundCoords(std::vector<cv::Point> b){ fgCoords_ = b;};
-void DisegniSegmenter::setBackgroundCoord(cv::Point b){ bgCoord_ = b; }
+
+void DisegniSegmenter::setForegroundCoords(const std::vector<cv::Point>& b)
+{
+    fgCoords_ = b;
+}
+
+void DisegniSegmenter::setBackgroundCoords(const std::vector<cv::Point>& b)
+{
+    bgCoords_ = b;
+}
 
 void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
@@ -121,27 +123,25 @@ cv::Mat DisegniSegmenter::preprocess_()
 
 cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 {
+    // Setup our label image
+    cv::Mat labeled = cv::Mat::zeros(input.size(), CV_32S);
 
-    // Create the marker image for the watershed algorithm
-    cv::Mat markers = cv::Mat::zeros(input.size(), CV_32S);
-
-    // Draw the foreground markers with circles
+    // Seed our foreground labels with user-provided coords
     int label = 1;
-    
-    for (const auto& coord : fgCoords_){
-        
-        cv::circle(markers, coord, 1, cv::Scalar(label++), -1);
-        
+    for (const auto& coord : fgCoords_) {
+        cv::circle(labeled, coord, 1, cv::Scalar(label++), -1);
     }
 
-    // Draw the background marker with circles
-    cv::circle(markers, bgCoord_, 1, cv::Scalar(255), -1);
+    // Seed our background label with user-provided coords
+    for (const auto& coord : bgCoords_) {
+        cv::circle(labeled, coord, 1, cv::Scalar(255), -1);
+    }
 
     // Perform the watershed algorithm
-    cv::watershed(input, markers);
+    cv::watershed(input, labeled);
 
-    // Returns the watershedded Mat image as distinct pixel values
-    return markers;
+    // Return labeled image
+    return labeled;
 }
 
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(

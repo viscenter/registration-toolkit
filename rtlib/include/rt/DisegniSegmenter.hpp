@@ -30,9 +30,9 @@ public:
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
     /** @brief Sets Foreground Coordinate points */
-    void setForegroundCoords(std::vector<cv::Point> b);
+    void setForegroundCoords(const std::vector<cv::Point>& b);
     /** @brief Sets Background Coordinate points */
-    void setBackgroundCoord(cv::Point b);
+    void setBackgroundCoords(const std::vector<cv::Point>& b);
 
     /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
@@ -58,7 +58,7 @@ private:
     /** Foreground boundary vector */
     std::vector<cv::Point> fgCoords_;
     /** Background boundary coordinate */
-    cv::Point bgCoord_;
+    std::vector<cv::Point> bgCoords_;
 
     /** Preprocessing: White-to-black */
     bool whiteToBlack_{false};

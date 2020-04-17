@@ -19,11 +19,16 @@ int main(int argc, char* argv[])
     po::options_description required("General Options");
     required.add_options()
         ("help,h", "Show this message")
-        ("input,i", po::value<std::string>()->required(), "Input disegni image")
-        ("output-prefix", po::value<std::string>()->default_value("disegni_"), "Filename prefix for segmented images")
-        ("output-format", po::value<std::string>()->default_value("png"), "Output image format")
-        ("output-labels", po::value<std::string>(), "The file path to save the color labels image")
-        ("output-dir,o", po::value<std::string>()->required(), "Output directory segmented disegni images");
+        ("input,i", po::value<std::string>()->required(),
+            "Input disegni image")
+        ("output-prefix", po::value<std::string>()->default_value("disegni_"),
+            "Filename prefix for segmented images")
+        ("output-format", po::value<std::string>()->default_value("png"),
+            "Output image format")
+        ("output-labels", po::value<std::string>(),
+            "The file path to save the color labels image")
+        ("output-dir,o", po::value<std::string>()->required(),
+            "Output directory segmented disegni images");
 
     po::options_description preproc("Preprocessing Options");
     preproc.add_options()
@@ -60,16 +65,15 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    // Test data: hard-coded fg/bg pts
+    std::vector<cv::Point> fgPts{{181, 370}};
+    std::vector<cv::Point> bgPts{{57, 55}};
+
     // Run segmenter
     std::cout << "Segmenting image..." << std::endl;
     rt::DisegniSegmenter segmenter;
-
-    //Testing Purpose (Manual Vector Points Given)
-    std::vector<cv::Point> manualPoints{{181,370}};
-    cv::Point backgroundPoint{57,55};
-    segmenter.setForegroundCoords(manualPoints);
-    segmenter.setBackgroundCoord(backgroundPoint);
-    //Testing Purpose
+    segmenter.setForegroundCoords(fgPts);
+    segmenter.setBackgroundCoords(bgPts);
 
     segmenter.setInputImage(input);
     segmenter.setPreprocessWhiteToBlack(parsed.count("white-to-black") > 0);
@@ -103,4 +107,3 @@ int main(int argc, char* argv[])
 
     return EXIT_SUCCESS;
 }
-
