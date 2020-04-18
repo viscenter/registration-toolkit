@@ -1,5 +1,6 @@
 #include <iomanip>
 #include <iostream>
+#include <regex>
 #include <sstream>
 
 #include <boost/filesystem.hpp>
@@ -12,6 +13,8 @@
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
+
+cv::Point ParsePointString(const std::string& s);
 
 int main(int argc, char* argv[])
 {
@@ -42,7 +45,13 @@ int main(int argc, char* argv[])
 
     po::options_description segOpts("Segmentation Options");
     segOpts.add_options()
-        ("bbox-buffer,b", po::value<int>()->default_value(10),
+        ("seed-fg,f", po::value<std::vector<std::string>>()->required(),
+            "Add a seed point for a foreground object. Should be a string in "
+            "the format \"x,y\". May be specified multiple times.")
+        ("seed-bg,b", po::value<std::vector<std::string>>()->required(),
+            "Add a seed point for the background. Should be a string in "
+            "the format \"x,y\". May be specified multiple times.")
+        ("bbox-buffer", po::value<int>()->default_value(10),
             "Number of pixels added to the bounding box of segmented objects");
 
     po::options_description all("Usage");
@@ -74,9 +83,29 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Test data: hard-coded fg/bg pts
-    std::vector<cv::Point> fgPts{{100, 78}};
-    std::vector<cv::Point> bgPts{{10, 10}, {325, 425}};
+    // Parse foreground seeds from opts
+    auto fgStrs = parsed["seed-fg"].as<std::vector<std::string>>();
+    std::vector<cv::Point> fgPts;
+    for (const auto& f : fgStrs) {
+        try {
+            fgPts.push_back(ParsePointString(f));
+        } catch (const std::exception& /* unused */) {
+            std::cerr << "Warning: Could not parse string as point: ";
+            std::cerr << f << std::endl;
+        }
+    }
+
+    // Parse background seeds from opts
+    auto bgStrs = parsed["seed-bg"].as<std::vector<std::string>>();
+    std::vector<cv::Point> bgPts;
+    for (const auto& b : bgStrs) {
+        try {
+            bgPts.push_back(ParsePointString(b));
+        } catch (const std::exception& /* unused */) {
+            std::cerr << "Warning: Could not parse string as point: ";
+            std::cerr << b << std::endl;
+        }
+    }
 
     // Run segmenter
     std::cout << "Segmenting image..." << std::endl;
@@ -126,4 +155,25 @@ int main(int argc, char* argv[])
     }
 
     return EXIT_SUCCESS;
+}
+
+cv::Point ParsePointString(const std::string& s)
+{
+    // Parse the string into doubles
+    std::regex delim(",");
+    std::sregex_token_iterator it(s.begin(), s.end(), delim, -1);
+    std::vector<int> components;
+    for (; it != std::sregex_token_iterator(); it++) {
+        components.emplace_back(std::stoi(*it));
+    }
+
+    // Size check
+    if (components.size() != 2) {
+        throw std::invalid_argument(
+            "String contains incorrect number of components: " +
+            std::to_string(components.size()));
+    }
+
+    // Convert to point
+    return {components[0], components[1]};
 }
