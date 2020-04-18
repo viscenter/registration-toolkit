@@ -8,6 +8,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/DisegniSegmenter.hpp"
+#include "rt/io/TIFFIO.hpp"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -25,20 +26,27 @@ int main(int argc, char* argv[])
             "Filename prefix for segmented images")
         ("output-format", po::value<std::string>()->default_value("png"),
             "Output image format")
-        ("output-labels", po::value<std::string>(),
-            "The file path to save the color labels image")
         ("output-dir,o", po::value<std::string>(),
             "Output directory for segmented disegni images. "
-            "Default: Current working directory");
+            "Default: Current working directory")
+        ("output-labels", po::value<std::string>(),
+            "The file path to save the labels image (32bpc Mono")
+        ("output-labels-rgb", po::value<std::string>(),
+            "The file path to save the labels image (8bpc RGB");
 
-    po::options_description preproc("Preprocessing Options");
-    preproc.add_options()
+    po::options_description preprocOpts("Preprocessing Options");
+    preprocOpts.add_options()
         ("white-to-black", "Convert white pixels to black pixels")
         ("sharpen", "Apply Laplacian sharpen")
         ("blur", "Apply median blur");
 
+    po::options_description segOpts("Segmentation Options");
+    segOpts.add_options()
+        ("bbox-buffer,b", po::value<int>()->default_value(10),
+            "Number of pixels added to the bounding box of segmented objects");
+
     po::options_description all("Usage");
-    all.add(required).add(preproc);
+    all.add(required).add(preprocOpts).add(segOpts);
     // clang-format on
 
     // Parse the cmd line
@@ -80,6 +88,7 @@ int main(int argc, char* argv[])
     segmenter.setPreprocessWhiteToBlack(parsed.count("white-to-black") > 0);
     segmenter.setPreprocessSharpen(parsed.count("sharpen") > 0);
     segmenter.setPreprocessBlur(parsed.count("blur") > 0);
+    segmenter.setBoundingBoxBuffer(parsed["bbox-buffer"].as<int>());
     auto results = segmenter.compute();
 
     // Setup output variables
@@ -91,11 +100,18 @@ int main(int argc, char* argv[])
     auto prefix = parsed["output-prefix"].as<std::string>();
     auto ext = "." + parsed["output-format"].as<std::string>();
 
-    // Save the labels image
+    // Save the labels images
     if (parsed.count("output-labels") > 0) {
         std::cout << "Saving labels image..." << std::endl;
+        fs::path labelPath = parsed["output-labels"].as<std::string>();
+        labelPath.replace_extension("tif");
+        rt::io::WriteTIFF(labelPath.string(), segmenter.getLabeledImage(false));
+    }
+
+    if (parsed.count("output-labels-rgb") > 0) {
+        std::cout << "Saving RGB labels image..." << std::endl;
         cv::imwrite(
-            parsed["output-labels"].as<std::string>(),
+            parsed["output-labels-rgb"].as<std::string>(),
             segmenter.getLabeledImage(true));
     }
 

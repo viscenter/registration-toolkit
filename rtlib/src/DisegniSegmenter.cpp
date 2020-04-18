@@ -36,6 +36,7 @@ void DisegniSegmenter::setBackgroundCoords(const std::vector<cv::Point>& b)
 void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
 void DisegniSegmenter::setPreprocessBlur(bool b) { blur_ = b; }
+void DisegniSegmenter::setBoundingBoxBuffer(int b) { bboxBuffer_ = b; }
 
 std::vector<cv::Mat> DisegniSegmenter::compute()
 {
@@ -196,9 +197,15 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     // Use bounding boxes to create ROI images
     std::vector<cv::Mat> subimgs;
     for (const auto& i : labelBBs) {
-        auto height = i.second.br.y - i.second.tl.y;
-        auto width = i.second.br.x - i.second.tl.x;
-        cv::Rect roi(i.second.tl.x, i.second.tl.y, width, height);
+        // Apply bbox buffer
+        auto min_x = std::max(i.second.tl.x - bboxBuffer_, 0);
+        auto min_y = std::max(i.second.tl.y - bboxBuffer_, 0);
+        auto max_x = std::min(i.second.br.x + bboxBuffer_, input.cols - 1);
+        auto max_y = std::min(i.second.br.y + bboxBuffer_, input.rows - 1);
+
+        auto height = max_y - min_y;
+        auto width = max_x - min_x;
+        cv::Rect roi(min_x, min_y, width, height);
         cv::Mat subimg = input(roi).clone();
         subimgs.push_back(subimg);
     }
