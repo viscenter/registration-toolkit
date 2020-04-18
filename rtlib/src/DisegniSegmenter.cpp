@@ -23,15 +23,17 @@ struct BoundingBox {
 
 void DisegniSegmenter::setInputImage(const cv::Mat& i) { input_ = i; }
 
-void DisegniSegmenter::setForegroundCoords(const std::vector<cv::Point>& b)
+void DisegniSegmenter::setForegroundSeeds(const std::vector<cv::Point>& b)
 {
-    fgCoords_ = b;
+    fgSeeds_ = b;
 }
 
-void DisegniSegmenter::setBackgroundCoords(const std::vector<cv::Point>& b)
+void DisegniSegmenter::setBackgroundSeeds(const std::vector<cv::Point>& b)
 {
-    bgCoords_ = b;
+    bgSeeds_ = b;
 }
+
+void DisegniSegmenter::setSeedSize(int s) { seedSize_ = s; }
 
 void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
@@ -130,20 +132,20 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     cv::Mat labeled = cv::Mat::zeros(input.size(), CV_32S);
 
     // Seed our background label with user-provided coords
-    for (const auto& coord : bgCoords_) {
-        cv::circle(labeled, coord, 1, cv::Scalar(1), -1);
+    for (const auto& coord : bgSeeds_) {
+        cv::circle(labeled, coord, seedSize_, cv::Scalar(1), -1);
     }
 
     // We have two reserved labels and cv::watershed only supports positive
     // integer labels, so protect against too many provided seeds
-    if (fgCoords_.size() > std::numeric_limits<int32_t>::max() - 2) {
+    if (fgSeeds_.size() > std::numeric_limits<int32_t>::max() - 2) {
         throw std::overflow_error("Number of object seeds exceeds maximum");
     }
 
     // Seed our foreground labels with user-provided coords
     int32_t label = 2;
-    for (const auto& coord : fgCoords_) {
-        cv::circle(labeled, coord, 1, cv::Scalar(label++), -1);
+    for (const auto& coord : fgSeeds_) {
+        cv::circle(labeled, coord, seedSize_, cv::Scalar(label++), -1);
     }
 
     // Perform the watershed algorithm

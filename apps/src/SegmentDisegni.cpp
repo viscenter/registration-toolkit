@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
         ("seed-bg,b", po::value<std::vector<std::string>>()->required(),
             "Add a seed point for the background. Should be a string in "
             "the format \"x,y\". May be specified multiple times.")
+        ("seed-size,s", po::value<int>()->default_value(1),
+            "Radius of the seed points, in pixels")
         ("bbox-buffer", po::value<int>()->default_value(10),
             "Number of pixels added to the bounding box of segmented objects");
 
@@ -63,7 +65,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Show the help message
-    if (parsed.count("help") || argc < 4) {
+    if (parsed.count("help") || argc < 6) {
         std::cerr << all << std::endl;
         return EXIT_SUCCESS;
     }
@@ -110,10 +112,10 @@ int main(int argc, char* argv[])
     // Run segmenter
     std::cout << "Segmenting image..." << std::endl;
     rt::DisegniSegmenter segmenter;
-    segmenter.setForegroundCoords(fgPts);
-    segmenter.setBackgroundCoords(bgPts);
-
     segmenter.setInputImage(input);
+    segmenter.setForegroundSeeds(fgPts);
+    segmenter.setBackgroundSeeds(bgPts);
+    segmenter.setSeedSize(parsed["seed-size"].as<int>());
     segmenter.setPreprocessWhiteToBlack(parsed.count("white-to-black") > 0);
     segmenter.setPreprocessSharpen(parsed.count("sharpen") > 0);
     segmenter.setPreprocessBlur(parsed.count("blur") > 0);

@@ -35,7 +35,7 @@ public:
      *
      * Every point in this list defines the seed for a new foreground object.
      */
-    void setForegroundCoords(const std::vector<cv::Point>& b);
+    void setForegroundSeeds(const std::vector<cv::Point>& b);
 
     /**
      * @brief Set seed points for the background
@@ -43,7 +43,10 @@ public:
      * Every point in this list defines a seed for the background layer of the
      * input image.
      */
-    void setBackgroundCoords(const std::vector<cv::Point>& b);
+    void setBackgroundSeeds(const std::vector<cv::Point>& b);
+
+    /** @brief Set the radius of the seed points, in pixels */
+    void setSeedSize(int s);
 
     /**
      * @brief Set the number of buffer pixels around objects in the output
@@ -93,9 +96,11 @@ private:
     /** Segmented subregions */
     std::vector<cv::Mat> results_;
     /** Foreground boundary vector */
-    std::vector<cv::Point> fgCoords_;
+    std::vector<cv::Point> fgSeeds_;
     /** Background boundary coordinate */
-    std::vector<cv::Point> bgCoords_;
+    std::vector<cv::Point> bgSeeds_;
+    /** Seed size (radius) */
+    int seedSize_{1};
 
     /** Preprocessing: White-to-black */
     bool whiteToBlack_{false};
