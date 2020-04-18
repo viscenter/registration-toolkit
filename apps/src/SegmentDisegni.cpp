@@ -33,9 +33,10 @@ int main(int argc, char* argv[])
             "Output directory for segmented disegni images. "
             "Default: Current working directory")
         ("output-labels", po::value<std::string>(),
-            "The file path to save the labels image (32bpc Mono")
+            "The file path to save the labels image (32-bit "
+            "integer labels)")
         ("output-labels-rgb", po::value<std::string>(),
-            "The file path to save the labels image (8bpc RGB");
+            "The file path to save the labels image (RGB)");
 
     po::options_description preprocOpts("Preprocessing Options");
     preprocOpts.add_options()
