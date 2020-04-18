@@ -5,7 +5,7 @@ set(target "${module}")
 set(io_srcs
     src/OBJReader.cpp
     src/OBJWriter.cpp
-    src/ReadRawTIFF.cpp
+    src/TIFFIO.cpp
     src/LandmarkReader.cpp
     src/LandmarkWriter.cpp
 )
