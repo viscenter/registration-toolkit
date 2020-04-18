@@ -30,11 +30,55 @@ public:
     /** @brief Median blur input image prior to segmentation */
     void setPreprocessBlur(bool b);
 
+    /**
+     * @brief Set seed points for foreground objects
+     *
+     * Every point in this list defines the seed for a new foreground object.
+     */
+    void setForegroundSeeds(const std::vector<cv::Point>& b);
+
+    /**
+     * @brief Set seed points for the background
+     *
+     * Every point in this list defines a seed for the background layer of the
+     * input image.
+     */
+    void setBackgroundSeeds(const std::vector<cv::Point>& b);
+
+    /** @brief Set the radius of the seed points, in pixels */
+    void setSeedSize(int s);
+
+    /**
+     * @brief Set the number of buffer pixels around objects in the output
+     * images
+     *
+     * Adjusts the bounding box for segmented objects to include buffer space.
+     * If set to 0, sub-images will be defined by the axis-aligned bounding box
+     * which includes all of the pixels for a particular label. If > 0, extra
+     * space will be added to returned images. If < 0, portions of the
+     * segmented object will not be included in the output image.
+     *
+     * Default: 10
+     *
+     * @param b Number of buffer pixels to add to object bounding boxes
+     */
+    void setBoundingBoxBuffer(int b);
+
     /** @brief Compute disegni segmentation */
     std::vector<cv::Mat> compute();
 
     /**
      * @brief Get labeled image
+     *
+     * If `colored` is true (default), returns an 8bpc RGB label image where
+     * each segmented object has a random color. Otherwise, returns a signed
+     * 32-bit single-channel image of pixel labels.
+     *
+     * Signed 32-bit label interpretation:
+     *   - -1 - Border between objects
+     *   -  0 - Unlabeled pixel
+     *   -  1 - Background object
+     *   - >1 - Label value
      *
      * @param colored If `true` (default), converts the labeled image to
      * an RGB image (CV_8UC3). Otherwise, returns pixel labels (CV_32SC1).
@@ -51,6 +95,12 @@ private:
     cv::Mat labeled_;
     /** Segmented subregions */
     std::vector<cv::Mat> results_;
+    /** Foreground boundary vector */
+    std::vector<cv::Point> fgSeeds_;
+    /** Background boundary coordinate */
+    std::vector<cv::Point> bgSeeds_;
+    /** Seed size (radius) */
+    int seedSize_{1};
 
     /** Preprocessing: White-to-black */
     bool whiteToBlack_{false};
@@ -58,15 +108,17 @@ private:
     bool sharpen_{false};
     /** Preprocessing: Blur */
     bool blur_{false};
+    /** Buffer pixels */
+    int bboxBuffer_{10};
 
     /** Preprocessing */
     cv::Mat preprocess_();
 
     /** Run watershed on image */
-    static cv::Mat watershed_image_(const cv::Mat& input);
+    cv::Mat watershed_image_(const cv::Mat& input);
 
     /** Use labeled image to convert input into several images */
-    static std::vector<cv::Mat> split_labeled_image_(
+    std::vector<cv::Mat> split_labeled_image_(
         const cv::Mat& input, const cv::Mat& labeled);
 };
 }  // namespace rt

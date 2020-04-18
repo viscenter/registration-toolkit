@@ -1,6 +1,7 @@
 #include "rt/DisegniSegmenter.hpp"
 
 #include <algorithm>
+#include <exception>
 #include <limits>
 #include <map>
 #include <set>
@@ -22,9 +23,22 @@ struct BoundingBox {
 
 void DisegniSegmenter::setInputImage(const cv::Mat& i) { input_ = i; }
 
+void DisegniSegmenter::setForegroundSeeds(const std::vector<cv::Point>& b)
+{
+    fgSeeds_ = b;
+}
+
+void DisegniSegmenter::setBackgroundSeeds(const std::vector<cv::Point>& b)
+{
+    bgSeeds_ = b;
+}
+
+void DisegniSegmenter::setSeedSize(int s) { seedSize_ = s; }
+
 void DisegniSegmenter::setPreprocessWhiteToBlack(bool b) { whiteToBlack_ = b; }
 void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
 void DisegniSegmenter::setPreprocessBlur(bool b) { blur_ = b; }
+void DisegniSegmenter::setBoundingBoxBuffer(int b) { bboxBuffer_ = b; }
 
 std::vector<cv::Mat> DisegniSegmenter::compute()
 {
@@ -48,10 +62,15 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     // Generate random colors for each label
     std::map<int32_t, cv::Vec3b> colors;
     for (const auto& l : unique_labels) {
-        auto b = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
-        auto g = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
-        auto r = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
-        colors[l] = cv::Vec3b{b, g, r};
+        // Border pixels are black
+        if (l == -1) {
+            colors[l] = cv::Vec3b{0, 0, 0};
+        } else {
+            auto b = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+            auto g = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+            auto r = static_cast<uint8_t>(cv::theRNG().uniform(0, 256));
+            colors[l] = cv::Vec3b{b, g, r};
+        }
     }
 
     // Fill output image with color labels
@@ -59,7 +78,7 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     for (int y = 0; y < labeled_.rows; y++) {
         for (int x = 0; x < labeled_.cols; x++) {
             auto index = labeled_.at<int>(y, x);
-            if (index > 0 && colors.count(index) > 0) {
+            if (colors.count(index) > 0) {
                 dst.at<cv::Vec3b>(y, x) = colors.at(index);
             }
         }
@@ -109,51 +128,31 @@ cv::Mat DisegniSegmenter::preprocess_()
 
 cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 {
-    // Create binary image from source image
-    cv::Mat bw;
-    cv::cvtColor(input, bw, cv::COLOR_BGR2GRAY);
-    cv::threshold(bw, bw, 40, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    // Setup our label image
+    cv::Mat labeled = cv::Mat::zeros(input.size(), CV_32S);
 
-    // Perform the distance transform algorithm
-    cv::Mat dist;
-    cv::distanceTransform(bw, dist, cv::DIST_L2, 3);
-    // Normalize the distance image for range = {0.0, 1.0}
-    // so we can visualize and threshold it
-    cv::normalize(dist, dist, 0, 1.0, cv::NORM_MINMAX);
-
-    // Threshold to obtain the peaks
-    // This will be the markers for the foreground objects
-    cv::threshold(dist, dist, 0.4, 1.0, cv::THRESH_BINARY);
-    // Dilate a bit the dist image
-    cv::Mat kernel1 = cv::Mat::ones(3, 3, CV_8U);
-    cv::dilate(dist, dist, kernel1);
-
-    // Create the CV_8U version of the distance image
-    // It is needed for findContours()
-    cv::Mat dist_8u;
-    dist.convertTo(dist_8u, CV_8U);
-    // Find total markers
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(
-        dist_8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-    // Create the marker image for the watershed algorithm
-    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32S);
-    // Draw the foreground markers
-    for (size_t i = 0; i < contours.size(); i++) {
-        cv::drawContours(
-            markers, contours, static_cast<int>(i),
-            cv::Scalar(static_cast<int>(i) + 1), -1);
+    // Seed our background label with user-provided coords
+    for (const auto& coord : bgSeeds_) {
+        cv::circle(labeled, coord, seedSize_, cv::Scalar(1), -1);
     }
-    // Draw the background marker
-    cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
-    markers.convertTo(markers, CV_32S);
+
+    // We have two reserved labels and cv::watershed only supports positive
+    // integer labels, so protect against too many provided seeds
+    if (fgSeeds_.size() > std::numeric_limits<int32_t>::max() - 2) {
+        throw std::overflow_error("Number of object seeds exceeds maximum");
+    }
+
+    // Seed our foreground labels with user-provided coords
+    int32_t label = 2;
+    for (const auto& coord : fgSeeds_) {
+        cv::circle(labeled, coord, seedSize_, cv::Scalar(label++), -1);
+    }
 
     // Perform the watershed algorithm
-    cv::watershed(input, markers);
+    cv::watershed(input, labeled);
 
-    // Returns the watershedded Mat image as distinct pixel values
-    return markers;
+    // Return labeled image
+    return labeled;
 }
 
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
@@ -167,8 +166,11 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
             // Get label
             auto label = labeled.at<int32_t>(y, x);
 
-            // Skip pixels with weird labels
-            if (label == -1 || label == 255) {
+            // Reserved labels:
+            // -1: boundary between objects
+            //  0: unknown
+            //  1: background
+            if (label <= 1) {
                 continue;
             }
 
@@ -197,9 +199,15 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     // Use bounding boxes to create ROI images
     std::vector<cv::Mat> subimgs;
     for (const auto& i : labelBBs) {
-        auto height = i.second.br.y - i.second.tl.y;
-        auto width = i.second.br.x - i.second.tl.x;
-        cv::Rect roi(i.second.tl.x, i.second.tl.y, width, height);
+        // Apply bbox buffer
+        auto min_x = std::max(i.second.tl.x - bboxBuffer_, 0);
+        auto min_y = std::max(i.second.tl.y - bboxBuffer_, 0);
+        auto max_x = std::min(i.second.br.x + bboxBuffer_, input.cols - 1);
+        auto max_y = std::min(i.second.br.y + bboxBuffer_, input.rows - 1);
+
+        auto height = max_y - min_y;
+        auto width = max_x - min_x;
+        cv::Rect roi(min_x, min_y, width, height);
         cv::Mat subimg = input(roi).clone();
         subimgs.push_back(subimg);
     }
