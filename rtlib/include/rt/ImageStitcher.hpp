@@ -3,15 +3,7 @@
 #include <vector>
 #include <iostream>
 
-#include <boost/filesystem.hpp>
-
-#include <opencv2/core.hpp>
-
-#include <opencv2/stitching/detail/matchers.hpp>
-#include "opencv2/stitching/warpers.hpp"
 #include <opencv2/stitching.hpp>
-
-#include <opencv2/imgcodecs.hpp>
 
 namespace rt
 {
@@ -32,11 +24,13 @@ public:
     void setLandmarks(std::vector<std::string> ldmFiles);
 
     // Sets the bool to whether or not landmarks should be generated
-    void setGenerateLandmarks(bool generate){ generateLandmarks_ = generate; }
+    void setGenerateLandmarks(bool generate){ generate_landmarks_ = generate; }
 
-    void printFeatures();
+    void setOption(int option){ option_ = option; }
 
-    void printMatches();
+    void printFeatures(std::string file_path);
+
+    void printMatches(std::string file_path);
 
     struct LandmarkPair{
         int src_idx;
@@ -50,41 +44,40 @@ private:
     std::vector<cv::UMat> masks_;
     std::vector<cv::detail::ImageFeatures> all_features_;
     std::vector<cv::detail::MatchesInfo> all_pairwise_matches_;
-    bool generateLandmarks_ = true;
-    std::vector<LandmarkPair> landmarks;
+    bool generate_landmarks_ = true;
+    int option_ = 2;
+    std::vector<LandmarkPair> landmarks_;
 
-    void insertUserMatches(const LandmarkPair& landmarks);
+    void insert_user_matches_(const LandmarkPair& landmarks);
 
     // Automatically finds features for the images
-    std::vector<cv::detail::ImageFeatures> findFeatures(double& work_scale_);
+    std::vector<cv::detail::ImageFeatures> find_features_(double& work_scale_);
 
     // Automatically finds the matches between features for the images
-    std::vector<cv::detail::MatchesInfo> findMatches(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_, std::vector<cv::detail::ImageFeatures>& features_);
+    void find_matches_(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_);
 
     // Estimates the camera parameters that the photos were taken with
-    std::vector<cv::detail::CameraParams> estimateCameraParams(double conf_thresh_, float& warped_image_scale_, std::vector<cv::detail::ImageFeatures>& features_,
+    std::vector<cv::detail::CameraParams> estimate_camera_params_(double conf_thresh_, float& warped_image_scale_, std::vector<cv::detail::ImageFeatures>& features_,
                                                                std::vector<cv::detail::MatchesInfo>& pairwise_matches_);
 
     // Stitches together the images and returns the larger image
-    cv::Mat composePano(double seam_work_aspect_, float warped_image_scale_, double work_scale_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::detail::CameraParams>& cameras_, std::vector<cv::Size>& full_img_sizes_);
+    cv::Mat compose_pano_(double seam_work_aspect_, float warped_image_scale_, double work_scale_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::detail::CameraParams>& cameras_, std::vector<cv::Size>& full_img_sizes_);
 
-    void insertFeatures(std::vector<cv::detail::ImageFeatures> features);
-
-    int searchImgIndex(int img_index);
+    int search_img_index_(int img_index);
 
     void PrintMatSwitch(const cv::UMat& m);
 
-    void computeHomography(cv::detail::MatchesInfo& matches_info);
+    void compute_homography_(cv::detail::MatchesInfo& matches_info);
 
-    void filterMatchedFeatures(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2);
+    void filter_matched_features_(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2);
 
-    int search(cv::detail::ImageFeatures& features, std::pair<float, float>& point);
+    int search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point);
 
-    void reduceImgPoints(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
+    void reduce_img_points_(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
 
-    int searchMatches(int src, int dst);
+    int search_matches_(int src, int dst);
 
-    void createMatches();
+    void create_matches_();
 
     template <typename T>
     void PrintMat(const cv::UMat& m) {

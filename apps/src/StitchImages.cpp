@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
             ("output-file,o", po::value<std::string>()->required(),
              "Output image")
             ("input-ldm,ldm", po::value<std::vector<std::string> >()->multitoken(), "User generated landmarks file")
+            ("option", po::value<int>(), "Option 1, 2, or 3 for storing the user generated landmarks")
             ("disable-auto-ldm", "Disable automatically generated landmarks");
 
     // Sets the program options
@@ -51,6 +52,16 @@ int main(int argc, char* argv[])
     // The user can't turn off automatically generated landmarks and not provide landmarks
     if(parsed.count("disable-auto-ldm") && !parsed.count("input-ldm")){
         std::cerr << "Cannot disable automatic landmark generation and not provide landmarks." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    int option = 2;
+    if(parsed.count("option")) {
+        option = parsed["option"].as<int>();
+    }
+
+    if(option < 1 || option > 3){
+        std::cerr << "Option values can only be 1, 2, or 3 when giving user generated landmarks." << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -88,11 +99,12 @@ int main(int argc, char* argv[])
 
         // Set the user specified landmarks for the stitcher
         stitcher.setLandmarks(ldmFiles);
-        //stitcher.setLandmarks(img1_points, img2_points);
     }
 
     // Set the bool that tells the program if landmarks should automatically be generated
     stitcher.setGenerateLandmarks(!parsed.count("disable-auto-ldm"));
+
+    stitcher.setOption(option);
 
     // Stitch the images together
     auto res = stitcher.compute();
