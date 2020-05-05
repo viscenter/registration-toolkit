@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <boost/filesystem.hpp>  //
-#include <opencv2/core.hpp>      //
+#include <boost/filesystem.hpp>
+#include <opencv2/core.hpp>
 
-#include "rt/SpatialObject.hpp"        //
-#include "rt/ImageTypes.hpp"  //
+#include "rt/SpatialObject.hpp"
+#include "rt/types/UVMap.hpp"
 
 namespace rt
 {
@@ -25,31 +25,29 @@ public:
     explicit Mesh(const boost::filesystem::path& path);
 
     /** @brief Return the fixed image (texture) of the input data */
-    cv::Mat getImage(int idx = 0) { return cvFixedImage_; }
+    cv::Mat getImage(int idx = 0) { return texture_; }
 
     /** @brief Return a single image from the input data */
     virtual int getNumImages() { return 1; }
 
     /** @brief Return whether or not this object has a mesh */
-    bool hasMesh() { return origMesh_ != nullptr; }
+    bool hasMesh() { return mesh_ != nullptr; }
 
     /** @brief Return a single mesh from the input data */
-    rt::ITKMesh::Pointer getMesh(int idx = 0) { return origMesh_; }
+    rt::ITKMesh::Pointer getMesh(int idx = 0) { return mesh_; }
 
     /** @brief Return a single image from the input data */
     int getNumMeshes() { return 0; }
 
-    /** @brief Return the fixed image of the input data */
-    rt::Image8UC3::Pointer getFixedImage() { return fixedImage_; }
 
 private:
-    /** Fixed texture image of the mesh */
-    cv::Mat cvFixedImage_;
-
-    /** Fixed image */
-    rt::Image8UC3::Pointer fixedImage_;
-
     /** 3D mesh of the input data */
-    rt::ITKMesh::Pointer origMesh_ = nullptr;
+    ITKMesh::Pointer mesh_;
+
+    /** UV Map */
+    UVMap uvMap_;
+
+    /** Mesh texture image */
+    cv::Mat texture_;
 };
 }  // namespace rt
