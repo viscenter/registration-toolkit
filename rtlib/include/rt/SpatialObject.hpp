@@ -15,16 +15,16 @@
 namespace rt
 {
 /**
- * @class Data
+ * @class SpatialObject
  * @brief Abstract data structure class to represents the input and
  * output for the registration pipeline
  * @ingroup data
  */
-class Data
+class SpatialObject
 {
 
 public:
-    using Pointer = std::shared_ptr<Data>;
+    using Pointer = std::shared_ptr<SpatialObject>;
 
     /** @brief Load the data type from the given file. This path should be the
      * root path of a SpatialObject object from the SpatialObject subdirectory
@@ -47,9 +47,9 @@ public:
     virtual int getNumMeshes() = 0;
 
 protected:
-    Data() = default;
+    SpatialObject() = default;
 
     /** Constructor */
-    Data(const boost::filesystem::path& path) {}
+    SpatialObject(const boost::filesystem::path& path) {}
 };
 }  // namespace rt

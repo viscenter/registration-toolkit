@@ -7,7 +7,7 @@
 #include <boost/filesystem.hpp>  //
 #include <opencv2/core.hpp>      //
 
-#include "rt/Data.hpp"        //
+#include "rt/SpatialObject.hpp"        //
 #include "rt/ImageTypes.hpp"  //
 
 namespace rt
@@ -18,7 +18,7 @@ namespace rt
  * registration pipeline
  * @ingroup data
  */
-class Mesh : public Data
+class Mesh : public SpatialObject
 {
 public:
     /** Constructor */

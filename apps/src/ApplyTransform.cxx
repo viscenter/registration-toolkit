@@ -9,7 +9,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#include "rt/Data.hpp"
+#include "rt/SpatialObject.hpp"
 #include "rt/ImageTransformResampler.hpp"
 
 using CompositeTransform = itk::CompositeTransform<double, 2>;
@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
         tfmReader->GetTransformList()->begin()->GetPointer());
 
     // Load the moving image at full depth and resample it
-    auto cvFixed = rt::Data::Load(fixedPath);
-    auto cvMoving = rt::Data::Load(movingPath);
+    auto cvFixed = rt::SpatialObject::Load(fixedPath);
+    auto cvMoving = rt::SpatialObject::Load(movingPath);
     cv::Mat cvFixedImg = cvFixed->getImage();
     cv::Mat cvMovingImg = cvMoving->getImage(-1);
     // auto cvFixed = cv::imread(fixedPath.string());

@@ -23,7 +23,7 @@ set(srcs
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
     src/DisegniSegmenter.cpp
-    src/Data.cpp
+        src/SpatialObject.cpp
     src/Image.cpp
     src/Envi.cpp
     src/Mesh.cpp)

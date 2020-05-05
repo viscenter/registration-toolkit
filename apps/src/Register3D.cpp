@@ -9,7 +9,7 @@
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
-#include "rt/Data.hpp"
+#include "rt/SpatialObject.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     ITKMesh::Pointer origMesh;
     cv::Mat cvFixedImage;
 
-    auto meshObj = rt::Data::Load(fixedPath);
+    auto meshObj = rt::SpatialObject::Load(fixedPath);
     cvFixedImage = meshObj->getImage();
     origMesh = meshObj->getMesh();
     /*
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
     auto cvMovingImage = cv::imread(movingPath.string());
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
      */
-    auto cvMoving = Data::Data::Load(movingPath);
+    auto cvMoving = SpatialObject::SpatialObject::Load(movingPath);
     cv::Mat cvMovingImage = cvMoving->getImage();
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
 

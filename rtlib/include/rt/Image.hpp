@@ -7,7 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
-#include "rt/Data.hpp"
+#include "rt/SpatialObject.hpp"
 
 namespace rt
 {
@@ -16,7 +16,7 @@ namespace rt
  * @brief Represent a simple 2D image for the registration pipeline
  * @ingroup data
  */
-class Image : public Data
+class Image : public SpatialObject
 {
 public:
     /** Constructor */

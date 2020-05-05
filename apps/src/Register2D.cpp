@@ -10,7 +10,7 @@
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
-#include "rt/Data.hpp"
+#include "rt/SpatialObject.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
@@ -95,10 +95,10 @@ int main(int argc, char* argv[])
     auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMoving);
     */
 
-    auto cvFixed = Data::Data::Load(fixedPath);
+    auto cvFixed = SpatialObject::SpatialObject::Load(fixedPath);
     cv::Mat cvFixedImg = cvFixed->getImage();
     auto fixedImage = OCVB::CVMatToITKImage<Image8UC3>(cvFixedImg);
-    auto cvMoving = Data::Data::Load(movingPath);
+    auto cvMoving = SpatialObject::SpatialObject::Load(movingPath);
     cv::Mat cvMovingImg = cvMoving->getImage();
     auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMovingImg);
 

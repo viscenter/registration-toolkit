@@ -2,7 +2,7 @@
 // Created by Anthony Tamasi on 2019-10-31.
 //
 
-#include "rt/Data.hpp"
+#include "rt/SpatialObject.hpp"
 
 #include <itkOpenCVImageBridge.h>
 #include <nlohmann/json.hpp>
@@ -20,7 +20,7 @@ using OCVBridge = itk::OpenCVImageBridge;
 
 enum class Type { Image, Envi, Mesh };
 
-Data::Pointer Data::Load(const fs::path& path)
+SpatialObject::Pointer SpatialObject::Load(const fs::path& path)
 {
     fs::path metadata_file;
 
