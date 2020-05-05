@@ -11,6 +11,13 @@ namespace rt
 class ImageStitcher
 {
 public:
+    struct LandmarkPair{
+        int srcIdx;
+        int dstIdx;
+        std::vector<std::pair<float, float> > srcLdms;
+        std::vector<std::pair<float, float> > dstLdms;
+    };
+
     ImageStitcher() = default;
 
     // Sets the images to be stitched
@@ -24,28 +31,21 @@ public:
     void setLandmarks(std::vector<std::string> ldmFiles);
 
     // Sets the bool to whether or not landmarks should be generated
-    void setGenerateLandmarks(bool generate){ generate_landmarks_ = generate; }
+    void setGenerateLandmarks(bool generate);
 
-    void setOption(int option){ option_ = option; }
+    void setOption(int option);
 
     void printFeatures(std::string file_path);
 
     void printMatches(std::string file_path);
 
-    struct LandmarkPair{
-        int src_idx;
-        int dst_idx;
-        std::vector<std::pair<float, float> > src_ldms;
-        std::vector<std::pair<float, float> > dst_ldms;
-    };
-
 private:
     std::vector<cv::UMat> imgs_;
     std::vector<cv::UMat> masks_;
-    std::vector<cv::detail::ImageFeatures> all_features_;
-    std::vector<cv::detail::MatchesInfo> all_pairwise_matches_;
-    bool generate_landmarks_ = true;
-    int option_ = 2;
+    std::vector<cv::detail::ImageFeatures> allFeatures_;
+    std::vector<cv::detail::MatchesInfo> allPairwiseMatches_;
+    bool generateLandmarks_ = true;
+    int option_ = 1;
     std::vector<LandmarkPair> landmarks_;
 
     void insert_user_matches_(const LandmarkPair& landmarks);
@@ -65,29 +65,12 @@ private:
 
     int search_img_index_(int img_index);
 
-    void PrintMatSwitch(const cv::UMat& m);
-
     void compute_homography_(cv::detail::MatchesInfo& matches_info);
-
-    void filter_matched_features_(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2);
-
-    int search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point);
-
-    void reduce_img_points_(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
 
     int search_matches_(int src, int dst);
 
     void create_matches_();
 
-    template <typename T>
-    void PrintMat(const cv::UMat& m) {
-        for(int y = 0; y < m.rows; y++) {
-            for(int x = 0; x < m.cols; x++) {
-                std::cout << m.getMat(cv::ACCESS_READ).at<T>(y, x) << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
 };
 
 }  // namespace rt

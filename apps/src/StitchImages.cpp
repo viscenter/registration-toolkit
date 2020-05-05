@@ -20,11 +20,11 @@ int main(int argc, char* argv[])
     po::options_description stitching("Stitching Options");
     stitching.add_options()
             ("help,h", "Show this message")
-            ("images,imgs", po::value<std::vector<std::string> >()->multitoken()->required(), "Images to be stitched")
+            ("images,i", po::value<std::vector<std::string> >()->required(), "Images to be stitched")
             ("output-file,o", po::value<std::string>()->required(),
              "Output image")
-            ("input-ldm,ldm", po::value<std::vector<std::string> >()->multitoken(), "User generated landmarks file")
-            ("option", po::value<int>(), "Option 1, 2, or 3 for storing the user generated landmarks")
+            ("input-ldm,l", po::value<std::vector<std::string> >(), "User generated landmarks file")
+            ("option", po::value<int>()->default_value(1), "Option 1, 2, or 3 for storing the user generated landmarks")
             ("disable-auto-ldm", "Disable automatically generated landmarks");
 
     // Sets the program options
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Checks if the user asked for help or if there are not enough arguments given
-    if(parsed.count("help") || argc < 3){
+    if(parsed.count("help") || argc < 7){
         std::cerr << all << std::endl;
         return EXIT_FAILURE;
     }
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 
     // The user can't turn off automatically generated landmarks and not provide landmarks
     if(parsed.count("disable-auto-ldm") && !parsed.count("input-ldm")){
-        std::cerr << "Cannot disable automatic landmark generation and not provide landmarks." << std::endl;
+        std::cerr << "Error: Automatic landmarks disabled but manual landmarks not provided." << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -67,22 +67,13 @@ int main(int argc, char* argv[])
 
     // Get the output file path and the paths of the images
     fs::path output = parsed["output-file"].as<std::string>();
-    std::vector<std::string> images = parsed["images"].as<std::vector<std::string>>();
+    auto imgPaths = parsed["images"].as<std::vector<std::string>>();
 
     // Read in the images and store them
     std::vector<cv::Mat> imgs;
-    for (int i = 0; i < images.size(); i++) {
-        cv::Mat img = cv::imread(images[i]);
-        /*if (divide_images) {
-            cv::Rect rect(0, 0, img.cols / 2, img.rows);
-            imgs.push_back(img(rect).clone());
-            rect.x = img.cols / 3;
-            imgs.push_back(img(rect).clone());
-            rect.x = img.cols / 2;
-            imgs.push_back(img(rect).clone());
-        } else {
-            imgs.push_back(img);
-        }*/
+    for (const auto& p : imgPaths) {
+        // This will load the image as 8UC3
+        cv::Mat img = cv::imread(p);
         imgs.push_back(img);
     }
 
@@ -95,13 +86,15 @@ int main(int argc, char* argv[])
     // Read in the landmarks if the user provides them
     if(parsed.count("input-ldm")) {
         // Get landmarks file paths
-        std::vector<std::string> ldmFiles = parsed["input-ldm"].as<std::vector<std::string>>();
+        auto ldmFiles = parsed["input-ldm"].as<std::vector<std::string>>();
 
         // Set the user specified landmarks for the stitcher
         stitcher.setLandmarks(ldmFiles);
     }
 
     // Set the bool that tells the program if landmarks should automatically be generated
+    // NOTE: This sets a variable to true if landmarks will be generated which will happen if
+    //       the user does not set the flag for disable-auto-ldm
     stitcher.setGenerateLandmarks(!parsed.count("disable-auto-ldm"));
 
     stitcher.setOption(option);

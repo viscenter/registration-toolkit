@@ -50,18 +50,17 @@
 
 using namespace rt;
 
+int search_img_index_(int img_index);
+int search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point);
+void filter_matched_features_(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2);
+void reduce_img_points_(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
 
+void ImageStitcher::setGenerateLandmarks(bool generate){
+    generateLandmarks_ = generate;
+}
 
-void ImageStitcher::PrintMatSwitch(const cv::UMat& m) {
-    switch (m.type()) {
-        case CV_32FC1:
-            PrintMat<float>(m);
-        case CV_8UC1:
-            PrintMat<uint8_t>(m);
-    }
-
-
-
+void ImageStitcher::setOption(int option){
+    option_ = option;
 }
 
 void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matches_info){
@@ -71,8 +70,8 @@ void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matches_info){
     for (size_t i = 0; i < matches_info.matches.size(); ++i)
     {
         const cv::DMatch &m = matches_info.matches[i];
-        src_points.at<cv::Point2f>(0, static_cast<int>(i)) = all_features_[0].keypoints[m.queryIdx].pt;
-        dst_points.at<cv::Point2f>(0, static_cast<int>(i)) = all_features_[1].keypoints[m.trainIdx].pt;
+        src_points.at<cv::Point2f>(0, static_cast<int>(i)) = allFeatures_[matches_info.src_img_idx].keypoints[m.queryIdx].pt;
+        dst_points.at<cv::Point2f>(0, static_cast<int>(i)) = allFeatures_[matches_info.dst_img_idx].keypoints[m.trainIdx].pt;
     }
     matches_info.H = estimateAffinePartial2D(src_points, dst_points, matches_info.inliers_mask);
 
@@ -85,9 +84,11 @@ void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matches_info){
 
     // Find number of inliers
     matches_info.num_inliers = 0;
-    for (size_t i = 0; i < matches_info.inliers_mask.size(); ++i)
-        if (matches_info.inliers_mask[i])
+    for (size_t i = 0; i < matches_info.inliers_mask.size(); ++i) {
+        if (matches_info.inliers_mask[i]) {
             matches_info.num_inliers++;
+        }
+    }
 
     // These coeffs are from paper M. Brown and D. Lowe. "Automatic Panoramic
     // Image Stitching using Invariant Features"
@@ -102,7 +103,7 @@ void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matches_info){
     matches_info.H.at<double>(2, 2) = 1;
 }
 
-int ImageStitcher::search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point){
+int search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point){
         for(int j = 0; j < features.keypoints.size(); j++){
             if(std::abs(features.keypoints[j].pt.x - point.first) < 0.001){
                 if(std::abs(features.keypoints[j].pt.y - point.second) < 0.001){
@@ -113,7 +114,7 @@ int ImageStitcher::search_(cv::detail::ImageFeatures& features, std::pair<float,
         return -1;
     }
 
-void ImageStitcher::filter_matched_features_(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2){
+void filter_matched_features_(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2){
     for(int i = 0; i < points1.size(); i++){
         // Implement search so it finds the index for the point
         // Returns -1 if the points cannot be found
@@ -129,7 +130,7 @@ void ImageStitcher::filter_matched_features_(cv::detail::ImageFeatures& features
     }
 }
 
-void ImageStitcher::reduce_img_points_(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2){
+void reduce_img_points_(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2){
     for(int i = 0; i < features1.size(); i++){
         features1[i].first = features1[i].first * work_scale;
         features1[i].second = features1[i].second * work_scale;
@@ -139,8 +140,8 @@ void ImageStitcher::reduce_img_points_(const double& work_scale, std::vector<std
 }
 
 int ImageStitcher::search_img_index_(int img_index) {
-    for(int i = 0; i < all_features_.size(); i++){
-        if(img_index == all_features_[i].img_idx){
+    for(int i = 0; i < allFeatures_.size(); i++){
+        if(img_index == allFeatures_[i].img_idx){
             return i;
         }
     }
@@ -155,14 +156,14 @@ void ImageStitcher::insert_user_matches_(const LandmarkPair& ldm_pair){
     int src_size, dst_size;
     // Populate the keypoints for the src image first
     cv::detail::ImageFeatures img1_features;
-    int img1_idx = search_img_index_(ldm_pair.src_idx);
+    int img1_idx = search_img_index_(ldm_pair.srcIdx);
     // Check if the src image is already in the features vector
     if(img1_idx < 0){
         // Creates a new feature and puts it into all_features_
-        img1_features.img_idx = ldm_pair.src_idx;
-        img1_features.img_size = cv::Size(imgs_[ldm_pair.src_idx].size().width, imgs_[ldm_pair.src_idx].size().height);
-        for(int i = 0; i < ldm_pair.src_ldms.size(); i++){
-            img1_features.keypoints.emplace_back(cv::KeyPoint(ldm_pair.src_ldms[i].first, ldm_pair.src_ldms[i].second, 31));
+        img1_features.img_idx = ldm_pair.srcIdx;
+        img1_features.img_size = cv::Size(imgs_[ldm_pair.srcIdx].size().width, imgs_[ldm_pair.srcIdx].size().height);
+        for(int i = 0; i < ldm_pair.srcLdms.size(); i++){
+            img1_features.keypoints.emplace_back(ldm_pair.srcLdms[i].first, ldm_pair.srcLdms[i].second, 31);
         }
 
         //May need to compute the descriptors
@@ -170,26 +171,26 @@ void ImageStitcher::insert_user_matches_(const LandmarkPair& ldm_pair){
         /*orb->detectAndCompute(smaller_imgs[0], cv::UMat(), feature_img1.keypoints, feature_img1.descriptors, true);
         filterMatchedFeatures(feature_img1, features1, features2);*/
         src_size = 0;
-        all_features_.push_back(img1_features);
+        allFeatures_.push_back(img1_features);
     }
     else{
-        src_size = all_features_[img1_idx].keypoints.size();
+        src_size = allFeatures_[img1_idx].keypoints.size();
         // Appends the new landmarks
-        for(int i = 0; i < ldm_pair.src_ldms.size(); i++){
-            all_features_[img1_idx].keypoints.emplace_back(cv::KeyPoint(ldm_pair.src_ldms[i].first, ldm_pair.src_ldms[i].second, 31));
+        for(int i = 0; i < ldm_pair.srcLdms.size(); i++){
+            allFeatures_[img1_idx].keypoints.emplace_back(ldm_pair.srcLdms[i].first, ldm_pair.srcLdms[i].second, 31);
         }
     }
 
     // Populate the keypoints for the dst image
     cv::detail::ImageFeatures img2_features;
-    int img2_idx = search_img_index_(ldm_pair.dst_idx);
+    int img2_idx = search_img_index_(ldm_pair.dstIdx);
     // Check if the src image is already in the features vector
     if(img2_idx < 0){
         // Creates a new feature and puts it into all_features_
-        img2_features.img_idx = ldm_pair.dst_idx;
-        img2_features.img_size = cv::Size(imgs_[ldm_pair.dst_idx].size().width, imgs_[ldm_pair.dst_idx].size().height);
-        for(int i = 0; i < ldm_pair.dst_ldms.size(); i++){
-            img2_features.keypoints.emplace_back(cv::KeyPoint(ldm_pair.dst_ldms[i].first, ldm_pair.dst_ldms[i].second, 31));
+        img2_features.img_idx = ldm_pair.dstIdx;
+        img2_features.img_size = cv::Size(imgs_[ldm_pair.dstIdx].size().width, imgs_[ldm_pair.dstIdx].size().height);
+        for(int i = 0; i < ldm_pair.dstLdms.size(); i++){
+            img2_features.keypoints.emplace_back(ldm_pair.dstLdms[i].first, ldm_pair.dstLdms[i].second, 31);
         }
 
         //May need to compute the descriptors with orb->detectAndCompute with useProvidedKepoints = true
@@ -197,36 +198,36 @@ void ImageStitcher::insert_user_matches_(const LandmarkPair& ldm_pair){
         /*orb->detectAndCompute(smaller_imgs[0], cv::UMat(), feature_img1.keypoints, feature_img1.descriptors, true);
         filterMatchedFeatures(feature_img1, features1, features2);*/
         dst_size = 0;
-        all_features_.push_back(img2_features);
+        allFeatures_.push_back(img2_features);
     }
     else{
-        dst_size = all_features_[img2_idx].keypoints.size();
+        dst_size = allFeatures_[img2_idx].keypoints.size();
         // Appends the new landmarks
-        for(int i = 0; i < ldm_pair.dst_ldms.size(); i++){
-            all_features_[img2_idx].keypoints.emplace_back(cv::KeyPoint(ldm_pair.dst_ldms[i].first, ldm_pair.dst_ldms[i].second, 31));
+        for(int i = 0; i < ldm_pair.dstLdms.size(); i++){
+            allFeatures_[img2_idx].keypoints.emplace_back(ldm_pair.dstLdms[i].first, ldm_pair.dstLdms[i].second, 31);
         }
         //May need to compute the descriptors
     }
 
     // Populate the matches and put them into pairwise matches
-    int src_dst_idx = search_matches_(ldm_pair.src_idx, ldm_pair.dst_idx);
-    cv::detail::MatchesInfo matches1 = all_pairwise_matches_[src_dst_idx];
-    for(int i = 0; i < ldm_pair.src_ldms.size(); i++){
-        matches1.matches.emplace_back(cv::DMatch(src_size + i, dst_size + i, 0));
+    int src_dst_idx = search_matches_(ldm_pair.srcIdx, ldm_pair.dstIdx);
+    cv::detail::MatchesInfo matches1 = allPairwiseMatches_[src_dst_idx];
+    for(int i = 0; i < ldm_pair.srcLdms.size(); i++){
+        matches1.matches.emplace_back(src_size + i, dst_size + i, 0);
     }
     compute_homography_(matches1);
-    all_pairwise_matches_[src_dst_idx] = matches1;
+    allPairwiseMatches_[src_dst_idx] = matches1;
 
-    int dst_src_idx = search_matches_(ldm_pair.dst_idx, ldm_pair.src_idx);
-    cv::detail::MatchesInfo matches2 = all_pairwise_matches_[dst_src_idx];
+    int dst_src_idx = search_matches_(ldm_pair.dstIdx, ldm_pair.srcIdx);
+    cv::detail::MatchesInfo matches2 = allPairwiseMatches_[dst_src_idx];
     for(int i = 0; i < matches1.matches.size(); i++){
-        matches2.matches.emplace_back(cv::DMatch(matches1.matches[i].trainIdx, matches1.matches[i].queryIdx, 0));
+        matches2.matches.emplace_back(matches1.matches[i].trainIdx, matches1.matches[i].queryIdx, 0);
     }
     matches2.inliers_mask = matches1.inliers_mask;
     matches2.confidence = matches1.confidence;
     matches2.num_inliers = matches1.num_inliers;
     matches2.H = matches1.H.inv();
-    all_pairwise_matches_[dst_src_idx] = matches2;
+    allPairwiseMatches_[dst_src_idx] = matches2;
 }
 
 // This will probably need to be changed to account for having more than 2 images
@@ -238,8 +239,8 @@ void ImageStitcher::setLandmarks(std::vector<std::string> ldmFiles){
     }
     for(int i = 0; i < ldmFiles.size(); i++){
         LandmarkPair ldm;
-        ldm.src_idx = i;
-        ldm.dst_idx = i+1;
+        ldm.srcIdx = i;
+        ldm.dstIdx = i+1;
         std::ifstream landmarkFile;
         // Open the landmarks file
         landmarkFile.open(ldmFiles[i]);
@@ -255,15 +256,15 @@ void ImageStitcher::setLandmarks(std::vector<std::string> ldmFiles){
         landmarkFile >> point1.first;
         while (!landmarkFile.eof()) {
             landmarkFile >> point1.second;
-            ldm.src_ldms.push_back(point1);
+            ldm.srcLdms.push_back(point1);
             landmarkFile >> point2.first;
             landmarkFile >> point2.second;
-            ldm.dst_ldms.push_back(point2);
+            ldm.dstLdms.push_back(point2);
             landmarkFile >> point1.first;
         }
         // Close the landmarks file
         landmarkFile.close();
-        landmarks_.emplace_back(ldm);
+        landmarks_.push_back(ldm);
     }
 }
 
@@ -275,9 +276,9 @@ std::vector<cv::detail::ImageFeatures> ImageStitcher::find_features_(double& wor
     std::vector<cv::detail::ImageFeatures> features_(imgs_.size());
 
     for (size_t i = 0; i < imgs_.size(); ++i) {
-            cv::resize(
-                    imgs_[i], feature_find_imgs[i], cv::Size(), work_scale_,
-                    work_scale_, cv::INTER_LINEAR);
+        cv::resize(
+                imgs_[i], feature_find_imgs[i], cv::Size(), work_scale_,
+                work_scale_, cv::INTER_LINEAR);
 
 
         if (!masks_.empty()) {
@@ -285,7 +286,7 @@ std::vector<cv::detail::ImageFeatures> ImageStitcher::find_features_(double& wor
                     masks_[i], feature_find_masks[i], cv::Size(), work_scale_,
                     work_scale_, cv::INTER_NEAREST);
         }
-        features_[i].img_idx = (int)i;
+        features_[i].img_idx = static_cast<int>(i);
         // LOGLN("Features in image #" << i+1 << ": " <<
         // features_[i].keypoints.size());
     }
@@ -307,12 +308,12 @@ std::vector<cv::detail::ImageFeatures> ImageStitcher::find_features_(double& wor
 
 void ImageStitcher::find_matches_(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_) {
     std::vector<cv::detail::MatchesInfo> pairwise_matches_;
-    cv::Ptr<cv::detail::FeaturesMatcher> features_matcher_ = cv::makePtr<cv::detail::AffineBestOf2NearestMatcher>(false, false);
+    auto features_matcher_ = cv::makePtr<cv::detail::AffineBestOf2NearestMatcher>(false, false);
     cv::UMat matching_mask_;
     // LOGLN("Finding features, time: " << ((getTickCount() - t) /
     // getTickFrequency()) << " sec");
 
-    (*features_matcher_)(all_features_, all_pairwise_matches_, matching_mask_);
+    (*features_matcher_)(allFeatures_, allPairwiseMatches_, matching_mask_);
     features_matcher_->collectGarbage();
     // LOGLN("Pairwise matching, time: " << ((getTickCount() - t) /
     // getTickFrequency()) << " sec");
@@ -325,7 +326,7 @@ void ImageStitcher::find_matches_(double conf_thresh_, std::vector<cv::UMat>& se
     }
     // Leave only images we are sure are from the same panorama
     auto indices_ = cv::detail::leaveBiggestComponent(
-            all_features_, all_pairwise_matches_, (float)conf_thresh_);
+            allFeatures_, allPairwiseMatches_, (float)conf_thresh_);
     std::vector<cv::UMat> seam_est_imgs_subset;
     std::vector<cv::UMat> imgs_subset;
     std::vector<cv::Size> full_img_sizes_subset;
@@ -378,13 +379,15 @@ std::vector<cv::detail::CameraParams> ImageStitcher::estimate_camera_params_(dou
     bool do_wave_correct_{false};
     cv::detail::WaveCorrectKind wave_correct_kind_{
             cv::detail::WaveCorrectKind::WAVE_CORRECT_HORIZ};
-    if (focals.size() % 2 == 1)
+    if (focals.size() % 2 == 1) {
         warped_image_scale_ = static_cast<float>(focals[focals.size() / 2]);
-    else
+    }
+    else {
         warped_image_scale_ =
                 static_cast<float>(
                         focals[focals.size() / 2 - 1] + focals[focals.size() / 2]) *
                 0.5f;
+    }
 
     if (do_wave_correct_) {
         std::vector<cv::Mat> rmats;
@@ -442,15 +445,17 @@ cv::Mat ImageStitcher::compose_pano_(double seam_work_aspect_, float warped_imag
     // Compensate exposure before finding seams
     cv::Ptr<cv::detail::ExposureCompensator> exposure_comp_ = cv::makePtr<cv::detail::NoExposureCompensator>();
     exposure_comp_->feed(corners, images_warped, masks_warped);
-    for (size_t i = 0; i < imgs_.size(); ++i)
+    for (size_t i = 0; i < imgs_.size(); ++i) {
         exposure_comp_->apply(
                 int(i), corners[i], images_warped[i], masks_warped[i]);
+    }
 
     // Find seams
     cv::Ptr<cv::detail::SeamFinder> seam_finder_ = cv::makePtr<cv::detail::GraphCutSeamFinder>(cv::detail::GraphCutSeamFinderBase::COST_COLOR);
     std::vector<cv::UMat> images_warped_f(imgs_.size());
-    for (size_t i = 0; i < imgs_.size(); ++i)
+    for (size_t i = 0; i < imgs_.size(); ++i) {
         images_warped[i].convertTo(images_warped_f[i], CV_32F);
+    }
     seam_finder_->find(images_warped_f, corners, masks_warped);
 
     // Release unused memory
@@ -479,10 +484,11 @@ cv::Mat ImageStitcher::compose_pano_(double seam_work_aspect_, float warped_imag
         // Read image and resize it if necessary
         full_img = imgs_[img_idx];
         if (!is_compose_scale_set) {
-            if (compose_resol_ > 0)
+            if (compose_resol_ > 0) {
                 compose_scale = std::min(
                         1.0,
                         std::sqrt(compose_resol_ * 1e6 / full_img.size().area()));
+            }
             is_compose_scale_set = true;
 
             // Compute relative scales
@@ -521,8 +527,9 @@ cv::Mat ImageStitcher::compose_pano_(double seam_work_aspect_, float warped_imag
             resize(
                     full_img, img, cv::Size(), compose_scale, compose_scale,
                     cv::INTER_LINEAR);
-        } else
+        } else {
             img = full_img;
+        }
         full_img.release();
         cv::Size img_size = img.size();
 
@@ -580,9 +587,9 @@ cv::Mat ImageStitcher::compose_pano_(double seam_work_aspect_, float warped_imag
 
 int ImageStitcher::search_matches_(int src, int dst){
     // Need to find more efficient way to search
-    for(int i = 0; i < all_pairwise_matches_.size(); i++){
-        if (src == all_pairwise_matches_[i].src_img_idx) {
-            if (dst == all_pairwise_matches_[i].dst_img_idx) {
+    for(int i = 0; i < allPairwiseMatches_.size(); i++){
+        if (src == allPairwiseMatches_[i].src_img_idx) {
+            if (dst == allPairwiseMatches_[i].dst_img_idx) {
                 return i;
             }
         }
@@ -602,7 +609,7 @@ void ImageStitcher::create_matches_() {
                 match.src_img_idx = i;
                 match.dst_img_idx = j;
             }
-            all_pairwise_matches_.push_back(match);
+            allPairwiseMatches_.push_back(match);
         }
     }
 }
@@ -610,8 +617,8 @@ void ImageStitcher::create_matches_() {
 // Need to give a flag that will print the images within a certain folder
 void ImageStitcher::printFeatures(std::string file_path){
     cv::UMat output;
-    for(int i = 0; i < all_features_.size(); i++) {
-        cv::drawKeypoints(imgs_[all_features_[i].img_idx], all_features_[i].keypoints, output, cv::Scalar(0, 255, 0),
+    for(int i = 0; i < allFeatures_.size(); i++) {
+        cv::drawKeypoints(imgs_[allFeatures_[i].img_idx], allFeatures_[i].keypoints, output, cv::Scalar(0, 255, 0),
                           cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
         cv::imwrite(file_path + "features_" + std::to_string(i) + ".jpg", output);
     }
@@ -620,13 +627,13 @@ void ImageStitcher::printFeatures(std::string file_path){
 // Need to give a flag that will print the images within a certain folder
 void ImageStitcher::printMatches(std::string file_path){
     cv::UMat matches_output;
-    for(int i = 0; i < all_pairwise_matches_.size(); i++) {
-        if(all_pairwise_matches_[i].src_img_idx != -1 && all_pairwise_matches_[i].dst_img_idx != -1 && all_pairwise_matches_[i].src_img_idx != all_pairwise_matches_[i].dst_img_idx) {
-            if (!all_pairwise_matches_[i].matches.empty()) {
-                int src = all_pairwise_matches_[i].src_img_idx;
-                int dest = all_pairwise_matches_[i].dst_img_idx;
-                cv::drawMatches(imgs_[src], all_features_[src].keypoints, imgs_[dest], all_features_[dest].keypoints,
-                                all_pairwise_matches_[i].matches, matches_output, cv::Scalar(0, 255, 0),
+    for(int i = 0; i < allPairwiseMatches_.size(); i++) {
+        if(allPairwiseMatches_[i].src_img_idx != -1 && allPairwiseMatches_[i].dst_img_idx != -1 && allPairwiseMatches_[i].src_img_idx != allPairwiseMatches_[i].dst_img_idx) {
+            if (!allPairwiseMatches_[i].matches.empty()) {
+                int src = allPairwiseMatches_[i].src_img_idx;
+                int dest = allPairwiseMatches_[i].dst_img_idx;
+                cv::drawMatches(imgs_[src], allFeatures_[src].keypoints, imgs_[dest], allFeatures_[dest].keypoints,
+                                allPairwiseMatches_[i].matches, matches_output, cv::Scalar(0, 255, 0),
                                 cv::Scalar(0, 255, 0));
                 cv::imwrite(file_path + "matches_" + std::to_string(i) + ".jpg",
                             matches_output);
@@ -694,8 +701,8 @@ cv::Mat ImageStitcher::compute()
     // Need to add the functionality for adding the user generate landmarks/features
     // Add these landmarks/features and matches to the all_features and all_pairwise_matches vectors
 
-    if(generate_landmarks_) {
-        all_features_ = find_features_(work_scale_);
+    if(generateLandmarks_) {
+        allFeatures_ = find_features_(work_scale_);
 
         find_matches_(conf_thresh_, seam_est_imgs_, full_img_sizes_);
     }
@@ -723,7 +730,7 @@ cv::Mat ImageStitcher::compute()
     ///// Estimate camera params /////
     //////////////////////////////////
     float warped_image_scale_;
-    std::vector<cv::detail::CameraParams> cameras_ = estimate_camera_params_(conf_thresh_, warped_image_scale_, all_features_, all_pairwise_matches_);
+    std::vector<cv::detail::CameraParams> cameras_ = estimate_camera_params_(conf_thresh_, warped_image_scale_, allFeatures_, allPairwiseMatches_);
 
     //////////////////////
     //// compose pano ////
