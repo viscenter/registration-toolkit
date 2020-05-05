@@ -9,8 +9,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#include "rt/ImageTransformResampler.hpp"
 #include "rt/Data.hpp"
+#include "rt/ImageTransformResampler.hpp"
 
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 using TransformConverter = itk::CompositeTransformIOHelperTemplate<double>;
@@ -75,10 +75,10 @@ int main(int argc, char* argv[])
     auto cvMoving = rt::Data::Load(movingPath);
     cv::Mat cvFixedImg = cvFixed->getImage();
     cv::Mat cvMovingImg = cvMoving->getImage(-1);
-    //auto cvFixed = cv::imread(fixedPath.string());
-    //auto cvMoving = cv::imread(movingPath.string(), -1);
-    //cv::Size s(cvFixed.cols, cvFixed.rows);
-    //auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
+    // auto cvFixed = cv::imread(fixedPath.string());
+    // auto cvMoving = cv::imread(movingPath.string(), -1);
+    // cv::Size s(cvFixed.cols, cvFixed.rows);
+    // auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
     cv::Size s(cvFixedImg.cols, cvFixedImg.rows);
     auto cvFinal = rt::ImageTransformResampler(cvMovingImg, s, transform);
 

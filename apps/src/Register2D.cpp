@@ -10,13 +10,13 @@
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
+#include "rt/Data.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
 #include "rt/LandmarkDetector.hpp"
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/LandmarkWriter.hpp"
-#include "rt/Data.hpp"
 
 using namespace rt;
 
@@ -102,8 +102,6 @@ int main(int argc, char* argv[])
     cv::Mat cvMovingImg = cvMoving->getImage();
     auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMovingImg);
 
-
-
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);
     movingImage->SetSpacing(1.0);
@@ -126,8 +124,8 @@ int main(int argc, char* argv[])
         } else {
             std::cout << "Detecting landmarks..." << std::endl;
             LandmarkDetector landmarkDetector;
-            //landmarkDetector.setFixedImage(cvFixed);
-            //landmarkDetector.setMovingImage(cvMoving);
+            // landmarkDetector.setFixedImage(cvFixed);
+            // landmarkDetector.setMovingImage(cvMoving);
             landmarkDetector.setFixedImage(cvFixedImg);
             landmarkDetector.setMovingImage(cvMovingImg);
             landmarkDetector.compute();
@@ -200,11 +198,11 @@ int main(int argc, char* argv[])
 
     ///// Resample the source image /////
     printf("Resampling the moving image...\n");
-    //cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
+    // cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
     cvMovingImg = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
-    //cv::Size s(cvFixed.cols, cvFixed.rows);
+    // cv::Size s(cvFixed.cols, cvFixed.rows);
     cv::Size s(cvFixedImg.cols, cvFixedImg.rows);
-    //auto cvFinal = ImageTransformResampler(cvMoving, s, compositeTrans);
+    // auto cvFinal = ImageTransformResampler(cvMoving, s, compositeTrans);
     auto cvFinal = ImageTransformResampler(cvMovingImg, s, compositeTrans);
 
     ///// Write the output image /////

@@ -9,6 +9,7 @@
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
+#include "rt/Data.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
@@ -17,7 +18,6 @@
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/Exceptions.hpp"
 #include "rt/types/UVMap.hpp"
-#include "rt/Data.hpp"
 
 using namespace rt;
 
@@ -86,7 +86,6 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
-
     /* PREVIOUS CODE
     // Read the OBJ file and static image
     io::OBJReader reader;
@@ -107,8 +106,6 @@ int main(int argc, char* argv[])
     ITKMesh::Pointer origMesh;
     cv::Mat cvFixedImage;
 
-
-
     auto meshObj = rt::Data::Load(fixedPath);
     cvFixedImage = meshObj->getImage();
     origMesh = meshObj->getMesh();
@@ -120,14 +117,11 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
      */
-    if(meshObj->hasMesh()){
+    if (meshObj->hasMesh()) {
         fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
-    }
-    else{
+    } else {
         return EXIT_FAILURE;
     }
-
-
 
     // Read the moving image
     /* PREVIOUS CODE
@@ -137,7 +131,6 @@ int main(int argc, char* argv[])
     auto cvMoving = Data::Data::Load(movingPath);
     cv::Mat cvMovingImage = cvMoving->getImage();
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
-
 
     // Ignore spacing information
     fixedImage->SetSpacing(1.0);

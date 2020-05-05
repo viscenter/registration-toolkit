@@ -11,7 +11,6 @@
 #include "rt/Image.hpp"
 #include "rt/Mesh.hpp"
 
-
 namespace fs = boost::filesystem;
 using json = nlohmann::json;
 using namespace rt;
@@ -25,23 +24,23 @@ Data::Pointer Data::Load(const fs::path& path)
 {
     fs::path metadata_file;
 
-    //Find this file path's metadata file
-    for (fs::directory_entry& entry : fs::directory_iterator(path)){
-        if(entry.path().stem() == "metadata" && entry.path().extension() != "json") {
+    // Find this file path's metadata file
+    for (fs::directory_entry& entry : fs::directory_iterator(path)) {
+        if (entry.path().stem() == "metadata" &&
+            entry.path().extension() != "json") {
             metadata_file = entry.path();
         }
     }
 
-    //Read "spatial object type" of the metadata file into JSON object
+    // Read "spatial object type" of the metadata file into JSON object
     std::ifstream input_stream(metadata_file.string());
     json j;
     input_stream >> j;
 
     Type metadata_type = j["type"];
 
-
-    //Select type of object based on this file's type
-    switch(metadata_type){
+    // Select type of object based on this file's type
+    switch (metadata_type) {
         case Type::Image:
             return std::make_shared<rt::Image>(path);
         case Type::Envi:

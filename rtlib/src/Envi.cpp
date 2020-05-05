@@ -8,16 +8,14 @@ namespace et = envitools;
 namespace fs = boost::filesystem;
 using namespace rt;
 
-
 rt::ENVI::ENVI(const fs::path& path) : envi_{path} {}
 
 cv::Mat rt::ENVI::getImage(int idx)
 {
-    //Get image of particular spectral band
+    // Get image of particular spectral band
     cv::Mat img = envi_.getBand(idx);
 
-    //envi_.closeFile();
+    // envi_.closeFile();
 
     return img;
 }
-
