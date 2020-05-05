@@ -17,7 +17,7 @@ FetchContent_MakeAvailable(envi-tools)
 FetchContent_Declare(
         nlohmann
         GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG develop
+        GIT_TAG v3.7.3
 )
 
 FetchContent_MakeAvailable(nlohmann)

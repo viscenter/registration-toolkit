@@ -26,7 +26,8 @@ set(srcs
         src/SpatialObject.cpp
     src/Image.cpp
     src/Envi.cpp
-    src/Mesh.cpp)
+    src/Mesh.cpp
+)
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
 add_library("${namespace}${module}" ALIAS "${target}")
@@ -44,7 +45,6 @@ target_link_libraries(${target}
         vtkCommonCore
         vtkCommonDataModel
         ET::envitools
-        nlohmann_json::nlohmann_json
     PRIVATE
         opencv_calib3d
         opencv_features2d
@@ -54,6 +54,7 @@ target_link_libraries(${target}
         vtkCommonTransforms
         vtkFiltersGeneral
         TIFF::TIFF
+        nlohmann_json::nlohmann_json
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"
