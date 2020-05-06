@@ -55,15 +55,25 @@ int search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point)
 void filter_matched_features_(cv::detail::ImageFeatures& features, std::vector<std::pair<float, float> >& points1, std::vector<std::pair<float, float> >& points2);
 void reduce_img_points_(const double& work_scale, std::vector<std::pair<float, float> > &features1, std::vector<std::pair<float, float> > &features2);
 
+
+void ImageStitcher::setImages(std::vector<cv::Mat> images){
+    imgsMat_ = images;
+}
+
 void ImageStitcher::setGenerateLandmarks(bool generate){
     generateLandmarks_ = generate;
 }
 
-void ImageStitcher::setOption(int option){
+void ImageStitcher::setOption(ManualLdmPosition option){
     option_ = option;
 }
 
-void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matchesInfo){
+void ImageStitcher::convert_imgs_to_UMat_(){
+    for(auto & i : imgsMat_){
+        imgs_.push_back(i.getUMat(cv::ACCESS_READ));
+    }
+}
+cv::detail::MatchesInfo ImageStitcher::compute_homography_(cv::detail::MatchesInfo matchesInfo){
     // Construct point-point correspondences for transform estimation
     cv::Mat srcPoints(1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
     cv::Mat dstPoints(1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
@@ -79,7 +89,7 @@ void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matchesInfo){
         // could not find transformation
         matchesInfo.confidence = 0;
         matchesInfo.num_inliers = 0;
-        return;
+        return matchesInfo;
     }
 
     // Find number of inliers
@@ -98,6 +108,8 @@ void ImageStitcher::compute_homography_(cv::detail::MatchesInfo& matchesInfo){
     // extend H to represent linear transformation in homogeneous coordinates
     matchesInfo.H.push_back(cv::Mat::zeros(1, 3, CV_64F));
     matchesInfo.H.at<double>(2, 2) = 1;
+
+    return matchesInfo;
 }
 
 int search_(cv::detail::ImageFeatures& features, std::pair<float, float>& point){
@@ -204,7 +216,7 @@ void ImageStitcher::insert_user_matches_(const LandmarkPair& ldmPair){
     for(int i = 0; i < ldmPair.srcLdms.size(); i++){
         matches1.matches.emplace_back(srcSize + i, dstSize + i, 0);
     }
-    compute_homography_(matches1);
+    matches1 = compute_homography_(matches1);
     allPairwiseMatches_[srcDstIdx] = matches1;
 
     int dstSrcIdx = search_matches_(ldmPair.dstIdx, ldmPair.srcIdx);
@@ -262,7 +274,7 @@ void ImageStitcher::find_matches_(double confThresh, std::vector<cv::UMat>& seam
     featuresMatcher->collectGarbage();
 
     // This is for option 1 with placing the matches before filtering the images
-    if (option_ == 1 && !landmarks_.empty()){
+    if (option_ == ManualLdmPosition::AfterMatching && !landmarks_.empty()){
         for(int i = 0; i < landmarks_.size(); i++){
             insert_user_matches_(landmarks_[i]);
         }
@@ -585,6 +597,8 @@ void ImageStitcher::printMatches(std::string filePath){
 // cv::Stitcher::stitch()
 cv::Mat ImageStitcher::compute()
 {
+    convert_imgs_to_UMat_();
+
     //////////////////////
     //// match images ////
     //////////////////////
@@ -653,10 +667,10 @@ cv::Mat ImageStitcher::compute()
         create_matches_();
         // Only possible option for placing user landmarks is option 2
         // Change option to 2
-        option_ = 2;
+        option_ = ManualLdmPosition::AfterFilter;
     }
     // This is option 2 with placing the user matches after getting the automatic matches
-    if (option_ == 2 && !landmarks_.empty()){
+    if (option_ == ManualLdmPosition::AfterFilter && !landmarks_.empty()){
         for(int i = 0; i < landmarks_.size(); i++){
             insert_user_matches_(landmarks_[i]);
         }

@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 
+#include <opencv2/core.hpp>
 #include <opencv2/stitching.hpp>
 
 namespace rt
@@ -11,6 +12,9 @@ namespace rt
 class ImageStitcher
 {
 public:
+
+    enum class ManualLdmPosition { AfterMatching = 1,  AfterFilter, FallbackOnly };
+
     struct LandmarkPair{
         int srcIdx;
         int dstIdx;
@@ -21,7 +25,7 @@ public:
     ImageStitcher() = default;
 
     // Sets the images to be stitched
-    void setImages(cv::InputArrayOfArrays i) { i.getUMatVector(imgs_); }
+    void setImages(std::vector<cv::Mat> i);// { i.getUMatVector(imgs_); }
 
     // Stitches the images together
     cv::Mat compute();
@@ -32,7 +36,7 @@ public:
     // Sets the bool to whether or not landmarks should be generated
     void setGenerateLandmarks(bool generate);
 
-    void setOption(int option);
+    void setOption(ManualLdmPosition option);
 
     void printFeatures(std::string filePath);
 
@@ -40,12 +44,15 @@ public:
 
 private:
     std::vector<cv::UMat> imgs_;
+    std::vector<cv::Mat> imgsMat_;
     std::vector<cv::UMat> masks_;
     std::vector<cv::detail::ImageFeatures> allFeatures_;
     std::vector<cv::detail::MatchesInfo> allPairwiseMatches_;
     bool generateLandmarks_ = true;
-    int option_ = 1;
+    ManualLdmPosition option_ = ManualLdmPosition::AfterFilter;
     std::vector<LandmarkPair> landmarks_;
+
+    void convert_imgs_to_UMat_();
 
     void insert_user_matches_(const LandmarkPair& ldmPair);
 
@@ -63,7 +70,7 @@ private:
 
     int search_img_index_(int imgIndex);
 
-    void compute_homography_(cv::detail::MatchesInfo& matchesInfo);
+    cv::detail::MatchesInfo compute_homography_(cv::detail::MatchesInfo matchesInfo);
 
     int search_matches_(int src, int dst);
 

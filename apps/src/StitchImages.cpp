@@ -59,7 +59,10 @@ int main(int argc, char* argv[])
             ("output-file,o", po::value<std::string>()->required(),
              "Output image")
             ("input-ldm,l", po::value<std::vector<std::string> >(), "User generated landmarks file")
-            ("option", po::value<int>()->default_value(2), "Option 1, 2, or 3 for storing the user generated landmarks")
+            ("insert-ldm-pos", po::value<int>()->default_value(2), "The position to insert the user generated landmarks.\n"
+                                                                   "1 -> After automatically generating matches\n"
+                                                                   "2 -> After filtering out images with no matches\n"
+                                                                   "3 -> Only as a fallback option if there are no matches for an image")
             ("disable-auto-ldm", "Disable automatically generated landmarks");
 
     // Sets the program options
@@ -90,13 +93,11 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    int option = 2;
-    if(parsed.count("option")) {
-        option = parsed["option"].as<int>();
-    }
+        auto manualLdmPos = static_cast<rt::ImageStitcher::ManualLdmPosition>(parsed["insert-ldm-pos"].as<int>());
 
-    if(option < 1 || option > 3){
-        std::cerr << "Option values can only be 1, 2, or 3 when giving user generated landmarks." << std::endl;
+    if(manualLdmPos != rt::ImageStitcher::ManualLdmPosition::AfterFilter && manualLdmPos != rt::ImageStitcher::ManualLdmPosition::AfterMatching
+            && manualLdmPos != rt::ImageStitcher::ManualLdmPosition::FallbackOnly){
+        std::cerr << "Insert landmark position can only be 1, 2, or 3 when giving user generated landmarks." << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -134,7 +135,7 @@ int main(int argc, char* argv[])
     //       the user does not set the flag for disable-auto-ldm
     stitcher.setGenerateLandmarks(!parsed.count("disable-auto-ldm"));
 
-    stitcher.setOption(option);
+    stitcher.setOption(manualLdmPos);
 
     try {
         // Stitch the images together
