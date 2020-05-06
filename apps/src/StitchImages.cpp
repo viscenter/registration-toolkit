@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <exception>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -14,6 +15,40 @@ namespace po = boost::program_options;
 
 auto divide_images = false;
 
+std::vector<rt::ImageStitcher::LandmarkPair> getLandmarks(std::vector<std::string> ldmFiles){
+    std::vector<rt::ImageStitcher::LandmarkPair> landmarks;
+    for(int i = 0; i < ldmFiles.size(); i++){
+        rt::ImageStitcher::LandmarkPair ldm;
+        ldm.srcIdx = i;
+        ldm.dstIdx = i+1;
+        std::ifstream landmarkFile;
+        // Open the landmarks file
+        landmarkFile.open(ldmFiles[i]);
+        // Check that the landmarks file opened
+        if (!landmarkFile.is_open()) {
+            throw std::runtime_error(
+                    "Could not open landmarks file " + ldmFiles[i] + ".");
+        }
+
+        std::pair<float, float> point1;
+        std::pair<float, float> point2;
+        // Read in the landmarks and store them
+        landmarkFile >> point1.first;
+        while (!landmarkFile.eof()) {
+            landmarkFile >> point1.second;
+            ldm.srcLdms.push_back(point1);
+            landmarkFile >> point2.first;
+            landmarkFile >> point2.second;
+            ldm.dstLdms.push_back(point2);
+            landmarkFile >> point1.first;
+        }
+        // Close the landmarks file
+        landmarkFile.close();
+        landmarks.push_back(ldm);
+    }
+    return landmarks;
+}
+
 int main(int argc, char* argv[])
 {
     // Adds the options that the user can set for the program
@@ -24,7 +59,7 @@ int main(int argc, char* argv[])
             ("output-file,o", po::value<std::string>()->required(),
              "Output image")
             ("input-ldm,l", po::value<std::vector<std::string> >(), "User generated landmarks file")
-            ("option", po::value<int>()->default_value(1), "Option 1, 2, or 3 for storing the user generated landmarks")
+            ("option", po::value<int>()->default_value(2), "Option 1, 2, or 3 for storing the user generated landmarks")
             ("disable-auto-ldm", "Disable automatically generated landmarks");
 
     // Sets the program options
@@ -88,8 +123,10 @@ int main(int argc, char* argv[])
         // Get landmarks file paths
         auto ldmFiles = parsed["input-ldm"].as<std::vector<std::string>>();
 
+        std::vector<rt::ImageStitcher::LandmarkPair> landmarks = getLandmarks(ldmFiles);
+
         // Set the user specified landmarks for the stitcher
-        stitcher.setLandmarks(ldmFiles);
+        stitcher.setLandmarks(landmarks);
     }
 
     // Set the bool that tells the program if landmarks should automatically be generated
@@ -99,9 +136,14 @@ int main(int argc, char* argv[])
 
     stitcher.setOption(option);
 
-    // Stitch the images together
-    auto res = stitcher.compute();
+    try {
+        // Stitch the images together
+        auto res = stitcher.compute();
 
-    // Write the stitched image to the output file specified by the user
-    cv::imwrite(output.string(), res);
+        // Write the stitched image to the output file specified by the user
+        cv::imwrite(output.string(), res);
+    }
+    catch (std::exception& e){
+        std::cerr << e.what() << std::endl;
+    }
 }

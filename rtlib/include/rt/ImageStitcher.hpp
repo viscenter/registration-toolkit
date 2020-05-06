@@ -27,17 +27,16 @@ public:
     cv::Mat compute();
 
     // Sets the user generated landmarks
-    // This will probably need to change so that there can be more than 2 images
-    void setLandmarks(std::vector<std::string> ldmFiles);
+    void setLandmarks(std::vector<LandmarkPair> ldms);
 
     // Sets the bool to whether or not landmarks should be generated
     void setGenerateLandmarks(bool generate);
 
     void setOption(int option);
 
-    void printFeatures(std::string file_path);
+    void printFeatures(std::string filePath);
 
-    void printMatches(std::string file_path);
+    void printMatches(std::string filePath);
 
 private:
     std::vector<cv::UMat> imgs_;
@@ -48,24 +47,23 @@ private:
     int option_ = 1;
     std::vector<LandmarkPair> landmarks_;
 
-    void insert_user_matches_(const LandmarkPair& landmarks);
+    void insert_user_matches_(const LandmarkPair& ldmPair);
 
     // Automatically finds features for the images
-    std::vector<cv::detail::ImageFeatures> find_features_(double& work_scale_);
+    std::vector<cv::detail::ImageFeatures> find_features_(double workScale);
 
     // Automatically finds the matches between features for the images
-    void find_matches_(double conf_thresh_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::Size>& full_img_sizes_);
+    void find_matches_(double confThresh, std::vector<cv::UMat>& seamEstImgs, std::vector<cv::Size>& fullImgSizes);
 
     // Estimates the camera parameters that the photos were taken with
-    std::vector<cv::detail::CameraParams> estimate_camera_params_(double conf_thresh_, float& warped_image_scale_, std::vector<cv::detail::ImageFeatures>& features_,
-                                                               std::vector<cv::detail::MatchesInfo>& pairwise_matches_);
+    std::vector<cv::detail::CameraParams> estimate_camera_params_(double confThresh, float& warpedImageScale);
 
     // Stitches together the images and returns the larger image
-    cv::Mat compose_pano_(double seam_work_aspect_, float warped_image_scale_, double work_scale_, std::vector<cv::UMat>& seam_est_imgs_, std::vector<cv::detail::CameraParams>& cameras_, std::vector<cv::Size>& full_img_sizes_);
+    cv::Mat compose_pano_(double seamWorkAspect, float warpedImageScale, double workScale, std::vector<cv::UMat>& seamEstImgs, std::vector<cv::detail::CameraParams>& cameras, std::vector<cv::Size>& fullImgSizes);
 
-    int search_img_index_(int img_index);
+    int search_img_index_(int imgIndex);
 
-    void compute_homography_(cv::detail::MatchesInfo& matches_info);
+    void compute_homography_(cv::detail::MatchesInfo& matchesInfo);
 
     int search_matches_(int src, int dst);
 
