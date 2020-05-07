@@ -33,7 +33,7 @@ SpatialObject::Pointer SpatialObject::Load(const fs::path& path)
     json j;
     input_stream >> j;
 
-    Type metadata_type = j["type"];
+    Type metadata_type = static_cast<Type>(j["type"]);
 
     // Select type of object based on this file's type
     switch (metadata_type) {
