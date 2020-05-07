@@ -27,9 +27,12 @@ class SpatialObject
 public:
     using Pointer = std::shared_ptr<SpatialObject>;
 
-    /** @brief Load the data type from the given file. This path should be the
-     * root path of a SpatialObject object from the SpatialObject subdirectory
-     * of a Registration Package*/
+    /**
+     * @brief Factory method for loading a SpatialObject-derived class from disk.
+     *
+     * This path should be the root path of a SpatialObject object from the
+     * SpatialObject subdirectory of a Registration Package.
+     */
     static Pointer Load(const boost::filesystem::path& path);
 
     /** @brief Return a single image from the input data */
@@ -42,7 +45,7 @@ public:
     virtual bool hasMesh() = 0;
 
     /** @brief Return a single mesh from the input data */
-    virtual rt::ITKMesh::Pointer getMesh(int idx = 0) = 0;
+    virtual ITKMesh::Pointer getMesh(size_t idx = 0) = 0;
 
     /** @brief Return a single image from the input data */
     virtual int getNumMeshes() = 0;

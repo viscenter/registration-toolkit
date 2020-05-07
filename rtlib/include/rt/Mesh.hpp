@@ -33,7 +33,7 @@ public:
     bool hasMesh() { return mesh_ != nullptr; }
 
     /** @brief Return a single mesh from the input data */
-    rt::ITKMesh::Pointer getMesh(int idx = 0) { return mesh_; }
+    ITKMesh::Pointer getMesh(size_t idx = 0) { return mesh_; }
 
     /** @brief Return a single image from the input data */
     int getNumMeshes() { return 0; }
