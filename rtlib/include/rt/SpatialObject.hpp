@@ -11,6 +11,7 @@
 #include <opencv2/core.hpp>
 
 #include "rt/types/ITKMesh.hpp"
+#include "rt/types/UVMap.hpp"
 
 namespace rt
 {
@@ -45,6 +46,9 @@ public:
 
     /** @brief Return a single image from the input data */
     virtual int getNumMeshes() = 0;
+
+    /** @brief Return the UV Map from the input data */
+    virtual UVMap getUVMap() = 0;
 
 protected:
     SpatialObject() = default;

@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
+    /*
     io::OBJReader reader;
     reader.setPath(fixedPath);
     ITKMesh::Pointer origMesh;
@@ -95,6 +96,10 @@ int main(int argc, char* argv[])
     auto meshObj = rt::SpatialObject::Load(fixedPath);
     cvFixedImage = meshObj->getImage();
     origMesh = meshObj->getMesh();
+     */
+    auto meshObj = rt::SpatialObject::Load(fixedPath);
+    auto cvFixedImage = meshObj->getImage();
+    auto origMesh = meshObj->getMesh();
 
     if (meshObj->hasMesh()) {
         fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
@@ -179,7 +184,7 @@ int main(int argc, char* argv[])
 
     ///// Apply the transformation to the UV map /////
     printf("Finished registration\n\n");
-    auto oldUVMap = reader.getUVMap();
+    auto oldUVMap = meshObj->getUVMap();
     UVMap newUVMap;
     for (auto point = origMesh->GetPoints()->Begin();
          point != origMesh->GetPoints()->End(); ++point) {

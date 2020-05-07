@@ -41,6 +41,9 @@ public:
     /** @brief Return a single image from the input data */
     int getNumMeshes() { return 0; }
 
+    /** @brief Return the UV Map from the input data */
+    UVMap getUVMap() { return UVMap(); }
+
 private:
     // std::vector<cv::Mat> bands_; //Could use to store bands we have read in
     // memory?

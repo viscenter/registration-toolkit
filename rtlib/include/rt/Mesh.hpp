@@ -8,7 +8,6 @@
 #include <opencv2/core.hpp>
 
 #include "rt/SpatialObject.hpp"
-#include "rt/types/UVMap.hpp"
 
 namespace rt
 {
@@ -38,6 +37,9 @@ public:
 
     /** @brief Return a single image from the input data */
     int getNumMeshes() { return 0; }
+
+    /** @brief Return the UV Map from the input data */
+    UVMap getUVMap() { return uvMap_; }
 
 
 private:

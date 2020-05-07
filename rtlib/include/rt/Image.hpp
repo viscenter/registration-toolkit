@@ -38,6 +38,9 @@ public:
     /** @brief Return a single image from the input data */
     int getNumMeshes() { return 0; }
 
+    /** @brief Return the UV Map from the input data */
+    UVMap getUVMap() { return UVMap(); }
+
 private:
     /** Image */
     cv::Mat img_;
