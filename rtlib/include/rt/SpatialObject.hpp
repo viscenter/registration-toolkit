@@ -55,8 +55,5 @@ public:
 
 protected:
     SpatialObject() = default;
-
-    /** Constructor */
-    SpatialObject(const boost::filesystem::path& path) {}
 };
 }  // namespace rt
