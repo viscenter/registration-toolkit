@@ -75,10 +75,6 @@ int main(int argc, char* argv[])
     auto cvMoving = rt::SpatialObject::Load(movingPath);
     cv::Mat cvFixedImg = cvFixed->getImage();
     cv::Mat cvMovingImg = cvMoving->getImage();
-    // auto cvFixed = cv::imread(fixedPath.string());
-    // auto cvMoving = cv::imread(movingPath.string(), -1);
-    // cv::Size s(cvFixed.cols, cvFixed.rows);
-    // auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
     cv::Size s(cvFixedImg.cols, cvFixedImg.rows);
     auto cvFinal = rt::ImageTransformResampler(cvMovingImg, s, transform);
 

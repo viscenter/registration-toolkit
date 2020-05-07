@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
@@ -86,21 +87,6 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
-    /* PREVIOUS CODE
-    // Read the OBJ file and static image
-    io::OBJReader reader;
-    reader.setPath(fixedPath);
-    ITKMesh::Pointer origMesh;
-    cv::Mat cvFixedImage;
-    try {
-        origMesh = reader.read();
-        //cvFixedImage = reader.getTextureMat();
-        fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-     */
     io::OBJReader reader;
     reader.setPath(fixedPath);
     ITKMesh::Pointer origMesh;
@@ -109,14 +95,7 @@ int main(int argc, char* argv[])
     auto meshObj = rt::SpatialObject::Load(fixedPath);
     cvFixedImage = meshObj->getImage();
     origMesh = meshObj->getMesh();
-    /*
-    try {
-        fixedImage = meshObj->getFixedImage();
-    } catch (const std::exception& e) {
-        std::cerr << "ERROR: " << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-     */
+
     if (meshObj->hasMesh()) {
         fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
     } else {
@@ -124,10 +103,7 @@ int main(int argc, char* argv[])
     }
 
     // Read the moving image
-    /* PREVIOUS CODE
-    auto cvMovingImage = cv::imread(movingPath.string());
-    movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
-     */
+
     auto cvMoving = SpatialObject::SpatialObject::Load(movingPath);
     cv::Mat cvMovingImage = cvMoving->getImage();
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
