@@ -71,10 +71,10 @@ int main(int argc, char* argv[])
         tfmReader->GetTransformList()->begin()->GetPointer());
 
     // Load the moving image at full depth and resample it
-    auto cvFixed = rt::SpatialObject::Load(fixedPath);
-    auto cvMoving = rt::SpatialObject::Load(movingPath);
-    cv::Mat cvFixedImg = cvFixed->getImage();
-    cv::Mat cvMovingImg = cvMoving->getImage();
+    auto fixedObj = rt::SpatialObject::Load(fixedPath);
+    auto movingObj = rt::SpatialObject::Load(movingPath);
+    cv::Mat cvFixedImg = fixedObj->getImage();
+    cv::Mat cvMovingImg = movingObj->getImage();
     cv::Size s(cvFixedImg.cols, cvFixedImg.rows);
     auto cvFinal = rt::ImageTransformResampler(cvMovingImg, s, transform);
 
