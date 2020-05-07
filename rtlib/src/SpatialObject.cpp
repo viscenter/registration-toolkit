@@ -14,7 +14,7 @@ namespace fs = boost::filesystem;
 using json = nlohmann::json;
 using namespace rt;
 
-enum class Type { Image, Envi, Mesh };
+enum class Type { Image = 0, Envi, Mesh };
 
 SpatialObject::Pointer SpatialObject::Load(const fs::path& path)
 {
