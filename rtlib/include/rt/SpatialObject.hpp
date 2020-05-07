@@ -36,7 +36,7 @@ public:
     static Pointer Load(const boost::filesystem::path& path);
 
     /** @brief Return a single image from the input data */
-    virtual cv::Mat getImage(int idx = 0) = 0;
+    virtual cv::Mat getImage(size_t idx = 0) = 0;
 
     /** @brief Return a single image from the input data */
     virtual int getNumImages() = 0;

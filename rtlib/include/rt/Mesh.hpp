@@ -24,7 +24,7 @@ public:
     explicit Mesh(const boost::filesystem::path& path);
 
     /** @brief Return the fixed image (texture) of the input data */
-    cv::Mat getImage(int idx = 0) { return texture_; }
+    cv::Mat getImage(size_t idx = 0) { return texture_; }
 
     /** @brief Return a single image from the input data */
     virtual int getNumImages() { return 1; }

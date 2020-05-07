@@ -23,7 +23,7 @@ public:
     explicit Image(const boost::filesystem::path& path);
 
     /** @brief Return a single image */
-    cv::Mat getImage(int idx = 0) { return img_; }
+    cv::Mat getImage(size_t idx = 0) { return img_; }
 
     /** @brief Return the number of images we have. Only 1 because Image object
      * represents 1 image */

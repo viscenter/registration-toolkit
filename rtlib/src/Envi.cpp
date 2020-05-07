@@ -10,12 +10,15 @@ using namespace rt;
 
 rt::ENVI::ENVI(const fs::path& path) : envi_{path} {}
 
-cv::Mat rt::ENVI::getImage(int idx)
+cv::Mat rt::ENVI::getImage(size_t idx)
 {
     // Get image of particular spectral band
     cv::Mat img = envi_.getBand(idx);
 
-    // envi_.closeFile();
-
     return img;
+}
+
+int rt::ENVI::getNumImages()
+{
+    return envi_.getWavelengths().size();
 }
