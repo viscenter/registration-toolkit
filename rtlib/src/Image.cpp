@@ -9,4 +9,4 @@
 using namespace rt;
 namespace fs = boost::filesystem;
 
-rt::Image::Image(const fs::path& path) { img_ = cv::imread(path.string(), -1); }
+Image::Image(const fs::path& path) { img_ = cv::imread(path.string(), -1); }

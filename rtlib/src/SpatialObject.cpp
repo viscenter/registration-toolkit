@@ -4,7 +4,6 @@
 
 #include "rt/SpatialObject.hpp"
 
-#include <itkOpenCVImageBridge.h>
 #include <nlohmann/json.hpp>
 
 #include "rt/Envi.hpp"
@@ -14,9 +13,6 @@
 namespace fs = boost::filesystem;
 using json = nlohmann::json;
 using namespace rt;
-
-// IO
-using OCVBridge = itk::OpenCVImageBridge;
 
 enum class Type { Image, Envi, Mesh };
 

@@ -42,8 +42,6 @@ public:
     UVMap getUVMap() { return UVMap(); }
 
 private:
-    // std::vector<cv::Mat> bands_; //Could use to store bands we have read in
-    // memory?
     /** ENVI object */
     envitools::ENVI envi_;
 };
