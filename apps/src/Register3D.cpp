@@ -87,28 +87,17 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
-    /*
-    io::OBJReader reader;
-    reader.setPath(fixedPath);
-    ITKMesh::Pointer origMesh;
-    cv::Mat cvFixedImage;
-
-    auto meshObj = rt::SpatialObject::Load(fixedPath);
-    cvFixedImage = meshObj->getImage();
-    origMesh = meshObj->getMesh();
-     */
     auto meshObj = rt::SpatialObject::Load(fixedPath);
     auto cvFixedImage = meshObj->getImage();
     auto origMesh = meshObj->getMesh();
 
-    if (meshObj->hasMesh()) {
+    if (meshObj->hasMesh() && meshObj->getNumImages() > 0) {
         fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
     } else {
         return EXIT_FAILURE;
     }
 
     // Read the moving image
-
     auto cvMoving = SpatialObject::SpatialObject::Load(movingPath);
     cv::Mat cvMovingImage = cvMoving->getImage();
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);

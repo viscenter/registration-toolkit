@@ -89,11 +89,11 @@ int main(int argc, char* argv[])
     ///// Setup input files /////
     // Load the fixed and moving image at 8bpc
 
-    auto cvFixed = SpatialObject::SpatialObject::Load(fixedPath);
-    cv::Mat cvFixedImg = cvFixed->getImage();
+    auto fixedObj = SpatialObject::SpatialObject::Load(fixedPath);
+    cv::Mat cvFixedImg = fixedObj->getImage();
     auto fixedImage = OCVB::CVMatToITKImage<Image8UC3>(cvFixedImg);
-    auto cvMoving = SpatialObject::SpatialObject::Load(movingPath);
-    cv::Mat cvMovingImg = cvMoving->getImage();
+    auto movingObj = SpatialObject::SpatialObject::Load(movingPath);
+    cv::Mat cvMovingImg = movingObj->getImage();
     auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMovingImg);
 
     // Ignore spacing information
@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
 
     ///// Resample the source image /////
     printf("Resampling the moving image...\n");
-    cvMovingImg = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
+    cvMovingImg = movingObj->getImage();
     cv::Size s(cvFixedImg.cols, cvFixedImg.rows);
     auto cvFinal = ImageTransformResampler(cvMovingImg, s, compositeTrans);
 
