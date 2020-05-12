@@ -25,7 +25,7 @@ public:
     ImageStitcher() = default;
 
     // Sets the images to be stitched
-    void setImages(std::vector<cv::Mat> i);// { i.getUMatVector(imgs_); }
+    void setImages(std::vector<cv::Mat> i);
 
     // Stitches the images together
     cv::Mat compute();
