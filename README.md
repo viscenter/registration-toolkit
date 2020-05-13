@@ -3,6 +3,15 @@ registration-toolkit
 
 Toolkit to handle the registration of multipage, diachronic image sets.
 
+Building
+--------
+
+```
+mkdir build && cd build
+cmake -DCMAKE_PREFIX_PATH=</path/to/vc-deps/deps> ..
+make
+```
+
 LandmarkGenerator
 -----------------
 
