@@ -23,6 +23,10 @@ set(srcs
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
     src/DisegniSegmenter.cpp
+        src/SpatialObject.cpp
+    src/Image.cpp
+    src/Envi.cpp
+    src/Mesh.cpp
 )
 
 add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
@@ -40,6 +44,7 @@ target_link_libraries(${target}
         ITKTransform
         vtkCommonCore
         vtkCommonDataModel
+        ET::envitools
     PRIVATE
         opencv_calib3d
         opencv_features2d
@@ -49,6 +54,7 @@ target_link_libraries(${target}
         vtkCommonTransforms
         vtkFiltersGeneral
         TIFF::TIFF
+        nlohmann_json::nlohmann_json
 )
 set_target_properties(${target} PROPERTIES
     VERSION "${PROJECT_VERSION}"

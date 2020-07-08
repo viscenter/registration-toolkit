@@ -2,6 +2,26 @@
 # Core #
 ########
 
+include(FetchContent)
+
+## Envi-tools ##
+FetchContent_Declare(
+    envi-tools
+    GIT_REPOSITORY https://github.com/viscenter/envi-tools.git
+    GIT_TAG develop
+)
+
+FetchContent_MakeAvailable(envi-tools)
+
+## Nlohmann ##
+FetchContent_Declare(
+        nlohmann
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.7.3
+)
+
+FetchContent_MakeAvailable(nlohmann)
+
 # For compiler sanitizers. Taken from:
 # https://github.com/arsenm/sanitizers-cmake/blob/master/README.md
 find_package(Sanitizers)

@@ -10,6 +10,7 @@
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
+#include "rt/SpatialObject.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
@@ -86,22 +87,19 @@ int main(int argc, char* argv[])
     Image8UC3::Pointer fixedImage;
     Image8UC3::Pointer movingImage;
 
-    // Read the OBJ file and static image
-    io::OBJReader reader;
-    reader.setPath(fixedPath);
-    ITKMesh::Pointer origMesh;
-    cv::Mat cvFixedImage;
-    try {
-        origMesh = reader.read();
-        cvFixedImage = reader.getTextureMat();
+    auto meshObj = rt::SpatialObject::Load(fixedPath);
+    auto cvFixedImage = meshObj->getImage();
+    auto origMesh = meshObj->getMesh();
+
+    if (meshObj->hasMesh() && meshObj->getNumImages() > 0) {
         fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    } else {
         return EXIT_FAILURE;
     }
 
     // Read the moving image
-    auto cvMovingImage = cv::imread(movingPath.string());
+    auto cvMoving = SpatialObject::SpatialObject::Load(movingPath);
+    cv::Mat cvMovingImage = cvMoving->getImage();
     movingImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvMovingImage);
 
     // Ignore spacing information
@@ -175,7 +173,7 @@ int main(int argc, char* argv[])
 
     ///// Apply the transformation to the UV map /////
     printf("Finished registration\n\n");
-    auto oldUVMap = reader.getUVMap();
+    auto oldUVMap = meshObj->getUVMap();
     UVMap newUVMap;
     for (auto point = origMesh->GetPoints()->Begin();
          point != origMesh->GetPoints()->End(); ++point) {
