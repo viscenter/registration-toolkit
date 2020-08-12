@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <exception>
 
-#include <opencv2/calib3d.hpp>
 #include <opencv2/features2d.hpp>
+#include <opencv2/stitching/detail/matchers.hpp>
 
 using namespace rt;
 
@@ -19,52 +19,63 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
     // Clear the output vector
     output_.clear();
 
+    // UMats for OpenCL support (if available)
+    cv::UMat fixedImage;
+    cv::UMat movingImage;
+    fixedImg_.copyTo(fixedImage);
+    movingImg_.copyTo(movingImage);
+
     // Detect key points and compute their descriptors
     auto featureDetector = cv::AKAZE::create();
-    std::vector<cv::KeyPoint> fixedKeyPts, movingKeyPts;
-    cv::Mat fixedDesc, movingDesc;
-    featureDetector->detectAndCompute(
-        fixedImg_, fixedMask_, fixedKeyPts, fixedDesc, false);
-    featureDetector->detectAndCompute(
-        movingImg_, movingMask_, movingKeyPts, movingDesc, false);
+    std::vector<cv::detail::ImageFeatures> features(2);
+    std::vector<cv::UMat> images{fixedImage, movingImage};
+    cv::detail::computeImageFeatures(featureDetector, images, features);
 
-    // Compute matches from descriptors
-    cv::BFMatcher matcher(cv::NORM_HAMMING);
-    std::vector<std::vector<cv::DMatch>> matches;
-    int k = 2;
-    matcher.knnMatch(fixedDesc, movingDesc, matches, k);
+    // Match keypoints
+    cv::detail::BestOf2NearestMatcher matcher(true, nnMatchRatio_);
+    std::vector<cv::detail::MatchesInfo> matches;
+    matcher(features, matches);
+    matcher.collectGarbage();
 
-    // Sort according to distance between descriptor matches
-    std::sort(
-        matches.begin(), matches.end(),
-        [](const std::vector<cv::DMatch>& a, const std::vector<cv::DMatch>& b) {
-            return a[0].distance < b[0].distance;
-        });
-
-    // Ratio Test
-    std::vector<cv::Point2f> goodFixed, goodMoving;
+    // Get only Fixed <-> Moving matches
+    cv::detail::MatchesInfo fixedToMoving;
+    cv::detail::MatchesInfo movingToFixed;
     for (const auto& m : matches) {
-        // Filter according to nn ratio
-        if (m[0].distance < nnMatchRatio_ * m[1].distance) {
-            auto fixIdx = m[0].queryIdx;
-            auto movIdx = m[0].trainIdx;
-
-            goodFixed.emplace_back(fixedKeyPts[fixIdx].pt);
-            goodMoving.emplace_back(movingKeyPts[movIdx].pt);
+        if (m.src_img_idx == 0 and m.dst_img_idx == 1) {
+            fixedToMoving = m;
+        } else if (m.src_img_idx == 1 and m.dst_img_idx == 0) {
+            movingToFixed = m;
         }
     }
 
-    // RANSAC outlier filtering
-    cv::Mat ransacMask;
-    double ransacReprojThreshold = 3;
-    cv::findHomography(goodMoving, goodFixed, cv::RANSAC, ransacReprojThreshold, ransacMask);
-    for (size_t idx = 0; idx < goodMoving.size(); idx++) {
-        if (ransacMask.at<uint8_t>(idx) > 0) {
-            output_.emplace_back(goodFixed[idx], goodMoving[idx]);
+    // Add all Fixed -> Moving inliers
+    for (size_t idx = 0; idx < fixedToMoving.matches.size(); idx++) {
+        if (fixedToMoving.inliers_mask[idx] == 0) {
+            continue;
+        }
+
+        const auto& m = fixedToMoving.matches[idx];
+        auto fixPt = features[0].keypoints[m.queryIdx].pt;
+        auto movPt = features[1].keypoints[m.trainIdx].pt;
+        output_.emplace_back(fixPt, movPt);
+    }
+
+    // Add Moving -> Fixed inliers not already in output
+    for (size_t idx = 0; idx < movingToFixed.matches.size(); idx++) {
+        if (movingToFixed.inliers_mask[idx] == 0) {
+            continue;
+        }
+
+        const auto& m = movingToFixed.matches[idx];
+        auto fixPt = features[0].keypoints[m.trainIdx].pt;
+        auto movPt = features[1].keypoints[m.queryIdx].pt;
+        if (std::find(
+                output_.begin(), output_.end(), LandmarkPair{fixPt, movPt}) ==
+            output_.end()) {
+            output_.emplace_back(fixPt, movPt);
         }
     }
 
-    // Return only the matches we've requested
     return output_;
 }
 
