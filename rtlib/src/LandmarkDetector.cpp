@@ -19,20 +19,14 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
     // Clear the output vector
     output_.clear();
 
-    // UMats for OpenCL support (if available)
-    cv::UMat fixedImage;
-    cv::UMat movingImage;
-    fixedImg_.copyTo(fixedImage);
-    movingImg_.copyTo(movingImage);
-
     // Detect key points and compute their descriptors
     auto featureDetector = cv::AKAZE::create();
     std::vector<cv::detail::ImageFeatures> features(2);
-    std::vector<cv::UMat> images{fixedImage, movingImage};
+    std::vector<cv::Mat> images{fixedImg_, movingImg_};
     cv::detail::computeImageFeatures(featureDetector, images, features);
 
     // Match keypoints
-    cv::detail::BestOf2NearestMatcher matcher(true, nnMatchRatio_);
+    cv::detail::BestOf2NearestMatcher matcher(false, nnMatchRatio_);
     std::vector<cv::detail::MatchesInfo> matches;
     matcher(features, matches);
     matcher.collectGarbage();
