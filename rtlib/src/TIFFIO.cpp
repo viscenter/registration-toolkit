@@ -1,10 +1,11 @@
 #include "rt/io/TIFFIO.hpp"
 
 #include <cstring>
-#include <iostream>
 
 #include <boost/algorithm/string.hpp>
 #include <opencv2/imgproc.hpp>
+
+#include "rt/Version.hpp"
 
 // Wrapping in a namespace to avoid define collisions
 namespace lt
@@ -195,6 +196,10 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
         std::array<uint16_t, 1> tag{EXTRASAMPLE_UNASSALPHA};
         lt::TIFFSetField(out, TIFFTAG_EXTRASAMPLES, 1, tag.data());
     }
+
+    // Metadata
+    lt::TIFFSetField(
+        out, TIFFTAG_SOFTWARE, ProjectInfo::NameAndVersion().c_str());
 
     // Row buffer. OpenCV documentation mentions that TIFFWriteScanline
     // modifies its read buffer, so we can't use the cv::Mat directly

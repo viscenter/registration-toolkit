@@ -1,6 +1,4 @@
-project(librtlib VERSION 0.1 LANGUAGES CXX)
 set(module "rtlib")
-set(target "${module}")
 
 set(io_srcs
     src/OBJReader.cpp
@@ -8,11 +6,16 @@ set(io_srcs
     src/TIFFIO.cpp
     src/LandmarkReader.cpp
     src/LandmarkWriter.cpp
+    src/ImageIO.cpp
 )
 
 set(type_srcs
     src/UVMap.cpp
     src/ITK2VTK.cpp
+)
+
+set(util_srcs
+    src/ImageConversion.cpp
 )
 
 set(srcs
@@ -25,14 +28,22 @@ set(srcs
     src/DisegniSegmenter.cpp
 )
 
-add_library(${target} ${srcs} ${io_srcs} ${type_srcs})
-add_library("${namespace}${module}" ALIAS "${target}")
-target_include_directories(${target}
+configure_file(src/Version.cpp.in Version.cpp)
+
+add_library(${module}
+    ${srcs}
+    ${io_srcs}
+    ${type_srcs}
+    ${util_srcs}
+    ${CMAKE_CURRENT_BINARY_DIR}/Version.cpp
+)
+add_library("${namespace}${module}" ALIAS "${module}")
+target_include_directories(${module}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(${target}
+target_link_libraries(${module}
     PUBLIC
         Boost::filesystem
         opencv_core
@@ -50,13 +61,13 @@ target_link_libraries(${target}
         vtkFiltersGeneral
         TIFF::TIFF
 )
-set_target_properties(${target} PROPERTIES
+set_target_properties(${module} PROPERTIES
     VERSION "${PROJECT_VERSION}"
     EXPORT_NAME "${module}"
 )
 
 install(
-    TARGETS "${target}"
+    TARGETS "${module}"
     EXPORT "${targets_export_name}"
     ARCHIVE DESTINATION "lib"
     LIBRARY DESTINATION "lib"

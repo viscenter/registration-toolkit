@@ -10,7 +10,8 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/ImageTransformResampler.hpp"
-#include "rt/io/TIFFIO.hpp"
+#include "rt/io/ImageIO.hpp"
+#include "rt/util/ImageConversion.hpp"
 
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 using TransformConverter = itk::CompositeTransformIOHelperTemplate<double>;
@@ -79,18 +80,7 @@ int main(int argc, char* argv[])
     // Add alpha channel if requested and needed
     if (parsed.count("enable-alpha") > 0 and
         (cvMoving.channels() == 1 or cvMoving.channels() == 3)) {
-        std::vector<cv::Mat> cns;
-        cv::split(cvMoving, cns);
-
-        cv::Mat alpha = cv::Mat::ones(cvMoving.size(), cvMoving.depth());
-        if (alpha.depth() == CV_8U) {
-            alpha *= 255;
-        } else if (alpha.depth() == CV_16U) {
-            alpha *= 65535;
-        }
-
-        cns.push_back(alpha);
-        cv::merge(cns, cvMoving);
+        cvMoving = rt::ColorConvertImage(cvMoving, cvMoving.channels() + 1);
     }
 
     // Transform image
@@ -100,11 +90,5 @@ int main(int argc, char* argv[])
 
     // Write out the file
     std::cout << "Writing transformed image..." << std::endl;
-    if (cvFinal.channels() == 2 or cvFinal.channels() == 4 or
-        cvFinal.depth() == CV_32F or cvFinal.depth() == CV_64F) {
-        outputPath.replace_extension(".tif");
-        rt::io::WriteTIFF(outputPath, cvFinal);
-    } else {
-        cv::imwrite(outputPath.string(), cvFinal);
-    }
+    rt::WriteImage(outputPath, cvFinal);
 }

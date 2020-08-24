@@ -1,0 +1,39 @@
+#include "rt/Version.hpp"
+
+using namespace rt;
+
+std::string ProjectInfo::Name()
+{
+    static std::string name{"@PROJECT_NAME@"};
+    return name;
+}
+
+uint32_t ProjectInfo::VersionMajor()
+{
+    static int vMaj{@PROJECT_VERSION_MAJOR@};
+    return vMaj;
+}
+
+uint32_t ProjectInfo::VersionMinor()
+{
+    static int vMin{@PROJECT_VERSION_MINOR@};
+    return vMin;
+}
+
+uint32_t ProjectInfo::VersionPatch()
+{
+    static int vPatch{@PROJECT_VERSION_PATCH@};
+    return vPatch;
+}
+
+std::string ProjectInfo::VersionString()
+{
+    static std::string version("@PROJECT_VERSION@");
+    return version;
+}
+
+std::string ProjectInfo::NameAndVersion()
+{
+    static std::string nameAndVersion{"@PROJECT_NAME@ @PROJECT_VERSION@"};
+    return nameAndVersion;
+}
