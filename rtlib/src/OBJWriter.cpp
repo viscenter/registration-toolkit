@@ -1,8 +1,8 @@
+#include "rt/io/OBJWriter.hpp"
+
 #include <string>
 
-#include <opencv2/imgcodecs.hpp>
-
-#include "rt/io/OBJWriter.hpp"
+#include "rt/io/ImageIO.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -113,8 +113,8 @@ int OBJWriter::write_texture_()
 
     std::cerr << "Writing texture image..." << std::endl;
     fs::path p = outputPath_;
-    p.replace_extension("png");
-    cv::imwrite(p.string(), texture_, {cv::IMWRITE_PNG_COMPRESSION, 6});
+    p.replace_extension("tif");
+    rt::WriteImage(p, texture_);
     return EXIT_SUCCESS;
 }
 

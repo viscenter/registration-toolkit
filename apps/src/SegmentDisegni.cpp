@@ -9,7 +9,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/DisegniSegmenter.hpp"
-#include "rt/io/TIFFIO.hpp"
+#include "rt/io/ImageIO.hpp"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -137,14 +137,13 @@ int main(int argc, char* argv[])
         std::cout << "Saving labels image..." << std::endl;
         fs::path labelPath = parsed["output-labels"].as<std::string>();
         labelPath.replace_extension("tif");
-        rt::io::WriteTIFF(labelPath.string(), segmenter.getLabeledImage(false));
+        rt::WriteImage(labelPath, segmenter.getLabeledImage(false));
     }
 
     if (parsed.count("output-labels-rgb") > 0) {
         std::cout << "Saving RGB labels image..." << std::endl;
-        cv::imwrite(
-            parsed["output-labels-rgb"].as<std::string>(),
-            segmenter.getLabeledImage(true));
+        fs::path rgbLabelsPath = parsed["output-labels-rgb"].as<std::string>();
+        rt::WriteImage(rgbLabelsPath, segmenter.getLabeledImage(true));
     }
 
     // Save the subimages
@@ -153,7 +152,7 @@ int main(int argc, char* argv[])
     for (const auto& r : results) {
         std::stringstream ss;
         ss << prefix << std::setw(padding) << std::setfill('0') << index << ext;
-        cv::imwrite((outDir / ss.str()).string(), r);
+        rt::WriteImage((outDir / ss.str()), r);
         index++;
     }
 

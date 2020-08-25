@@ -13,6 +13,7 @@
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/ImageTypes.hpp"
+#include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkReader.hpp"
 
 using namespace rt;
@@ -97,8 +98,8 @@ int main(int argc, char* argv[])
     }
 
     fs::path fixedPlot = fixedPath.stem().string() + "_plot.png";
-    cv::imwrite(fixedPlot.string(), cvFixed);
+    rt::WriteImage(fixedPlot, cvFixed);
 
     fs::path movingPlot = movingPath.stem().string() + "_plot.png";
-    cv::imwrite(movingPlot.string(), cvMoving);
+    rt::WriteImage(movingPlot, cvMoving);
 }

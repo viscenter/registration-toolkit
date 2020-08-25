@@ -175,37 +175,3 @@ cv::Mat rt::ColorConvertImage(const cv::Mat& m, int channels)
 
     return output;
 }
-
-cv::Mat rt::AddAlphaChannel(const cv::Mat& m)
-{
-    // Create and scale the alpha channel
-    cv::Mat alpha = cv::Mat::ones(m.size(), m.depth());
-    switch (alpha.depth()) {
-        case CV_8U:
-            alpha *= std::numeric_limits<uint8_t>::max();
-            break;
-        case CV_8S:
-            alpha *= std::numeric_limits<int8_t>::max();
-            break;
-        case CV_16U:
-            alpha *= std::numeric_limits<uint16_t>::max();
-            break;
-        case CV_16S:
-            alpha *= std::numeric_limits<int16_t>::max();
-            break;
-        default:
-            // do nothing
-            break;
-    }
-
-    // Split the original channels
-    std::vector<cv::Mat> cns;
-    cv::split(m, cns);
-
-    // Merge the channels with the alpha channel
-    cv::Mat result;
-    cns.push_back(alpha);
-    cv::merge(cns, result);
-
-    return result;
-}
