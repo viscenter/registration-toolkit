@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
             "Input disegni image")
         ("output-prefix", po::value<std::string>()->default_value("disegni_"),
             "Filename prefix for segmented images")
-        ("output-format", po::value<std::string>()->default_value("png"),
+        ("output-format", po::value<std::string>()->default_value("tif"),
             "Output image format")
         ("output-dir,o", po::value<std::string>(),
             "Output directory for segmented disegni images. "

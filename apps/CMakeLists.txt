@@ -1,5 +1,5 @@
 # 2D Registration Apps
-add_executable(rt_apply_transform src/ApplyTransform.cxx)
+add_executable(rt_apply_transform src/ApplyTransform.cpp)
 target_link_libraries(rt_apply_transform
     rt::rtlib
     opencv_core

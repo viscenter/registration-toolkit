@@ -8,6 +8,8 @@
 
 #include <opencv2/imgproc.hpp>
 
+#include "rt/util/ImageConversion.hpp"
+
 static const int INT_MINI = std::numeric_limits<int>::min();
 static const int INT_MAXI = std::numeric_limits<int>::max();
 static const cv::Vec3b WHITE = {255, 255, 255};
@@ -158,6 +160,9 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
 std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     const cv::Mat& input, const cv::Mat& labeled)
 {
+    // Setup an alpha channel
+    cv::Mat alpha = cv::Mat::zeros(input.size(), CV_32FC1);
+
     // Find subimage bounding boxes using pixel labels
     std::map<int32_t, BoundingBox> labelBBs;
     for (int y = 0; y < labeled.rows; y++) {
@@ -173,6 +178,9 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
             if (label <= 1) {
                 continue;
             }
+
+            // Set alpha channel value
+            alpha.at<float>(y, x) = 1.F;
 
             // Init new bb if we don't have one
             if (labelBBs.count(label) == 0) {
@@ -196,6 +204,16 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
         }
     }
 
+    // Scale alpha channel to output depth
+    alpha = rt::QuantizeImage(alpha, input.depth());
+
+    // Add alpha channel to image
+    cv::Mat inputAlpha;
+    std::vector<cv::Mat> cns;
+    cv::split(input, cns);
+    cns.push_back(alpha);
+    cv::merge(cns, inputAlpha);
+
     // Use bounding boxes to create ROI images
     std::vector<cv::Mat> subimgs;
     for (const auto& i : labelBBs) {
@@ -208,7 +226,7 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
         auto height = max_y - min_y;
         auto width = max_x - min_x;
         cv::Rect roi(min_x, min_y, width, height);
-        cv::Mat subimg = input(roi).clone();
+        cv::Mat subimg = inputAlpha(roi).clone();
         subimgs.push_back(subimg);
     }
 

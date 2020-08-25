@@ -45,7 +45,9 @@ int main(int argc, char* argv[])
         ("output-ldm", po::value<std::string>(),
             "Output file path for the generated landmarks file")
         ("output-tfm,t", po::value<std::string>(),
-            "Output file path for the generated transform file");
+            "Output file path for the generated transform file")
+        ("enable-alpha", "If enabled, an alpha layer will be "
+            "added to the moving image if it does not already have one.");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
@@ -190,7 +192,8 @@ int main(int argc, char* argv[])
     printf("Resampling the moving image...\n");
     cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
     cv::Size s(cvFixed.cols, cvFixed.rows);
-    if (cvMoving.channels() == 1 or cvMoving.channels() == 3) {
+    if (parsed.count("enable-alpha") > 0 and
+        (cvMoving.channels() == 1 or cvMoving.channels() == 3)) {
         cvMoving = rt::ColorConvertImage(cvMoving, cvMoving.channels() + 1);
     }
     auto cvFinal = ImageTransformResampler(cvMoving, s, compositeTrans);

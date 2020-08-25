@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 
     // Load the fixed image and moving image (at full depth)
     auto cvFixed = cv::imread(fixedPath.string());
-    auto cvMoving = cv::imread(movingPath.string(), -1);
+    auto cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
 
     // Add alpha channel if requested and needed
     if (parsed.count("enable-alpha") > 0 and
