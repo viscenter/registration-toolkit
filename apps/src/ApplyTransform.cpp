@@ -84,9 +84,9 @@ int main(int argc, char* argv[])
     }
 
     // Transform image
-    cv::Size s(cvFixed.cols, cvFixed.rows);
     std::cout << "Transforming image..." << std::endl;
-    auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
+    auto cvFinal =
+        rt::ImageTransformResampler(cvMoving, cvFixed.size(), transform);
 
     // Write out the file
     std::cout << "Writing transformed image..." << std::endl;

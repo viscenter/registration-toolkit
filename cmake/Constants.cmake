@@ -16,3 +16,13 @@ set(share_install_dir "share/${PROJECT_NAME}")
 # Targets export name (Config)
 set(targets_export_name "${PROJECT_NAME}Targets")
 set(namespace "${proj_prefix}::")
+
+# Get Git hash
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+if(GIT_SHA1)
+    string(SUBSTRING ${GIT_SHA1} 0 7 GIT_SHA1_SHORT)
+else()
+    set(GIT_SHA1 UNTRACKED)
+    set(GIT_SHA1_SHORT UNTRACKED)
+endif()

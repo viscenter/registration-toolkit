@@ -37,3 +37,15 @@ std::string ProjectInfo::NameAndVersion()
     static std::string nameAndVersion{"@PROJECT_NAME@ @PROJECT_VERSION@"};
     return nameAndVersion;
 }
+
+std::string ProjectInfo::GitHash()
+{
+    static std::string hash("@GIT_SHA1@");
+    return hash;
+}
+
+std::string ProjectInfo::GitHashShort()
+{
+    static std::string hashShort("@GIT_SHA1_SHORT@");
+    return hashShort;
+}

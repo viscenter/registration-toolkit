@@ -5,7 +5,7 @@ using namespace rt;
 using Transform = itk::CompositeTransform<double, 2>::Pointer;
 
 cv::Mat rt::ImageTransformResampler(
-    const cv::Mat& m, cv::Size& s, Transform transform)
+    const cv::Mat& m, const cv::Size& s, Transform transform)
 {
     switch (m.type()) {
         case CV_8UC1: {

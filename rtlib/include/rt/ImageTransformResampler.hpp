@@ -45,6 +45,6 @@ typename TImageType::Pointer ImageTransformResampler(
  */
 cv::Mat ImageTransformResampler(
     const cv::Mat& m,
-    cv::Size& s,
+    const cv::Size& s,
     itk::CompositeTransform<double, 2>::Pointer transform);
 }
