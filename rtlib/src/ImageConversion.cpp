@@ -89,7 +89,7 @@ cv::Mat rt::ColorConvertImage(const cv::Mat& m, int channels)
     }
 
     // 1 -> 2
-    if (ic == 1 && oc == 2) {
+    else if (ic == 1 && oc == 2) {
         auto alpha = CreateAlphaChannel(m.size(), m.depth());
         cv::merge(std::vector<cv::Mat>{m, alpha}, output);
     }
@@ -126,7 +126,7 @@ cv::Mat rt::ColorConvertImage(const cv::Mat& m, int channels)
     }
 
     // 3 -> 2
-    if (ic == 3 && oc == 2) {
+    else if (ic == 3 && oc == 2) {
         // Convert color to gray
         cv::Mat gray;
         cv::cvtColor(m, gray, cv::COLOR_BGR2GRAY);

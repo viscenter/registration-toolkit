@@ -206,7 +206,7 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
     auto bufferSize = static_cast<size_t>(lt::TIFFScanlineSize(out));
     std::vector<char> buffer(bufferSize + 32);
 
-    // Get working copy, with converted channels if it's RGB channel
+    // Get working copy with converted channels if an RGB-type image
     cv::Mat imgCopy;
     if (img.channels() == 3) {
         cv::cvtColor(img, imgCopy, cv::COLOR_BGR2RGB);

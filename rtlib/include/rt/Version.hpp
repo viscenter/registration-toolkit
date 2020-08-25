@@ -9,9 +9,9 @@ namespace rt
 struct ProjectInfo {
     /** Get the library name */
     static std::string Name();
-    /** Get the library version Major.Minor.Patch string */
+    /** Get the library version as a Major.Minor.Patch string */
     static std::string VersionString();
-    /** Get the library name and full version */
+    /** Get the library name and version string */
     static std::string NameAndVersion();
     /** Get the library Major version number */
     static uint32_t VersionMajor();
@@ -23,7 +23,7 @@ struct ProjectInfo {
     static std::string GitRepository();
     /** Get the full hash for the current git commit */
     static std::string GitHash();
-    /** Get the seven digit short short for the current git commit */
+    /** Get the seven digit short hash for the current git commit */
     static std::string GitHashShort();
 };
 
