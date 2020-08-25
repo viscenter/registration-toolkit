@@ -38,6 +38,12 @@ std::string ProjectInfo::NameAndVersion()
     return nameAndVersion;
 }
 
+std::string ProjectInfo::GitRepository()
+{
+    static std::string repo("https://github.com/viscenter/registration-toolkit.git");
+    return hash;
+}
+
 std::string ProjectInfo::GitHash()
 {
     static std::string hash("@GIT_SHA1@");

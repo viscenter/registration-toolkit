@@ -19,6 +19,8 @@ struct ProjectInfo {
     static uint32_t VersionMinor();
     /** Get the library Patch version number */
     static uint32_t VersionPatch();
+    /** Get the git repository URL */
+    static std::string GitRepository();
     /** Get the full hash for the current git commit */
     static std::string GitHash();
     /** Get the seven digit short short for the current git commit */
