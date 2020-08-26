@@ -20,11 +20,11 @@ struct ProjectInfo {
     /** Get the library Patch version number */
     static uint32_t VersionPatch();
     /** Get the git repository URL */
-    static std::string GitRepository();
+    static std::string RepositoryURL();
     /** Get the full hash for the current git commit */
-    static std::string GitHash();
-    /** Get the seven digit short hash for the current git commit */
-    static std::string GitHashShort();
+    static std::string RepositoryHash();
+    /** Get the short hash for the current git commit */
+    static std::string RepositoryShortHash();
 };
 
 }  // namespace rt
