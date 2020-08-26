@@ -86,6 +86,13 @@ target_link_libraries(rt_segment_disegni
     Boost::program_options
 )
 
+add_executable(rt_retexture_mesh src/RetextureMesh.cpp)
+target_link_libraries(rt_retexture_mesh
+    rt::rtlib
+    Boost::filesystem
+    Boost::program_options
+)
+
 
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
@@ -107,6 +114,7 @@ install(
         rt_plot_landmarks
         rt_swap_landmarks
         rt_segment_disegni
+        rt_retexture_mesh
     RUNTIME DESTINATION bin
     COMPONENT Programs
 )
