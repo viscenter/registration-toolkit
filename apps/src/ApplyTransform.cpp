@@ -10,6 +10,8 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/io/ImageIO.hpp"
+#include "rt/util/ImageConversion.hpp"
 
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 using TransformConverter = itk::CompositeTransformIOHelperTemplate<double>;
@@ -27,9 +29,11 @@ int main(int argc, char* argv[])
             ("moving,m", po::value<std::string>()->required(), "Moving image")
             ("fixed,f", po::value<std::string>()->required(), "Fixed image")
             ("transform,t", po::value<std::string>()->required(),
-             "Input file path for the transform file")
+                "Input file path for the transform file")
             ("output-file,o", po::value<std::string>()->required(),
-             "Output file path for the registered moving image");
+                "Output file path for the registered moving image")
+            ("enable-alpha", "If enabled, an alpha layer will be "
+                "added to the moving image if it does not already have one.");
 
     po::options_description all("Usage");
     all.add(required);
@@ -69,12 +73,22 @@ int main(int argc, char* argv[])
     CompositeTransform::Pointer transform = dynamic_cast<CompositeTransform*>(
         tfmReader->GetTransformList()->begin()->GetPointer());
 
-    // Load the moving image at full depth and resample it
+    // Load the fixed image and moving image (at full depth)
     auto cvFixed = cv::imread(fixedPath.string());
-    auto cvMoving = cv::imread(movingPath.string(), -1);
-    cv::Size s(cvFixed.cols, cvFixed.rows);
-    auto cvFinal = rt::ImageTransformResampler(cvMoving, s, transform);
+    auto cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
+
+    // Add alpha channel if requested and needed
+    if (parsed.count("enable-alpha") > 0 and
+        (cvMoving.channels() == 1 or cvMoving.channels() == 3)) {
+        cvMoving = rt::ColorConvertImage(cvMoving, cvMoving.channels() + 1);
+    }
+
+    // Transform image
+    std::cout << "Transforming image..." << std::endl;
+    auto cvFinal =
+        rt::ImageTransformResampler(cvMoving, cvFixed.size(), transform);
 
     // Write out the file
-    cv::imwrite(outputPath.string(), cvFinal);
+    std::cout << "Writing transformed image..." << std::endl;
+    rt::WriteImage(outputPath, cvFinal);
 }

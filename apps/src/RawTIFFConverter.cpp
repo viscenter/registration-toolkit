@@ -1,8 +1,8 @@
 #include <iostream>
 
 #include <boost/filesystem.hpp>
-#include <opencv2/imgcodecs.hpp>
 
+#include "rt/io/ImageIO.hpp"
 #include "rt/io/TIFFIO.hpp"
 
 namespace fs = boost::filesystem;
@@ -22,5 +22,5 @@ int main(int argc, char* argv[])
     auto img = rt::io::ReadRawTIFF(input, 10);
 
     // Save image
-    cv::imwrite(output.string(), img);
+    rt::WriteImage(output, img);
 }
