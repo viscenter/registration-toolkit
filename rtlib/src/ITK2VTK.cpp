@@ -87,5 +87,5 @@ VTK2ITK::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
 
         output->SetCell(cellId, cell);
     }
-};
+}
 }

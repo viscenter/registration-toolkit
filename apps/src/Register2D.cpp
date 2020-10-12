@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 
             // BSpline Warp
             BSplineLandmarkWarping bSplineLandmark;
-            bSplineLandmark.setFixedImage(fixedImage);
+            bSplineLandmark.setFixedImage(cvFixed);
             bSplineLandmark.setFixedLandmarks(fixedLandmarks);
             bSplineLandmark.setMovingLandmarks(movingLandmarks);
             auto warp = bSplineLandmark.compute();

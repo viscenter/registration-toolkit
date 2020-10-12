@@ -94,7 +94,6 @@ int main(int argc, char* argv[])
     try {
         origMesh = reader.read();
         cvFixedImage = reader.getTextureMat();
-        fixedImage = OCVBridge::CVMatToITKImage<Image8UC3>(cvFixedImage);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
@@ -145,7 +144,7 @@ int main(int argc, char* argv[])
 
             // BSpline Warp
             BSplineLandmarkWarping bSplineLandmark;
-            bSplineLandmark.setFixedImage(fixedImage);
+            bSplineLandmark.setFixedImage(cvFixedImage);
             bSplineLandmark.setFixedLandmarks(fixedLandmarks);
             bSplineLandmark.setMovingLandmarks(movingLandmarks);
             auto warp = bSplineLandmark.compute();

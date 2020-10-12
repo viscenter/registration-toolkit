@@ -1,9 +1,8 @@
 #pragma once
 
 #include <itkBSplineTransform.h>
-#include <itkLandmarkDisplacementFieldSource.h>
+#include <opencv2/core.hpp>
 
-#include "rt/ImageTypes.hpp"
 #include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt
@@ -25,7 +24,7 @@ public:
      *
      * This must be set in order to compute the transform.
      */
-    void setFixedImage(const Image8UC3::Pointer& f) { fixedImg_ = f; }
+    void setFixedImage(const cv::Mat& f);
 
     /** @brief Compute the transform */
     Transform::Pointer compute();
@@ -38,6 +37,6 @@ private:
     Transform::Pointer output_;
 
     /** Fixed image */
-    Image8UC3::Pointer fixedImg_;
+    cv::Mat fixedImg_;
 };
 }
