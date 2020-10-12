@@ -1,19 +1,23 @@
 #pragma once
 
+#include <cstring>
 #include <exception>
+#include <typeinfo>
 
+#include <itkConvertPixelBuffer.h>
 #include <itkImage.h>
 #include <itkImageRegionIterator.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "rt/ImageTypes.hpp"
+#include "rt/util/ImageConversion.hpp"
 
 namespace rt
 {
 
 template <typename ITKImageType>
-cv::Mat ITKImageToCVMat(const ITKImageType* img)
+cv::Mat ITKImageToCVMat(const itk::SmartPointer<ITKImageType> img)
 {
 
     using PixelType = typename ITKImageType::PixelType;
@@ -64,17 +68,39 @@ cv::Mat ITKImageToCVMat(const ITKImageType* img)
     return out;
 }
 
-template <typename ITKImageType>
+template <typename ITKImageType, typename CVPixelType>
 typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
 {
+    // Typedefs
+    using ITKPixelType = typename ITKImageType::PixelType;
+    using ConvertPixelTraits = itk::DefaultConvertPixelTraits<ITKPixelType>;
+
+    // Dimensions
+    auto w = img.cols;
+    auto h = img.rows;
+    auto cns = img.channels();
+
+    // We won't convert depth, so make sure depth matches
+    if (cns == 3) {
+        if (typeid(itk::RGBPixel<CVPixelType>) != typeid(ITKPixelType)) {
+            throw std::invalid_argument("Image depths don't match");
+        }
+    } else if (cns == 1) {
+        if (typeid(CVPixelType) != typeid(ITKPixelType)) {
+            throw std::invalid_argument("Image depths don't match");
+        }
+    } else {
+        throw std::invalid_argument(
+            "Unsupported channels: " + std::to_string(cns));
+    }
+
     typename ITKImageType::RegionType region;
     typename ITKImageType::RegionType::SizeType size;
     typename ITKImageType::RegionType::IndexType start;
     typename ITKImageType::SpacingType spacing;
-
     size.Fill(1);
-    size[0] = img.cols;
-    size[1] = img.rows;
+    size[0] = w;
+    size[1] = h;
     start.Fill(0);
     spacing.Fill(1);
     region.SetSize(size);
@@ -84,15 +110,65 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
     cv::Mat tmp;
     if(img.channels() == 3) {
         cv::cvtColor(img, tmp, cv::COLOR_BGR2RGB);
-    } else if (img.channels() == 4) {
-        cv::cvtColor(img, tmp, cv::COLOR_BGRA2RGBA);
     } else {
-        cv::copyTo(img, tmp);
+        img.copyTo(tmp);
     }
 
     auto out = ITKImageType::New();
     out->SetRegions(region);
     out->SetSpacing(spacing);
     out->Allocate();
+
+    size_t lineLength = w * cns * sizeof(CVPixelType);
+    std::vector<CVPixelType> unpaddedBuffer(h * lineLength, 0);
+    unsigned int paddedBufPos = 0;
+    unsigned int unpaddedBufPos = 0;
+    const char* in = reinterpret_cast<char*>(tmp.ptr());
+
+    for (int i = 0; i < h; ++i) {
+        std::memcpy(
+            &unpaddedBuffer[unpaddedBufPos], in + paddedBufPos, lineLength);
+        paddedBufPos += tmp.step;
+        unpaddedBufPos += lineLength;
+    }
+
+    itk::ConvertPixelBuffer<CVPixelType, ITKPixelType, ConvertPixelTraits>::
+        Convert(
+            static_cast<CVPixelType*>(unpaddedBuffer.data()), cns,
+            out->GetPixelContainer()->GetBufferPointer(),
+            out->GetPixelContainer()->Size());
+
+    return out;
+}
+
+template <typename ITKImageType>
+typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
+{
+    // Out channels
+    using ITKPixelType = typename ITKImageType::PixelType;
+    auto outCns =
+        itk::NumericTraits<ITKPixelType>::MeasurementVectorType::Dimension;
+
+    // Color convert
+    auto tmp = rt::ColorConvertImage(img, outCns);
+
+    switch (tmp.depth()) {
+        case CV_8U:
+            return CVMatToITKImage<ITKImageType, uint8_t>(tmp);
+        case CV_8S:
+            return CVMatToITKImage<ITKImageType, int8_t>(tmp);
+        case CV_16U:
+            return CVMatToITKImage<ITKImageType, uint16_t>(tmp);
+        case CV_16S:
+            return CVMatToITKImage<ITKImageType, int16_t>(tmp);
+        case CV_32S:
+            return CVMatToITKImage<ITKImageType, int32_t>(tmp);
+        case CV_32F:
+            return CVMatToITKImage<ITKImageType, float>(tmp);
+        case CV_64F:
+            return CVMatToITKImage<ITKImageType, double>(tmp);
+        default:
+            throw std::invalid_argument("Image type not supported");
+    }
 }
 }  // namespace rt

@@ -11,7 +11,7 @@ void BSplineLandmarkWarping::setFixedImage(const cv::Mat& f) { fixedImg_ = f; }
 
 BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
 {
-    Image8UC3::Pointer fixedImg;
+    auto fixedImg = CVMatToITKImage<Image8UC3>(fixedImg_);
 
     // Size checks
     if (fixedImg_.empty() || fixedLdmks_.empty() || movingLdmks_.empty()) {
