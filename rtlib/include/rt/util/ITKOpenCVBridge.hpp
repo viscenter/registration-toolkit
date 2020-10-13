@@ -121,7 +121,7 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
     } else if (img.channels() == 3) {
         cv::cvtColor(img, tmp, cv::COLOR_BGR2RGB);
     } else {
-        img.copyTo(tmp);
+        tmp = img;
     }
 
     auto out = ITKImageType::New();

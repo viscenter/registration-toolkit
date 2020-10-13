@@ -7,7 +7,6 @@
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/ITK2VTK.hpp"
 #include "rt/types/ITKMesh.hpp"
-#include "rt/types/UVMap.hpp"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;

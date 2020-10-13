@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
     ///// Read input file /////
     LandmarkReader reader;
     reader.setLandmarksPath(inputPath);
-    reader.readRaw();
+    reader.read();
 
     // Swap landmarks
     auto movingLandmarks = reader.getFixedLandmarks();

@@ -96,7 +96,7 @@ int OBJWriter::write_mtl_()
 
     // Path to the texture file, relative to the MTL file
     if (!texture_.empty()) {
-        outputMTL_ << "map_Kd " << outputPath_.stem().string() + ".png"
+        outputMTL_ << "map_Kd " << outputPath_.stem().string() + ".tif"
                    << std::endl;
     }
 

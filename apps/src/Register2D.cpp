@@ -86,8 +86,8 @@ int main(int argc, char* argv[])
     fs::path outputPath = parsed["output-file"].as<std::string>();
 
     ///// Setup input files /////
-    auto cvFixed = ReadImage(fixedPath);
-    auto cvMoving = ReadImage(movingPath);
+    auto fixed = ReadImage(fixedPath);
+    auto moving = ReadImage(movingPath);
     cv::Mat tmpMoving;
 
     // Setup final transform
@@ -107,8 +107,8 @@ int main(int argc, char* argv[])
         } else {
             std::cout << "Detecting landmarks..." << std::endl;
             LandmarkDetector landmarkDetector;
-            landmarkDetector.setFixedImage(cvFixed);
-            landmarkDetector.setMovingImage(cvMoving);
+            landmarkDetector.setFixedImage(fixed);
+            landmarkDetector.setMovingImage(moving);
             landmarkDetector.compute();
             fixedLandmarks = landmarkDetector.getFixedLandmarks();
             movingLandmarks = landmarkDetector.getMovingLandmarks();
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 
             // BSpline Warp
             BSplineLandmarkWarping bSplineLandmark;
-            bSplineLandmark.setFixedImage(cvFixed);
+            bSplineLandmark.setFixedImage(fixed);
             bSplineLandmark.setFixedLandmarks(fixedLandmarks);
             bSplineLandmark.setMovingLandmarks(movingLandmarks);
             auto warp = bSplineLandmark.compute();
@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
 
         // Resample moving image for next stage
         std::cout << "Resampling temporary image..." << std::endl;
-        tmpMoving = ImageTransformResampler(cvMoving, cvFixed.size(), compositeTrans);
+        tmpMoving = ImageTransformResampler(moving, fixed.size(), compositeTrans);
     }
 
     ///// Deformable Registration /////
@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
         printf("Running deformable registration...\n");
         auto iterations = parsed["deformable-iterations"].as<int>();
         rt::DeformableRegistration deformable;
-        deformable.setFixedImage(cvFixed);
+        deformable.setFixedImage(fixed);
         deformable.setMovingImage(tmpMoving);
         deformable.setNumberOfIterations(iterations);
         auto deformTransform = deformable.compute();
@@ -172,10 +172,10 @@ int main(int argc, char* argv[])
     ///// Resample the source image /////
     printf("Resampling the moving image...\n");
     if (parsed.count("enable-alpha") > 0 and
-        (cvMoving.channels() == 1 or cvMoving.channels() == 3)) {
-        cvMoving = ColorConvertImage(cvMoving, cvMoving.channels() + 1);
+        (moving.channels() == 1 or moving.channels() == 3)) {
+        moving = ColorConvertImage(moving, moving.channels() + 1);
     }
-    auto cvFinal = ImageTransformResampler(cvMoving, cvFixed.size(), compositeTrans);
+    auto cvFinal = ImageTransformResampler(moving, fixed.size(), compositeTrans);
 
     ///// Write the output image /////
     printf("Writing output image to file...\n");
