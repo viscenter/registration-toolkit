@@ -3,7 +3,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
-#include <itkOpenCVImageBridge.h>
 #include <itkTransformFileWriter.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -11,8 +10,8 @@
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
+#include "rt/ITKImageTypes.hpp"
 #include "rt/ImageTransformResampler.hpp"
-#include "rt/ImageTypes.hpp"
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
@@ -28,7 +27,6 @@ namespace po = boost::program_options;
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
-using OCVBridge = itk::OpenCVImageBridge;
 using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])

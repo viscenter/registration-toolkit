@@ -7,6 +7,9 @@
 #include <itkRegularStepGradientDescentOptimizer.h>
 #include <itkResampleImageFilter.h>
 
+#include "rt/ITKImageTypes.hpp"
+#include "rt/util/ITKOpenCVBridge.hpp"
+
 using namespace rt;
 
 using GrayInterpolator =
@@ -35,33 +38,50 @@ such as 20 percent. */
 static constexpr size_t DEFAULT_HISTOGRAM_BINS = 50;
 static constexpr double DEFAULT_SAMPLE_FACTOR = 1.0 / 80.0;
 
+using Transform = DeformableRegistration::Transform;
+
+void DeformableRegistration::setFixedImage(const cv::Mat& i)
+{
+    fixedImage_ = i;
+}
+
+void DeformableRegistration::setMovingImage(const cv::Mat& i)
+{
+    movingImage_ = i;
+}
+
+void DeformableRegistration::setNumberOfIterations(size_t i)
+{
+    iterations_ = i;
+}
+
+Transform::Pointer DeformableRegistration::getTransform() { return output_; }
+
 DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
 {
     ///// Create grayscale images /////
-    GrayscaleFilter::Pointer fixedFilter = GrayscaleFilter::New();
-    fixedFilter->SetInput(fixedImage_);
-
-    GrayscaleFilter::Pointer movingFilter = GrayscaleFilter::New();
-    movingFilter->SetInput(movingImage_);
+    auto fixed = CVMatToITKImage<Image8UC1>(fixedImage_);
+    auto moving = CVMatToITKImage<Image8UC1>(movingImage_);
 
     ///// Setup the BSpline Transform /////
     output_ = Transform::New();
-    Transform::PhysicalDimensionsType FixedPhysicalDims;
-    Transform::MeshSizeType MeshSize;
-    Transform::OriginType FixedOrigin;
+    Transform::PhysicalDimensionsType fixedPhysicalDims;
+    Transform::MeshSizeType meshSize;
+    Transform::OriginType fixedOrigin;
 
     for (auto i = 0; i < 2; i++) {
-        FixedOrigin[i] = fixedImage_->GetOrigin()[i];
-        FixedPhysicalDims[i] =
-            fixedImage_->GetSpacing()[i] *
-            (fixedImage_->GetLargestPossibleRegion().GetSize()[i] - 1);
+        fixedOrigin[i] = fixed->GetOrigin()[i];
+        fixedPhysicalDims[i] =
+            fixed->GetSpacing()[i] *
+            static_cast<double>(
+                fixed->GetLargestPossibleRegion().GetSize()[i] - 1);
     }
-    MeshSize.Fill(DEFAULT_MESH_FILL_SIZE);
+    meshSize.Fill(DEFAULT_MESH_FILL_SIZE);
 
-    output_->SetTransformDomainOrigin(FixedOrigin);
-    output_->SetTransformDomainPhysicalDimensions(FixedPhysicalDims);
-    output_->SetTransformDomainMeshSize(MeshSize);
-    output_->SetTransformDomainDirection(fixedImage_->GetDirection());
+    output_->SetTransformDomainOrigin(fixedOrigin);
+    output_->SetTransformDomainPhysicalDimensions(fixedPhysicalDims);
+    output_->SetTransformDomainMeshSize(meshSize);
+    output_->SetTransformDomainDirection(fixed->GetDirection());
 
     const auto numParams = output_->GetNumberOfParameters();
     BSplineParameters parameters(numParams);
@@ -69,20 +89,20 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
     output_->SetParameters(parameters);
 
     ///// Setup Registration and Metrics/////
-    Metric::Pointer metric = Metric::New();
-    Optimizer::Pointer optimizer = Optimizer::New();
-    Registration::Pointer registration = Registration::New();
-    GrayInterpolator::Pointer grayInterpolator = GrayInterpolator::New();
+    auto metric = Metric::New();
+    auto optimizer = Optimizer::New();
+    auto registration = Registration::New();
+    auto grayInterpolator = GrayInterpolator::New();
 
-    registration->SetFixedImage(fixedFilter->GetOutput());
-    registration->SetMovingImage(movingFilter->GetOutput());
+    registration->SetFixedImage(fixed);
+    registration->SetMovingImage(moving);
     registration->SetMetric(metric);
     registration->SetOptimizer(optimizer);
     registration->SetInterpolator(grayInterpolator);
     registration->SetTransform(output_);
     registration->SetInitialTransformParameters(output_->GetParameters());
 
-    Image8UC3::RegionType fixedRegion = fixedImage_->GetBufferedRegion();
+    auto fixedRegion = fixed->GetBufferedRegion();
     registration->SetFixedImageRegion(fixedRegion);
 
     metric->SetNumberOfHistogramBins(DEFAULT_HISTOGRAM_BINS);
@@ -91,7 +111,7 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
     metric->SetNumberOfSpatialSamples(numSamples);
 
     ///// Setup Optimizer /////
-    auto regionWidth = fixedImage_->GetLargestPossibleRegion().GetSize()[0];
+    auto regionWidth = fixed->GetLargestPossibleRegion().GetSize()[0];
     auto maxStepLength = regionWidth * DEFAULT_MAX_STEP_FACTOR;
     auto minStepLength = regionWidth * DEFAULT_MIN_STEP_FACTOR;
 

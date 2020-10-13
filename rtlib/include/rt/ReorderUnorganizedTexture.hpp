@@ -35,78 +35,60 @@ namespace rt
 class ReorderUnorganizedTexture
 {
 public:
-    /** Default distance (in mesh units) at which to sample the XY plane into
-     * image */
-    constexpr static double DEFAULT_SAMPLE_RATE = 0.1;
-
-    /**@{*/
-    /** Default */
-    ReorderUnorganizedTexture() : sampleRate_(DEFAULT_SAMPLE_RATE){}
-    /** @brief Construct with all input parameters */
-    ReorderUnorganizedTexture(
-        const vtkSmartPointer<vtkPolyData>& mesh,
-        const UVMap& uv,
-        const cv::Mat& img,
-        double rate = DEFAULT_SAMPLE_RATE)
-        : inputMesh_(mesh), inputUV_(uv), inputTexture_(img), sampleRate_(rate)
-    {
-    }
-    /**@}*/
-
-    /**@{*/
-    /** @brief Set the input mesh */
-    void setMesh(const vtkSmartPointer<vtkPolyData>& mesh)
-    {
-        inputMesh_ = mesh;
-    }
-    /** @brief Set the input UV map for the mesh */
-    void setUVMap(const UVMap& uv) { inputUV_ = uv; }
-    /** @brief Set the input, unorganized texture image */
-    void setTextureMat(const cv::Mat& img) { inputTexture_ = img; }
-    /** @brief Set the rate (in mesh units) at which to sample XY plane into an
+    /**
+     * Default distance (in mesh units) at which to sample the XY plane into
      * image
      */
-    void setSampleRate(double s) { sampleRate_ = s; }
-    /** @brief Set whether to use the first mesh intersection point */
-    void setUseFirstIntersection(bool b) { useFirstInterection_ = b; }
-    /**@}*/
+    constexpr static double DEFAULT_SAMPLE_RATE{0.1};
 
-    /**@{*/
-    /** @brief Generate the new texture image and UV map
-     *
-     * @return The new texture image
+    /** @brief Set the input mesh */
+    void setMesh(const vtkSmartPointer<vtkPolyData>& mesh);
+    /** @brief Set the input UV map for the mesh */
+    void setUVMap(const UVMap& uv);
+    /** @brief Set the input, unorganized texture image */
+    void setTextureMat(const cv::Mat& img);
+    /**
+     * @brief Set the rate (in mesh units) at which to sample XY plane into an
+     * image
      */
-    cv::Mat compute();
-    /**@}*/
+    void setSampleRate(double s);
+    /** @brief Set whether to use the first mesh intersection point */
+    void setUseFirstIntersection(bool b);
 
-    /**@{*/
+    /** @brief Generate the new texture image and UV map */
+    cv::Mat compute();
+
     /** @brief Get the output UV map */
-    UVMap getUVMap() { return outputUV_; }
+    UVMap getUVMap();
+
     /** @brief Get the output texture image */
-    cv::Mat getTextureMat() { return outputTexture_; }
-    /**@}*/
+    cv::Mat getTextureMat();
 
 private:
-    /** @brief Resample the input image into the organized texture */
+    /** Resample the input image into the organized texture */
     void create_texture_();
-    /** @brief Generate a new UV map relating the input mesh to the organized
-     * texture
+    /**
+     * Generate a new UV map relating the input mesh to the organized texture
      */
     void create_uv_();
 
-    /** Generate the barycentric coordinate of cartesian coordinate XYZ in
+    /**
+     * Generate the barycentric coordinate of cartesian coordinate XYZ in
      * triangle ABC
      *
      * Note: Barycentric coordinates are relative to the first vertex. The
      * barycentric coordinate of XYZ in ABC is different from the barycentric
      * coordinate of XYZ in BAC.
-     * */
-    cv::Vec3d barycentric_coord_(
+     *
+     */
+    static cv::Vec3d XYZToBarycentric(
         cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C);
 
-    /** Generate the cartesian coordinate of barycentric coordinate UVW in
-     * triangle ABC */
-    cv::Vec3d cartesian_coord_(
+    /**
+     * Generate the cartesian coordinate of barycentric coordinate UVW in
+     * triangle ABC
+     */
+    static cv::Vec3d BarycentricToXYZ(
         cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C);
 
     /** Input mesh */
@@ -117,11 +99,8 @@ private:
     cv::Mat inputTexture_;
 
     /** XY plane sample rate (in mesh units) */
-    double sampleRate_;
+    double sampleRate_{DEFAULT_SAMPLE_RATE};
 
-    /**
-     *
-     */
     cv::Vec3d origin_;
     cv::Vec3d xAxis_;
     cv::Vec3d yAxis_;

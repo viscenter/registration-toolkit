@@ -8,10 +8,8 @@ using namespace rt;
 
 TEST(ITKOCVBridge, RoundTrip)
 {
-    auto img = cv::imread("gray.tif", cv::IMREAD_UNCHANGED);
-    img = rt::QuantizeImage(img, CV_16U);
-    WriteImage("quantize.tif", img);
-    auto itkImg = CVMatToITKImage<Image16UC3>(img);
+    auto img = cv::imread("test.png", cv::IMREAD_UNCHANGED);
+    auto itkImg = CVMatToITKImage<Image8UC3>(img);
     auto cvImg = ITKImageToCVMat(itkImg);
 
     WriteImage("output.tif", cvImg);

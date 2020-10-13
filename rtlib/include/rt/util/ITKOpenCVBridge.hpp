@@ -10,7 +10,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "rt/ImageTypes.hpp"
+#include "rt/ITKImageTypes.hpp"
 #include "rt/util/ImageConversion.hpp"
 
 namespace rt
@@ -59,7 +59,9 @@ cv::Mat ITKImageToCVMat(const itk::SmartPointer<ITKImageType> img)
 
     // RGB -> BGR if needed
     cv::Mat out;
-    if (cns == 3) {
+    if (cns == 4) {
+        cv::cvtColor(tmp, out, cv::COLOR_RGBA2BGRA);
+    } else if (cns == 3) {
         cv::cvtColor(tmp, out, cv::COLOR_RGB2BGR);
     } else {
         tmp.copyTo(out);
@@ -74,6 +76,8 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
     // Typedefs
     using ITKPixelType = typename ITKImageType::PixelType;
     using ConvertPixelTraits = itk::DefaultConvertPixelTraits<ITKPixelType>;
+    using ConvertBuffer =
+        itk::ConvertPixelBuffer<CVPixelType, ITKPixelType, ConvertPixelTraits>;
 
     // Dimensions
     auto w = img.cols;
@@ -81,7 +85,11 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
     auto cns = img.channels();
 
     // We won't convert depth, so make sure depth matches
-    if (cns == 3) {
+    if (cns == 4) {
+        if (typeid(itk::RGBAPixel<CVPixelType>) != typeid(ITKPixelType)) {
+            throw std::invalid_argument("Image depths don't match");
+        }
+    } else if (cns == 3) {
         if (typeid(itk::RGBPixel<CVPixelType>) != typeid(ITKPixelType)) {
             throw std::invalid_argument("Image depths don't match");
         }
@@ -108,7 +116,9 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
 
     // BGR -> RGB
     cv::Mat tmp;
-    if(img.channels() == 3) {
+    if (img.channels() == 4) {
+        cv::cvtColor(img, tmp, cv::COLOR_BGRA2RGBA);
+    } else if (img.channels() == 3) {
         cv::cvtColor(img, tmp, cv::COLOR_BGR2RGB);
     } else {
         img.copyTo(tmp);
@@ -119,24 +129,10 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
     out->SetSpacing(spacing);
     out->Allocate();
 
-    size_t lineLength = w * cns * sizeof(CVPixelType);
-    std::vector<CVPixelType> unpaddedBuffer(h * lineLength, 0);
-    unsigned int paddedBufPos = 0;
-    unsigned int unpaddedBufPos = 0;
-    const char* in = reinterpret_cast<char*>(tmp.ptr());
-
-    for (int i = 0; i < h; ++i) {
-        std::memcpy(
-            &unpaddedBuffer[unpaddedBufPos], in + paddedBufPos, lineLength);
-        paddedBufPos += tmp.step;
-        unpaddedBufPos += lineLength;
-    }
-
-    itk::ConvertPixelBuffer<CVPixelType, ITKPixelType, ConvertPixelTraits>::
-        Convert(
-            static_cast<CVPixelType*>(unpaddedBuffer.data()), cns,
-            out->GetPixelContainer()->GetBufferPointer(),
-            out->GetPixelContainer()->Size());
+    ConvertBuffer::Convert(
+        reinterpret_cast<CVPixelType*>(tmp.data), cns,
+        out->GetPixelContainer()->GetBufferPointer(),
+        out->GetPixelContainer()->Size());
 
     return out;
 }

@@ -2,8 +2,8 @@
 
 #include <itkLandmarkDisplacementFieldSource.h>
 
-#include "rt/ImageTypes.hpp"
-#include "rt/types/ITKOpenCVBridge.hpp"
+#include "rt/ITKImageTypes.hpp"
+#include "rt/util/ITKOpenCVBridge.hpp"
 
 using namespace rt;
 

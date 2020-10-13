@@ -8,6 +8,12 @@
 
 using namespace rt;
 
+void LandmarkDetector::setFixedImage(const cv::Mat& img) { fixedImg_ = img; }
+void LandmarkDetector::setFixedMask(const cv::Mat& img) { fixedMask_ = img; }
+void LandmarkDetector::setMovingImage(const cv::Mat& img) { movingImg_ = img; }
+void LandmarkDetector::setMovingMask(const cv::Mat& img) { movingMask_ = img; }
+void LandmarkDetector::setMatchRatio(float r) { nnMatchRatio_ = r; }
+
 // Compute the matches
 std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 {

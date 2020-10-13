@@ -4,7 +4,6 @@
 
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/TIFFIO.hpp"
-#include "rt/types/ITKOpenCVBridge.hpp"
 
 namespace fs = boost::filesystem;
 

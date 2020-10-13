@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rt/ImageTypes.hpp"
+#include "rt/ITKImageTypes.hpp"
 #include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt

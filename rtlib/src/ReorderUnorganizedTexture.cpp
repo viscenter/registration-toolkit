@@ -7,6 +7,24 @@
 
 using namespace rt;
 
+void ReorderUnorganizedTexture::setMesh(
+    const vtkSmartPointer<vtkPolyData>& mesh)
+{
+    inputMesh_ = mesh;
+}
+void ReorderUnorganizedTexture::setUVMap(const UVMap& uv) { inputUV_ = uv; }
+void ReorderUnorganizedTexture::setTextureMat(const cv::Mat& img)
+{
+    inputTexture_ = img;
+}
+void ReorderUnorganizedTexture::setSampleRate(double s) { sampleRate_ = s; }
+void ReorderUnorganizedTexture::setUseFirstIntersection(bool b)
+{
+    useFirstInterection_ = b;
+}
+UVMap ReorderUnorganizedTexture::getUVMap() { return outputUV_; }
+cv::Mat ReorderUnorganizedTexture::getTextureMat() { return outputTexture_; }
+
 // Compute the result
 cv::Mat ReorderUnorganizedTexture::compute()
 {
@@ -88,7 +106,7 @@ void ReorderUnorganizedTexture::create_texture_()
                 cv::Vec3d alpha{interPts->GetPoint(i_id)};
 
                 // Get the barycentric coordinate of the intersection pt
-                cv::Vec3d bary_point = barycentric_coord_(alpha, A, B, C);
+                cv::Vec3d bary_point = XYZToBarycentric(alpha, A, B, C);
 
                 // Get the UV coordinates of triangle vertices
                 UVMap::Face f;
@@ -108,7 +126,7 @@ void ReorderUnorganizedTexture::create_texture_()
                 C = {c[0], c[1], 0.0};
 
                 // Get the UV position of the intersection point
-                cv::Vec3d cart_point = cartesian_coord_(bary_point, A, B, C);
+                cv::Vec3d cart_point = BarycentricToXYZ(bary_point, A, B, C);
 
                 // Convert the UV position to pixel coordinates (in orig image)
                 auto x = static_cast<float>(
@@ -150,7 +168,7 @@ void ReorderUnorganizedTexture::create_uv_()
 }
 
 // Calculate the barycentric coordinate of cartesian XYZ in triangle ABC
-cv::Vec3d ReorderUnorganizedTexture::barycentric_coord_(
+cv::Vec3d ReorderUnorganizedTexture::XYZToBarycentric(
     cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
 {
     auto v0 = B - A;
@@ -168,8 +186,9 @@ cv::Vec3d ReorderUnorganizedTexture::barycentric_coord_(
     output[0] = 1.0 - output[1] - output[2];
     return output;
 }
+
 // Calculate the cartesian coordinate of barycentric UVW in triangle ABC
-cv::Vec3d ReorderUnorganizedTexture::cartesian_coord_(
+cv::Vec3d ReorderUnorganizedTexture::BarycentricToXYZ(
     cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
 {
     return UVW[0] * A + UVW[1] * B + UVW[2] * C;
