@@ -31,7 +31,7 @@ typename TImageType::Pointer InterpolateImage(
 }
 
 cv::Mat rt::ImageTransformResampler(
-    const cv::Mat& m, const cv::Size& s, Transform transform)
+    const cv::Mat& m, const cv::Size& s, const Transform& transform)
 {
     switch (m.type()) {
         case CV_8UC1: {

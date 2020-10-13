@@ -12,6 +12,10 @@ namespace fs = boost::filesystem;
 
 static const auto IsFormat = rt::FileExtensionFilter;
 
+cv::Mat rt::ReadImage(const boost::filesystem::path& path) {
+    return cv::imread(path.string(), cv::IMREAD_UNCHANGED);
+}
+
 void rt::WriteImage(const fs::path& path, const cv::Mat& img)
 {
     // Use our TIFF writer

@@ -15,5 +15,5 @@ namespace rt
 cv::Mat ImageTransformResampler(
     const cv::Mat& m,
     const cv::Size& s,
-    itk::CompositeTransform<double, 2>::Pointer transform);
+    const itk::CompositeTransform<double, 2>::Pointer& transform);
 }

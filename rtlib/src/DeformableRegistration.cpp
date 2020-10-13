@@ -60,8 +60,10 @@ Transform::Pointer DeformableRegistration::getTransform() { return output_; }
 DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
 {
     ///// Create grayscale images /////
-    auto fixed = CVMatToITKImage<Image8UC1>(fixedImage_);
-    auto moving = CVMatToITKImage<Image8UC1>(movingImage_);
+    auto fixed8u = QuantizeImage(fixedImage_, CV_8U);
+    auto fixed = CVMatToITKImage<Image8UC1>(fixed8u);
+    auto moving8u = QuantizeImage(movingImage_, CV_8U);
+    auto moving = CVMatToITKImage<Image8UC1>(moving8u);
 
     ///// Setup the BSpline Transform /////
     output_ = Transform::New();
