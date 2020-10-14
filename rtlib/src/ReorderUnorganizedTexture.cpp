@@ -3,6 +3,7 @@
 #include <array>
 
 #include <opencv2/imgproc.hpp>
+#include <vtkIdList.h>
 #include <vtkLandmarkTransform.h>
 #include <vtkOBBTree.h>
 #include <vtkPolyData.h>
