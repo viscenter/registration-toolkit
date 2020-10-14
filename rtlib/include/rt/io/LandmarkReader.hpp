@@ -37,12 +37,12 @@ public:
 
 private:
     /** Path to the Landmarks file */
-    boost::filesystem::path landmarksPath_;
+    boost::filesystem::path path_;
 
     /** Fixed landmarks container */
-    rt::LandmarkContainer fixedLandmarks_;
+    rt::LandmarkContainer fixed_;
 
     /** Moving landmarks container */
-    rt::LandmarkContainer movingLandmarks_;
+    rt::LandmarkContainer moving_;
 };
 }  // namespace rt

@@ -6,8 +6,6 @@
 #include <itkCompositeTransformIOHelper.h>
 #include <itkTransformFactory.h>
 #include <itkTransformFileReader.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 #include "rt/ImageTransformResampler.hpp"
 #include "rt/io/ImageIO.hpp"
@@ -74,21 +72,20 @@ int main(int argc, char* argv[])
         tfmReader->GetTransformList()->begin()->GetPointer());
 
     // Load the fixed image and moving image (at full depth)
-    auto cvFixed = cv::imread(fixedPath.string());
-    auto cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
+    auto fixed = rt::ReadImage(fixedPath);
+    auto moving = rt::ReadImage(movingPath);
 
     // Add alpha channel if requested and needed
     if (parsed.count("enable-alpha") > 0 and
-        (cvMoving.channels() == 1 or cvMoving.channels() == 3)) {
-        cvMoving = rt::ColorConvertImage(cvMoving, cvMoving.channels() + 1);
+        (moving.channels() == 1 or moving.channels() == 3)) {
+        moving = rt::ColorConvertImage(moving, moving.channels() + 1);
     }
 
     // Transform image
     std::cout << "Transforming image..." << std::endl;
-    auto cvFinal =
-        rt::ImageTransformResampler(cvMoving, cvFixed.size(), transform);
+    auto final = rt::ImageTransformResampler(moving, fixed.size(), transform);
 
     // Write out the file
     std::cout << "Writing transformed image..." << std::endl;
-    rt::WriteImage(outputPath, cvFinal);
+    rt::WriteImage(outputPath, final);
 }

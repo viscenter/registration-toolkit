@@ -40,10 +40,8 @@ int main(int argc, char* argv[])
 
     // Reorder the texture
     std::cerr << "Reordering texture..." << std::endl;
-    auto vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    rt::ITK2VTK(flatMesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
-    r.setMesh(vtkMesh);
+    r.setMesh(flatMesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
     r.setSampleRate(sampleRate);

@@ -1,6 +1,6 @@
 #include "rt/io/OBJWriter.hpp"
 
-#include <string>
+#include <iostream>
 
 #include "rt/io/ImageIO.hpp"
 
@@ -9,6 +9,28 @@ namespace fs = boost::filesystem;
 static constexpr int UNSET_VALUE = -1;
 
 using namespace rt::io;
+
+OBJWriter::OBJWriter(fs::path outputPath, ITKMesh::Pointer mesh)
+    : outputPath_{std::move(outputPath)}, mesh_{mesh}
+{
+}
+
+OBJWriter::OBJWriter(
+    fs::path outputPath, ITKMesh::Pointer mesh, rt::UVMap uvMap, cv::Mat uvImg)
+    : outputPath_{std::move(outputPath)}
+    , mesh_{mesh}
+    , uvMap_{std::move(uvMap)}
+    , texture_{std::move(uvImg)}
+{
+}
+
+void OBJWriter::setPath(const fs::path& path) { outputPath_ = path; }
+
+void OBJWriter::setUVMap(const rt::UVMap& uvMap) { uvMap_ = uvMap; }
+
+void OBJWriter::setTexture(const cv::Mat& uvImg) { texture_ = uvImg; }
+
+void OBJWriter::setMesh(const ITKMesh::Pointer& mesh) { mesh_ = mesh; }
 
 ///// Validation /////
 // Make sure that all required parameters have been set and are okay
@@ -39,7 +61,7 @@ int OBJWriter::write()
     write_obj_();
 
     // Write texture stuff if we have a UV coordinate map
-    if (!textCoords_.empty()) {
+    if (!uvMap_.empty()) {
         write_mtl_();
         write_texture_();
     }
@@ -59,7 +81,7 @@ int OBJWriter::write_obj_()
     write_vertices_();
 
     // Only write texture information if we have a UV map
-    if (!textCoords_.empty()) {
+    if (!uvMap_.empty()) {
         write_texture_coordinates_();
     }
 
@@ -173,14 +195,14 @@ int OBJWriter::write_vertices_()
 // Write the UV coordinates that will be attached to points: 'vt u v'
 int OBJWriter::write_texture_coordinates_()
 {
-    if (!outputMesh_.is_open() || textCoords_.empty()) {
+    if (!outputMesh_.is_open() || uvMap_.empty()) {
         return EXIT_FAILURE;
     }
     std::cerr << "Writing texture coordinates..." << std::endl;
 
     // Ensure coordinates are relative to bottom left
-    auto startingOrigin = textCoords_.origin();
-    textCoords_.setOrigin(UVMap::Origin::BottomLeft);
+    auto startingOrigin = uvMap_.origin();
+    uvMap_.setOrigin(UVMap::Origin::BottomLeft);
 
     // Write mtl path, relative to OBJ
     auto mtlpath = outputPath_.stem();
@@ -191,8 +213,8 @@ int OBJWriter::write_texture_coordinates_()
 
     // Iterate over all of the saved coordinates in our coordinate map
     uint32_t vtIndex = 1;
-    for (uint32_t pId = 0; pId < textCoords_.size(); ++pId) {
-        cv::Vec2d uv = textCoords_.getUV(pId);
+    for (uint32_t pId = 0; pId < uvMap_.size(); ++pId) {
+        cv::Vec2d uv = uvMap_.getUV(pId);
         outputMesh_ << "vt " << uv[0] << " " << uv[1] << std::endl;
 
         // Find this UV map's point in _point_links and set its vt value to our
@@ -203,7 +225,7 @@ int OBJWriter::write_texture_coordinates_()
     }
 
     // Restore the starting origin
-    textCoords_.setOrigin(startingOrigin);
+    uvMap_.setOrigin(startingOrigin);
     return EXIT_SUCCESS;
 }
 

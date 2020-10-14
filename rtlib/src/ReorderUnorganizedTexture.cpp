@@ -1,28 +1,56 @@
 #include "rt/ReorderUnorganizedTexture.hpp"
 
+#include <array>
+
 #include <opencv2/imgproc.hpp>
 #include <vtkLandmarkTransform.h>
 #include <vtkOBBTree.h>
-#include <vtkTransformPolyDataFilter.h>
+#include <vtkPolyData.h>
+#include <vtkSmartPointer.h>
+
+#include "rt/types/ITK2VTK.hpp"
+
+/**
+ * Generate the barycentric coordinate of cartesian coordinate XYZ in
+ * triangle ABC
+ *
+ * Note: Barycentric coordinates are relative to the first vertex. The
+ * barycentric coordinate of XYZ in ABC is different from the barycentric
+ * coordinate of XYZ in BAC.
+ *
+ */
+static cv::Vec3d XYZToBarycentric(
+    cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C);
+
+/**
+ * Generate the cartesian coordinate of barycentric coordinate UVW in
+ * triangle ABC
+ */
+static cv::Vec3d BarycentricToXYZ(
+    cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C);
 
 using namespace rt;
 
-void ReorderUnorganizedTexture::setMesh(
-    const vtkSmartPointer<vtkPolyData>& mesh)
+void ReorderUnorganizedTexture::setMesh(const ITKMesh::Pointer& mesh)
 {
     inputMesh_ = mesh;
 }
 void ReorderUnorganizedTexture::setUVMap(const UVMap& uv) { inputUV_ = uv; }
+
 void ReorderUnorganizedTexture::setTextureMat(const cv::Mat& img)
 {
     inputTexture_ = img;
 }
+
 void ReorderUnorganizedTexture::setSampleRate(double s) { sampleRate_ = s; }
+
 void ReorderUnorganizedTexture::setUseFirstIntersection(bool b)
 {
     useFirstInterection_ = b;
 }
+
 UVMap ReorderUnorganizedTexture::getUVMap() { return outputUV_; }
+
 cv::Mat ReorderUnorganizedTexture::getTextureMat() { return outputTexture_; }
 
 // Compute the result
@@ -36,13 +64,14 @@ cv::Mat ReorderUnorganizedTexture::compute()
 
 void ReorderUnorganizedTexture::create_texture_()
 {
+    vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
+    rt::ITK2VTK(inputMesh_, vtkMesh);
+
     // Computes the OBB and returns the 3 axes relative to the box
-    double size[3];
+    std::array<double, 3> size;
     auto obbTree = vtkSmartPointer<vtkOBBTree>::New();
     obbTree->ComputeOBB(
-        inputMesh_, origin_.val, xAxis_.val, yAxis_.val, zAxis_.val, size);
-    obbTree->SetDataSet(inputMesh_);
-    obbTree->BuildLocator();
+        vtkMesh, origin_.val, xAxis_.val, yAxis_.val, zAxis_.val, size.data());
 
     // Setup the output image
     // After alignment, dimensions go from [0, dimension max], therefore
@@ -88,7 +117,7 @@ void ReorderUnorganizedTexture::create_texture_()
                 // Get the three vertices of the last intersected cell
                 auto cell = interCells->GetId(cid);
                 auto pointIds = vtkSmartPointer<vtkIdList>::New();
-                inputMesh_->GetCellPoints(cell, pointIds);
+                vtkMesh->GetCellPoints(cell, pointIds);
 
                 // Make sure we only have three vertices
                 assert(pointIds->GetNumberOfIds() == 3);
@@ -97,9 +126,12 @@ void ReorderUnorganizedTexture::create_texture_()
                 auto v_id2 = pointIds->GetId(2);
 
                 // Get the 3D positions of each vertex
-                cv::Vec3d A{inputMesh_->GetPoint(v_id0)};
-                cv::Vec3d B{inputMesh_->GetPoint(v_id1)};
-                cv::Vec3d C{inputMesh_->GetPoint(v_id2)};
+                auto itkPt = inputMesh_->GetPoint(v_id0);
+                cv::Vec3d A{itkPt.GetDataPointer()};
+                itkPt = inputMesh_->GetPoint(v_id1);
+                cv::Vec3d B{itkPt.GetDataPointer()};
+                itkPt = inputMesh_->GetPoint(v_id2);
+                cv::Vec3d C{itkPt.GetDataPointer()};
 
                 // Get the 3D position of the intersection pt
                 auto i_id = interPts->GetNumberOfPoints() - 1;
@@ -155,10 +187,10 @@ void ReorderUnorganizedTexture::create_uv_()
     auto uVec = xAxis_ / uLen;
     auto vVec = yAxis_ / vLen;
 
-    cv::Vec3d p;
-    for (auto i = 0; i < inputMesh_->GetNumberOfPoints(); ++i) {
+    for (size_t i = 0; i < inputMesh_->GetNumberOfPoints(); ++i) {
         // Get the point
-        inputMesh_->GetPoint(i, p.val);
+        auto itkPt = inputMesh_->GetPoint(i);
+        cv::Vec3d p{itkPt.GetDataPointer()};
 
         auto u = (p - origin_).dot(uVec) / uLen;
         auto v = (p - origin_).dot(vVec) / vLen;
@@ -168,8 +200,7 @@ void ReorderUnorganizedTexture::create_uv_()
 }
 
 // Calculate the barycentric coordinate of cartesian XYZ in triangle ABC
-cv::Vec3d ReorderUnorganizedTexture::XYZToBarycentric(
-    cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
+cv::Vec3d XYZToBarycentric(cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
 {
     auto v0 = B - A;
     auto v1 = C - A;
@@ -188,8 +219,7 @@ cv::Vec3d ReorderUnorganizedTexture::XYZToBarycentric(
 }
 
 // Calculate the cartesian coordinate of barycentric UVW in triangle ABC
-cv::Vec3d ReorderUnorganizedTexture::BarycentricToXYZ(
-    cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
+cv::Vec3d BarycentricToXYZ(cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C)
 {
     return UVW[0] * A + UVW[1] * B + UVW[2] * C;
 }

@@ -8,19 +8,19 @@ namespace fs = boost::filesystem;
 void LandmarkReader::read()
 {
     // Check that input is set
-    if (!fs::exists(landmarksPath_)) {
+    if (!fs::exists(path_)) {
         throw std::runtime_error("Invalid input. Unable to read.");
     }
 
     // Reset landmark containers
-    fixedLandmarks_.clear();
-    movingLandmarks_.clear();
+    fixed_.clear();
+    moving_.clear();
 
     // Read the landmarks file
     Landmark fixedLdm;
     Landmark movingLdm;
 
-    std::ifstream ifs(landmarksPath_.string());
+    std::ifstream ifs(path_.string());
     std::string line;
     std::vector<std::string> strs;
     while (std::getline(ifs, line)) {
@@ -40,26 +40,20 @@ void LandmarkReader::read()
         movingLdm[0] = std::stod(strs[2]);
         movingLdm[1] = std::stod(strs[3]);
 
-        fixedLandmarks_.push_back(fixedLdm);
-        movingLandmarks_.push_back(movingLdm);
+        fixed_.push_back(fixedLdm);
+        moving_.push_back(movingLdm);
     }
     ifs.close();
 }
 
 LandmarkReader::LandmarkReader(boost::filesystem::path landmarksPath)
-    : landmarksPath_(std::move(landmarksPath))
+    : path_(std::move(landmarksPath))
 {
 }
 
 void LandmarkReader::setLandmarksPath(const boost::filesystem::path& path)
 {
-    landmarksPath_ = path;
+    path_ = path;
 }
-rt::LandmarkContainer LandmarkReader::getFixedLandmarks()
-{
-    return fixedLandmarks_;
-}
-rt::LandmarkContainer LandmarkReader::getMovingLandmarks()
-{
-    return movingLandmarks_;
-}
+rt::LandmarkContainer LandmarkReader::getFixedLandmarks() { return fixed_; }
+rt::LandmarkContainer LandmarkReader::getMovingLandmarks() { return moving_; }

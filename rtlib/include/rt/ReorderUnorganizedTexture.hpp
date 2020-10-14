@@ -2,9 +2,8 @@
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
-#include <vtkPolyData.h>
-#include <vtkSmartPointer.h>
 
+#include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
 namespace rt
@@ -42,7 +41,7 @@ public:
     constexpr static double DEFAULT_SAMPLE_RATE{0.1};
 
     /** @brief Set the input mesh */
-    void setMesh(const vtkSmartPointer<vtkPolyData>& mesh);
+    void setMesh(const ITKMesh::Pointer& mesh);
     /** @brief Set the input UV map for the mesh */
     void setUVMap(const UVMap& uv);
     /** @brief Set the input, unorganized texture image */
@@ -72,27 +71,8 @@ private:
      */
     void create_uv_();
 
-    /**
-     * Generate the barycentric coordinate of cartesian coordinate XYZ in
-     * triangle ABC
-     *
-     * Note: Barycentric coordinates are relative to the first vertex. The
-     * barycentric coordinate of XYZ in ABC is different from the barycentric
-     * coordinate of XYZ in BAC.
-     *
-     */
-    static cv::Vec3d XYZToBarycentric(
-        cv::Vec3d XYZ, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C);
-
-    /**
-     * Generate the cartesian coordinate of barycentric coordinate UVW in
-     * triangle ABC
-     */
-    static cv::Vec3d BarycentricToXYZ(
-        cv::Vec3d UVW, cv::Vec3d A, cv::Vec3d B, cv::Vec3d C);
-
     /** Input mesh */
-    vtkSmartPointer<vtkPolyData> inputMesh_;
+    ITKMesh::Pointer inputMesh_;
     /** Input UV map */
     UVMap inputUV_;
     /** Input texture image */

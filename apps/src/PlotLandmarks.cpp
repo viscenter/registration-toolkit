@@ -21,14 +21,14 @@ int main(int argc, char* argv[])
     // clang-format off
     po::options_description required("General Options");
     required.add_options()
-            ("help,h", "Show this message")
-            ("moving,m", po::value<std::string>()->required(), "Moving image")
-            ("fixed,f", po::value<std::string>()->required(), "Fixed image");
+        ("help,h", "Show this message")
+        ("moving,m", po::value<std::string>()->required(), "Moving image")
+        ("fixed,f", po::value<std::string>()->required(), "Fixed image");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
-            ("landmarks,l", po::value<std::string>()->required(),
-             "Landmarks file");
+        ("landmarks,l", po::value<std::string>()->required(),
+         "Landmarks file");
 
     po::options_description all("Usage");
     all.add(required).add(ldmOptions);

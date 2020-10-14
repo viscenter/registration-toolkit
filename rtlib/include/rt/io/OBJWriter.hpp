@@ -1,7 +1,8 @@
 #pragma once
 
 #include <fstream>
-#include <iostream>
+#include <map>
+#include <string>
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
@@ -34,23 +35,14 @@ public:
     OBJWriter() = default;
 
     /** @brief Constructor with output path and input mesh */
-    OBJWriter(boost::filesystem::path outputPath, ITKMesh::Pointer mesh)
-        : outputPath_{std::move(outputPath)}, mesh_{mesh}
-    {
-    }
+    OBJWriter(boost::filesystem::path outputPath, ITKMesh::Pointer mesh);
 
     /** @brief Constructor with output path and textured mesh information */
     OBJWriter(
         boost::filesystem::path outputPath,
         ITKMesh::Pointer mesh,
         UVMap uvMap,
-        cv::Mat uvImg)
-        : outputPath_{std::move(outputPath)}
-        , mesh_{mesh}
-        , textCoords_{std::move(uvMap)}
-        , texture_{std::move(uvImg)}
-    {
-    }
+        cv::Mat uvImg);
     /**@}*/
 
     /**@{*/
@@ -59,16 +51,16 @@ public:
      * write() and validate() will fail if path does not have an expected
      * file extension (.obj/.OBJ).
      */
-    void setPath(const boost::filesystem::path& path) { outputPath_ = path; }
+    void setPath(const boost::filesystem::path& path);
 
     /** @brief Set the input mesh */
-    void setMesh(const ITKMesh::Pointer& mesh) { mesh_ = mesh; }
+    void setMesh(const ITKMesh::Pointer& mesh);
 
     /** @brief Set the input UV Map */
-    void setUVMap(const UVMap& uvMap) { textCoords_ = uvMap; }
+    void setUVMap(const UVMap& uvMap);
 
     /** @brief Set the input texture image */
-    void setTexture(const cv::Mat& uvImg) { texture_ = uvImg; }
+    void setTexture(const cv::Mat& uvImg);
 
     /** @brief Validate parameters */
     bool validate();
@@ -104,7 +96,7 @@ private:
     /** Input mesh */
     ITKMesh::Pointer mesh_;
     /** Input UV map */
-    UVMap textCoords_;
+    UVMap uvMap_;
     /** Input texture image */
     cv::Mat texture_;
 

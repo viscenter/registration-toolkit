@@ -77,10 +77,8 @@ int main(int argc, char* argv[])
     // Reorder the texture
     std::cerr << "Reordering texture :: Sample Rate: " << sampleRate
               << std::endl;
-    vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    rt::ITK2VTK(mesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
-    r.setMesh(vtkMesh);
+    r.setMesh(mesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
     r.setSampleRate(sampleRate);
