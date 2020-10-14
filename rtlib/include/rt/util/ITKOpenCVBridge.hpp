@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <itkSmartPointer.h>
 #include <opencv2/core.hpp>
 

@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <fstream>
 
 #include <boost/filesystem.hpp>
@@ -24,7 +26,6 @@ namespace io
  * include. Other material properties are currently ignored. Throws
  * rt::IOException on error.
  *
- * @ingroup IO
  */
 class OBJReader
 {

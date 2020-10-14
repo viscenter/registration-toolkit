@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <itkBSplineTransform.h>
 #include <opencv2/core.hpp>
 
@@ -11,7 +13,6 @@ namespace rt
  * @class BSplineLandmarkWarping
  * @brief Generate a B-spline-based transformation that maps an ordered set of
  * landmarks onto a fixed set of landmarks
- * @ingroup landmark
  */
 class BSplineLandmarkWarping : public LandmarkRegistrationBase
 {

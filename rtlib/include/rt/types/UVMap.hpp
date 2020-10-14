@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <unordered_map>
 
 #include <opencv2/core.hpp>
@@ -48,7 +50,6 @@ namespace rt
  * circumstances, use getFace() to retrieve the mapping between a face's
  * vertices and the UV values returned by getUV().
  *
- * @ingroup types
  */
 class UVMap
 {
@@ -61,7 +62,12 @@ public:
 
     /** Aspect ratio structure */
     struct Ratio {
-        double width{1}, height{1}, aspect{1};
+        /** Width of ratio */
+        double width{1};
+        /** Height of ratio */
+        double height{1};
+        /** Width / Height aspect ratio */
+        double aspect{1};
     };
 
     /**@{*/

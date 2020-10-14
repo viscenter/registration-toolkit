@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <fstream>
 #include <map>
 #include <string>
@@ -24,7 +26,6 @@ namespace io
  * Writes both textured and untextured meshes in ASCII OBJ format. Texture
  * information is automatically written if a UV map is set and is not empty.
  *
- * @ingroup IO
  */
 class OBJWriter
 {

@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 project("registration-toolkit" VERSION 1.1.0)
 
 # Modules
 include(FetchContent)
+include(CMakeDependentOption)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
@@ -15,7 +16,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 # Choose what to build
 option(RT_BUILD_APPS     "Compile core programs"    on)
-option(RT_BUILD_DOC      "Compile documentation"    off)
 option(RT_BUILD_TESTS    "Compile unit tests"       off)
 
 # Choose what to install
@@ -40,8 +40,10 @@ if (RT_BUILD_APPS)
 endif()
 
 ## Documentation
-if (RT_BUILD_DOC)
-    add_subdirectory(doc)
+find_package(Doxygen OPTIONAL_COMPONENTS dot)
+CMAKE_DEPENDENT_OPTION(RT_BUILD_DOCS "Build Doxygen documentation" on "DOXYGEN_FOUND" off)
+if(RT_BUILD_DOCS)
+    add_subdirectory(docs)
 endif()
 
 ## Tests

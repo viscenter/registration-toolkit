@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <boost/filesystem.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
@@ -10,7 +12,6 @@ namespace rt
 /**
  * @brief Landmarks file writer
  *
- * @ingroup landmark
  */
 class LandmarkWriter
 {

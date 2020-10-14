@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
@@ -12,7 +14,6 @@ namespace rt
  * @author Zack Anderson
  * @brief Landmarks file reader
  *
- * @ingroup landmark
  */
 class LandmarkReader
 {

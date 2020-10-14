@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <itkImage.h>
 #include <itkLandmarkBasedTransformInitializer.h>
 #include <itkRGBAPixel.h>
@@ -8,7 +10,6 @@
 namespace rt
 {
 /**@{*/
-/** @ingroup types */
 /** @brief 8-bit, unsigned, single channel pixel */
 using Pixel8UC1 = uint8_t;
 /** @brief 8-bit, unsigned, single channel image */
@@ -24,7 +25,6 @@ using Image8UC4 = itk::Image<Pixel8UC4, 2>;
 /**@}*/
 
 /**@{*/
-/** @ingroup types */
 /** @brief 16-bit, unsigned, single channel pixel */
 using Pixel16UC1 = uint16_t;
 /** @brief 16-bit, unsigned, single channel image */
@@ -40,7 +40,6 @@ using Image16UC4 = itk::Image<Pixel16UC4, 2>;
 /**@}*/
 
 /**@{*/
-/** @ingroup types */
 /** @brief 32-bit, floating point, single channel pixel */
 using Pixel32FC1 = float;
 /** @brief 32-bit, floating point, single channel image */
@@ -56,7 +55,6 @@ using Image32FC4 = itk::Image<Pixel32FC4, 2>;
 /**@}*/
 
 /**@{*/
-/** @ingroup types */
 /** @brief 64-bit, floating point, 2D vector pixel */
 using Vector = itk::Vector<double, 2>;
 /** @brief 64-bit, floating point, 2D vector image */

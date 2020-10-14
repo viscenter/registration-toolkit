@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <itkBSplineTransform.h>
 #include <opencv2/core.hpp>
 
@@ -17,7 +19,6 @@ namespace rt
  * This class is a simplified wrapper around ITK's ImageRegistrationMethod. If
  * you want fine-grained control, you should probably use that instead.
  *
- * @ingroup deformable
  */
 class DeformableRegistration
 {

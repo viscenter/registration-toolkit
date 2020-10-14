@@ -14,7 +14,7 @@
 using namespace rt;
 
 ///// ITK Mesh -> VTK Polydata /////
-ITK2VTK::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
+void rt::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
 {
 
     // points + normals
@@ -60,7 +60,7 @@ ITK2VTK::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
 }
 
 ///// VTK Polydata -> ITK Mesh /////
-VTK2ITK::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
+void rt::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
 {
 
     // points + normals

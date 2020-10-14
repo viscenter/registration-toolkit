@@ -1,0 +1,9 @@
+/**
+ * @namespace rt
+ * @brief Project top-level namespace
+ */
+
+/**
+ * @namespace rt::io
+ * @brief Project IO namespace
+ */

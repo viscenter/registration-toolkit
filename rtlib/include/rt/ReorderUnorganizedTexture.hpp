@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
@@ -29,7 +31,6 @@ namespace rt
  * and placed into the pixel. A UV map is also generated that maps the original
  * input mesh to the new texture image.
  *
- * @ingroup rtlib
  */
 class ReorderUnorganizedTexture
 {
@@ -81,9 +82,13 @@ private:
     /** XY plane sample rate (in mesh units) */
     double sampleRate_{DEFAULT_SAMPLE_RATE};
 
+    /** Origin position */
     cv::Vec3d origin_;
+    /** First basis */
     cv::Vec3d xAxis_;
+    /** Second basis */
     cv::Vec3d yAxis_;
+    /** Third basis */
     cv::Vec3d zAxis_;
 
     /** Whether we want the first or last mesh interesection point */
