@@ -22,7 +22,7 @@ jobs:
           
     - name: Setup Ubuntu
       if: matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04'
-      run: sudo apt-get update && sudo apt-get install -y cmake libopencv-dev libinsighttoolkit4-dev vtk7 libvtk7-dev libvtk-dicom-dev libvtkgdcm-dev libboost-filesystem-dev libboost-program-options-dev
+      run: sudo apt-get update && sudo apt-get install -y cmake libopencv-dev libinsighttoolkit4-dev vtk7 libvtk7-dev libvtk-dicom-dev libvtkgdcm-dev libgdcm-dev libboost-filesystem-dev libboost-program-options-dev
     
     - name: Setup macOS
       if: matrix.os == 'macos-10.15'
