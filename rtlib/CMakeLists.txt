@@ -58,8 +58,8 @@ target_link_libraries(${module}
         opencv_stitching
         ITKOptimizers
         vtkCommonTransforms
+        vtkFiltersCore
         vtkFiltersGeneral
-        vtkFiltersParallel
         TIFF::TIFF
 )
 set_target_properties(${module} PROPERTIES
