@@ -3,9 +3,7 @@
 #include <itkImageRegistrationMethod.h>
 #include <itkMattesMutualInformationImageToImageMetric.h>
 #include <itkNearestNeighborInterpolateImageFunction.h>
-#include <itkRGBToLuminanceImageFilter.h>
 #include <itkRegularStepGradientDescentOptimizer.h>
-#include <itkResampleImageFilter.h>
 
 #include "rt/ITKImageTypes.hpp"
 #include "rt/util/ITKOpenCVBridge.hpp"
@@ -14,7 +12,6 @@ using namespace rt;
 
 using GrayInterpolator =
     itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
-using GrayscaleFilter = itk::RGBToLuminanceImageFilter<Image8UC3, Image8UC1>;
 using Metric =
     itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
