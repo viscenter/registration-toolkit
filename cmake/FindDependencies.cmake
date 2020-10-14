@@ -21,7 +21,7 @@ set(ITKIOTransformLibs
     ITKIOTransformInsightLegacy
     ITKIOTransformMatlab
 )
-if(ITK_VERSION VERSION_GREATER_EQUAL 5.1)
+if(TARGET ITKSmoothing)
     set(ITKExtras ITKSmoothing)
 endif()
 
