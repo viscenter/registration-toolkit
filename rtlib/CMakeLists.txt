@@ -59,6 +59,7 @@ target_link_libraries(${module}
         ITKOptimizers
         vtkCommonTransforms
         vtkFiltersGeneral
+        vtkFiltersParallel
         TIFF::TIFF
 )
 set_target_properties(${module} PROPERTIES
