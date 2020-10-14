@@ -17,7 +17,6 @@ namespace rt
  */
 cv::Mat ReadImage(const boost::filesystem::path& path);
 
-
 /**
  * @brief Write image to the specified path
  *

@@ -10,12 +10,12 @@
 #include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/Exceptions.hpp"
 #include "rt/types/UVMap.hpp"
-#include "rt/io/ImageIO.hpp"
 
 using namespace rt;
 
@@ -137,7 +137,8 @@ int main(int argc, char* argv[])
 
         // Resample moving image for next stage
         std::cout << "Resampling temporary image..." << std::endl;
-        tmpMoving = ImageTransformResampler(moving, fixed.size(),compositeTrans);
+        tmpMoving =
+            ImageTransformResampler(moving, fixed.size(), compositeTrans);
     }
 
     ///// Deformable Registration /////
@@ -170,8 +171,7 @@ int main(int argc, char* argv[])
         // Transform through the final transformation
         auto in = origUV.mul({fixed.cols, fixed.rows});
         auto out = compositeTrans->TransformPoint(in.val);
-        cv::Vec2d newUV{out[0] / (moving.cols - 1),
-                        out[1] / (moving.rows - 1)};
+        cv::Vec2d newUV{out[0] / (moving.cols - 1), out[1] / (moving.rows - 1)};
 
         // Reassign to UV map
         newUVMap.addUV(newUV);

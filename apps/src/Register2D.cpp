@@ -153,7 +153,8 @@ int main(int argc, char* argv[])
 
         // Resample moving image for next stage
         std::cout << "Resampling temporary image..." << std::endl;
-        tmpMoving = ImageTransformResampler(moving, fixed.size(), compositeTrans);
+        tmpMoving =
+            ImageTransformResampler(moving, fixed.size(), compositeTrans);
     }
 
     ///// Deformable Registration /////
@@ -175,7 +176,8 @@ int main(int argc, char* argv[])
         (moving.channels() == 1 or moving.channels() == 3)) {
         moving = ColorConvertImage(moving, moving.channels() + 1);
     }
-    auto cvFinal = ImageTransformResampler(moving, fixed.size(), compositeTrans);
+    auto cvFinal =
+        ImageTransformResampler(moving, fixed.size(), compositeTrans);
 
     ///// Write the output image /////
     printf("Writing output image to file...\n");
