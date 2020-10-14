@@ -2,9 +2,6 @@
 
 #include <array>
 
-#include <vtkAutoInit.h>
-VTK_MODULE_INIT(vtkFiltersParallel)
-
 #include <opencv2/imgproc.hpp>
 #include <vtkLandmarkTransform.h>
 #include <vtkOBBTree.h>

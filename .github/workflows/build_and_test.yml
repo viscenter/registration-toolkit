@@ -21,8 +21,8 @@ jobs:
     - uses: actions/checkout@v2
           
     - name: Setup Ubuntu
-      if: matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04'
-      run: sudo apt-get update && sudo apt-get install -y cmake libopencv-dev libvtk7-dev libboost-filesystem-dev libboost-program-options-dev libinsighttoolkit4-dev libvtk6.3-
+      if: matrix.os == 'ubuntu-20.04'
+      run: sudo apt-get update && sudo apt-get install -y cmake libopencv-dev libvtk6-dev libboost-filesystem-dev libboost-program-options-dev libinsighttoolkit4-dev
 
     - name: Setup macOS
       if: matrix.os == 'macos-10.15'
