@@ -34,23 +34,23 @@ int main(int argc, char* argv[])
     // clang-format off
     po::options_description required("General Options");
     required.add_options()
-            ("help,h", "Show this message")
-            ("moving,m", po::value<std::string>()->required(), "Moving image")
-            ("fixed,f", po::value<std::string>()->required(), "OBJ file textured with fixed image")
-            ("output-file,o", po::value<std::string>()->required(),
-             "Output file path for the retextured OBJ")
-            ("output-tfm,t", po::value<std::string>(),
-             "Output file path for the generated transform file");
+        ("help,h", "Show this message")
+        ("moving,m", po::value<std::string>()->required(), "Moving image")
+        ("fixed,f", po::value<std::string>()->required(), "OBJ file textured with fixed image")
+        ("output-file,o", po::value<std::string>()->required(),
+         "Output file path for the retextured OBJ")
+        ("output-tfm,t", po::value<std::string>(),
+         "Output file path for the generated transform file");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
-            ("landmarks,l", po::value<std::string>(),"Landmarks file")
-            ("landmark-disable-bspline", "Disable B-Spline Landmark Registration");
+        ("landmarks,l", po::value<std::string>(),"Landmarks file")
+        ("landmark-disable-bspline", "Disable B-Spline Landmark Registration");
 
     po::options_description deformOptions("Deformable Registration Options");
     deformOptions.add_options()
-            ("deformable-iterations,i", po::value<int>()->default_value(100),
-             "Number of deformable optimization iterations");
+        ("deformable-iterations,i", po::value<int>()->default_value(100),
+         "Number of deformable optimization iterations");
 
     po::options_description all("Usage");
     all.add(required).add(ldmOptions).add(deformOptions);

@@ -57,6 +57,7 @@ target_link_libraries(${module}
         opencv_imgproc
         opencv_stitching
         ITKOptimizers
+        ${ITKExtras}
         vtkCommonTransforms
         vtkFiltersCore
         vtkFiltersGeneral

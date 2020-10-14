@@ -21,6 +21,9 @@ set(ITKIOTransformLibs
     ITKIOTransformInsightLegacy
     ITKIOTransformMatlab
 )
+if(ITK_VERSION VERSION_GREATER_EQUAL 5.1)
+    set(ITKExtras ITKSmoothing)
+endif()
 
 ### VTK ###
 find_package(VTK REQUIRED)
