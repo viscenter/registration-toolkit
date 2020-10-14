@@ -34,8 +34,7 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
     cv::detail::computeImageFeatures(featureDetector, images, features);
 
     // Safety check
-    if (features[0].getKeypoints().size() < 2 or
-        features[1].getKeypoints().size() < 2) {
+    if (features[0].keypoints.size() < 2 or features[1].keypoints.size() < 2) {
         // Not enough features to match
         return output_;
     }
