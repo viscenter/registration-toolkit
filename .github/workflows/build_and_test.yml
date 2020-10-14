@@ -29,7 +29,8 @@ jobs:
     - name: Setup macOS
       if: matrix.os == 'macos-10.15'
       run: |
-        brew uninstall llvm gcc-8 gcc-9
+        sudo xcode-select -s /Library/Developer/CommandLineTools/
+        brew uninstall llvm gcc@8 gcc@9
         brew install opencv itk vtk@8.2 boost
 
     - name: Create Build Environment
