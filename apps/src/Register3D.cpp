@@ -36,11 +36,12 @@ int main(int argc, char* argv[])
     required.add_options()
         ("help,h", "Show this message")
         ("moving,m", po::value<std::string>()->required(), "Moving image")
-        ("fixed,f", po::value<std::string>()->required(), "OBJ file textured with fixed image")
+        ("fixed,f", po::value<std::string>()->required(),
+            "OBJ file textured with fixed image")
         ("output-file,o", po::value<std::string>()->required(),
-         "Output file path for the retextured OBJ")
+            "Output file path for the retextured OBJ")
         ("output-tfm,t", po::value<std::string>(),
-         "Output file path for the generated transform file");
+            "Output file path for the generated transform file");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
