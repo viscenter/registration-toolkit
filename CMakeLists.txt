@@ -10,11 +10,6 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-# Use modern C++ for everything and generate compile_commands database.
-set(CMAKE_CXX_STANDARD 14)
-set(CXX_STANDARD_REQUIRED on)
-set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-
 # Choose what to build
 option(RT_BUILD_APPS     "Compile core programs"    on)
 option(RT_BUILD_TESTS    "Compile unit tests"       off)

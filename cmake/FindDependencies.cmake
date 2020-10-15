@@ -21,9 +21,6 @@ set(ITKIOTransformLibs
     ITKIOTransformInsightLegacy
     ITKIOTransformMatlab
 )
-if(TARGET ITKSmoothing)
-    set(ITKExtras ITKSmoothing)
-endif()
 
 ### VTK ###
 find_package(VTK REQUIRED)

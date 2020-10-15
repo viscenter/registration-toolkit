@@ -57,12 +57,15 @@ target_link_libraries(${module}
         opencv_imgproc
         opencv_stitching
         ITKOptimizers
-        ${ITKExtras}
         vtkCommonTransforms
         vtkFiltersCore
         vtkFiltersGeneral
         TIFF::TIFF
 )
+if(TARGET ITKSmoothing)
+    target_link_libraries(${module} PRIVATE ITKSmoothing)
+endif()
+target_compile_features(${module} PUBLIC cxx_std_14)
 set_target_properties(${module} PROPERTIES
     VERSION "${PROJECT_VERSION}"
     EXPORT_NAME "${module}"
