@@ -6,7 +6,15 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/stitching/detail/matchers.hpp>
 
+#include "rt/util/ImageConversion.hpp"
+
 using namespace rt;
+
+void LandmarkDetector::setFixedImage(const cv::Mat& img) { fixedImg_ = img; }
+void LandmarkDetector::setFixedMask(const cv::Mat& img) { fixedMask_ = img; }
+void LandmarkDetector::setMovingImage(const cv::Mat& img) { movingImg_ = img; }
+void LandmarkDetector::setMovingMask(const cv::Mat& img) { movingMask_ = img; }
+void LandmarkDetector::setMatchRatio(float r) { nnMatchRatio_ = r; }
 
 // Compute the matches
 std::vector<rt::LandmarkPair> LandmarkDetector::compute()
@@ -24,6 +32,12 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
     std::vector<cv::detail::ImageFeatures> features(2);
     std::vector<cv::Mat> images{fixedImg_, movingImg_};
     cv::detail::computeImageFeatures(featureDetector, images, features);
+
+    // Safety check
+    if (features[0].keypoints.size() < 2 or features[1].keypoints.size() < 2) {
+        // Not enough features to match
+        return output_;
+    }
 
     // Match keypoints
     cv::detail::BestOf2NearestMatcher matcher(false, nnMatchRatio_);
@@ -44,7 +58,8 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 
     // Add all Fixed -> Moving inliers
     for (size_t idx = 0; idx < fixedToMoving.matches.size(); idx++) {
-        if (fixedToMoving.inliers_mask[idx] == 0) {
+        size_t numInliers = fixedToMoving.num_inliers;
+        if (idx < numInliers and fixedToMoving.inliers_mask[idx] == 0) {
             continue;
         }
 
@@ -56,7 +71,8 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 
     // Add Moving -> Fixed inliers not already in output
     for (size_t idx = 0; idx < movingToFixed.matches.size(); idx++) {
-        if (movingToFixed.inliers_mask[idx] == 0) {
+        size_t numInliers = movingToFixed.num_inliers;
+        if (idx < numInliers and movingToFixed.inliers_mask[idx] == 0) {
             continue;
         }
 
@@ -69,7 +85,6 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
             output_.emplace_back(fixPt, movPt);
         }
     }
-
     return output_;
 }
 

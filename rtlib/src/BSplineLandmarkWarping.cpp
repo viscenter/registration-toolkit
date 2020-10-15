@@ -1,13 +1,24 @@
 #include "rt/BSplineLandmarkWarping.hpp"
 
+#include <itkLandmarkDisplacementFieldSource.h>
+
+#include "rt/ITKImageTypes.hpp"
+#include "rt/util/ITKOpenCVBridge.hpp"
+
 using namespace rt;
+
+void BSplineLandmarkWarping::setFixedImage(const cv::Mat& f) { fixedImg_ = f; }
 
 BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
 {
     // Size checks
-    if (fixedImg_.IsNull() || fixedLdmks_.empty() || movingLdmks_.empty()) {
-        throw std::runtime_error("Empty input parameter");
+    if (fixedImg_.empty() || fixedLdmks_.empty() || movingLdmks_.empty()) {
+        throw std::invalid_argument("Empty input parameter");
     }
+
+    // Convert to 8UC3
+    auto fixed8u = QuantizeImage(fixedImg_, CV_8U);
+    auto fixedImg = CVMatToITKImage<Image8UC3>(fixed8u);
 
     using TransformInitializer =
         itk::LandmarkBasedTransformInitializer<Transform, Image8UC3, Image8UC3>;
@@ -20,7 +31,7 @@ BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
     auto landmarkTransformInit = TransformInitializer::New();
     landmarkTransformInit->SetFixedLandmarks(fixedLdmks_);
     landmarkTransformInit->SetMovingLandmarks(movingLdmks_);
-    landmarkTransformInit->SetReferenceImage(fixedImg_);
+    landmarkTransformInit->SetReferenceImage(fixedImg);
     landmarkTransformInit->SetTransform(output_);
     landmarkTransformInit->InitializeTransform();
 

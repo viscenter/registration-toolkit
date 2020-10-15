@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <fstream>
 
 #include <boost/filesystem.hpp>
@@ -24,26 +26,25 @@ namespace io
  * include. Other material properties are currently ignored. Throws
  * rt::IOException on error.
  *
- * @ingroup IO
  */
 class OBJReader
 {
 public:
     /** @brief Set the OBJ file path */
-    void setPath(const boost::filesystem::path& p) { path_ = p; }
+    void setPath(const boost::filesystem::path& p);
 
     /** @brief Read the mesh from file */
     ITKMesh::Pointer read();
 
     /** @brief Return the parsed mesh */
-    ITKMesh::Pointer getMesh() { return mesh_; }
+    ITKMesh::Pointer getMesh();
 
     /**
      * @brief Return parsed UV information
      *
      * If no UV information is read, returns an empty UVMap.
      * */
-    UVMap getUVMap() { return uvMap_; }
+    UVMap getUVMap();
 
     /**
      * @brief Return texture image as cv::Mat
@@ -55,8 +56,7 @@ public:
 
 private:
     /**
-     * @brief 3-Tuple linking a vertex to its position, UV, and normal
-     * elements
+     * 3-Tuple linking a vertex to its position, UV, and normal elements
      *
      * The return value for each element is the [index + 1] of a vertex's
      * position, UV coordinate, or surface normal inside the
@@ -65,11 +65,13 @@ private:
      * VertexRefs { v, vt, vn }
      */
     using VertexRefs = cv::Vec3i;
-    /** @brief A list of at least three OBJReader::VertexRefs comprise a face */
+
+    /** A list of at least three OBJReader::VertexRefs comprise a face */
     using Face = std::vector<VertexRefs>;
 
-    /** @brief Validation enumeration to ensure proper parsing of
-     * OBJReader::VertexRefs */
+    /**
+     * Validation enumeration to ensure proper parsing vertices
+     */
     enum class RefType {
         Invalid,
         Vertex,

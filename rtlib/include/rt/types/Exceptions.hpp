@@ -1,6 +1,8 @@
 #pragma once
 
-#include <stdexcept>
+/** @file */
+
+#include <exception>
 #include <string>
 
 namespace rt
@@ -15,7 +17,6 @@ namespace rt
  * Based on
  * <a href="http://stackoverflow.com/a/8152888">this implementation</a>.
  *
- * @ingroup types
  */
 class IOException : public std::exception
 {
@@ -32,6 +33,7 @@ public:
     const char* what() const noexcept override { return msg_.c_str(); }
 
 protected:
+    /** Exception message */
     std::string msg_;
 };
 }

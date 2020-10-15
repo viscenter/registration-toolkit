@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <regex>
 #include <string>
 #include <vector>
@@ -8,6 +10,7 @@
 
 namespace rt
 {
+/** List of file extensions type */
 using ExtensionList = std::vector<std::string>;
 
 /** Filter a path by a list of approved file extensions */

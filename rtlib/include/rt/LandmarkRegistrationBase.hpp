@@ -1,23 +1,22 @@
 #pragma once
 
+/** @file */
+
 #include <itkPoint.h>
 
 namespace rt
 {
 /** @brief Landmark registration landmark
- * @ingroup landmark
  */
 using Landmark = itk::Point<double, 2>;
 
 /** @brief Generic Landmark container
- * @ingroup landmark
  */
 using LandmarkContainer = std::vector<Landmark>;
 
 /**
  * @class LandmarkRegistrationBase
  * @brief Base class for landmark registration algorithms
- * @ingroup landmark
  */
 class LandmarkRegistrationBase
 {

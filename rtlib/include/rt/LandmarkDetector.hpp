@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <vector>
 
 #include <opencv2/core.hpp>
@@ -24,21 +26,20 @@ using LandmarkPair = std::pair<cv::Point2f, cv::Point2f>;
  * between two images. To create key points bounded by a region of interest,
  * set the mask for either the static or moving image.
  *
- * @ingroup rtlib
  */
 class LandmarkDetector
 {
 public:
     /** @brief Set the fixed image */
-    void setFixedImage(const cv::Mat& img) { fixedImg_ = img; }
+    void setFixedImage(const cv::Mat& img);
     /** @brief Set the fixed image mask */
-    void setFixedMask(const cv::Mat& img) { fixedMask_ = img; }
+    void setFixedMask(const cv::Mat& img);
     /** @brief Set the moving image */
-    void setMovingImage(const cv::Mat& img) { movingImg_ = img; }
+    void setMovingImage(const cv::Mat& img);
     /** @brief Set the fixed image mask */
-    void setMovingMask(const cv::Mat& img) { movingMask_ = img; }
+    void setMovingMask(const cv::Mat& img);
     /** @brief Set the nearest-neighbor matching ratio */
-    void setMatchRatio(float r) { nnMatchRatio_ = r; }
+    void setMatchRatio(float r);
 
     /** @brief Compute key point matches between the fixed and moving images
      *

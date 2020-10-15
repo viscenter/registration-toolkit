@@ -1,19 +1,22 @@
 #pragma once
 
+/** @file */
+
 #include <functional>
 #include <numeric>
 #include <vector>
 
-// From https://stackoverflow.com/a/17074810/1917043
-
 namespace rt
 {
 
+/** Permutation result type */
 using Permutation = std::vector<std::size_t>;
 
 /**
  * @brief Generate a permutation vector that sorts an input vector using the
  * provided Compare function (Default: std::less)
+ *
+ * From https://stackoverflow.com/a/17074810/1917043
  */
 template <typename T, typename Compare = std::less<T>>
 Permutation PermutationSort(const std::vector<T>& vec, Compare c = Compare())

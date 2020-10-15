@@ -1,5 +1,7 @@
 #include "rt/types/UVMap.hpp"
 
+using namespace rt;
+
 /** Top-left UV Origin */
 const static cv::Vec2d ORIGIN_TOP_LEFT(0, 0);
 /** Top-right UV Origin */
@@ -8,14 +10,35 @@ const static cv::Vec2d ORIGIN_TOP_RIGHT(1, 0);
 const static cv::Vec2d ORIGIN_BOTTOM_LEFT(0, 1);
 /** Bottom-right UV Origin */
 const static cv::Vec2d ORIGIN_BOTTOM_RIGHT(1, 1);
+/** Get the above vectors when given an Origin enum value */
+static cv::Vec2d GetOriginVector(const UVMap::Origin& o);
 
-using namespace rt;
+UVMap::UVMap(UVMap::Origin o) : origin_{o} {}
+
+size_t UVMap::size() const { return uvs_.size(); }
+
+bool UVMap::empty() const { return uvs_.empty(); }
+
+void UVMap::setOrigin(const UVMap::Origin& o) { origin_ = o; }
+
+UVMap::Origin UVMap::origin() const { return origin_; }
+
+UVMap::Ratio UVMap::ratio() const { return ratio_; }
+
+void UVMap::ratio(double a) { ratio_.aspect = a; }
+
+void UVMap::ratio(double w, double h)
+{
+    ratio_.width = w;
+    ratio_.height = h;
+    ratio_.aspect = w / h;
+}
 
 size_t UVMap::addUV(const cv::Vec2d& uv, const Origin& o)
 {
     // transform to be relative to top-left
     cv::Vec2d transformed;
-    cv::absdiff(uv, origin_vector_(o), transformed);
+    cv::absdiff(uv, GetOriginVector(o), transformed);
     uvs_.push_back(transformed);
 
     return uvs_.size() - 1;
@@ -31,7 +54,7 @@ cv::Vec2d UVMap::getUV(size_t id, const Origin& o)
 
     // transform to be relative to the provided origin
     cv::Vec2d transformed;
-    cv::absdiff(uvs_[id], origin_vector_(o), transformed);
+    cv::absdiff(uvs_[id], GetOriginVector(o), transformed);
     return transformed;
 }
 
@@ -58,16 +81,16 @@ UVMap::Face UVMap::getFace(size_t id)
     return faces_[id];
 }
 
-cv::Vec2d UVMap::origin_vector_(const Origin& o)
+cv::Vec2d GetOriginVector(const UVMap::Origin& o)
 {
     switch (o) {
-        case Origin::TopLeft:
+        case UVMap::Origin::TopLeft:
             return ORIGIN_TOP_LEFT;
-        case Origin::TopRight:
+        case UVMap::Origin::TopRight:
             return ORIGIN_TOP_RIGHT;
-        case Origin::BottomLeft:
+        case UVMap::Origin::BottomLeft:
             return ORIGIN_BOTTOM_LEFT;
-        case Origin::BottomRight:
+        case UVMap::Origin::BottomRight:
             return ORIGIN_BOTTOM_RIGHT;
     }
 }

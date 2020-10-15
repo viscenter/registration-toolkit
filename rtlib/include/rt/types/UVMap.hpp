@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <unordered_map>
 
 #include <opencv2/core.hpp>
@@ -48,7 +50,6 @@ namespace rt
  * circumstances, use getFace() to retrieve the mapping between a face's
  * vertices and the UV values returned by getUV().
  *
- * @ingroup types
  */
 class UVMap
 {
@@ -61,20 +62,25 @@ public:
 
     /** Aspect ratio structure */
     struct Ratio {
-        double width{1}, height{1}, aspect{1};
+        /** Width of ratio */
+        double width{1};
+        /** Height of ratio */
+        double height{1};
+        /** Width / Height aspect ratio */
+        double aspect{1};
     };
 
     /**@{*/
     /** @brief Construct and set origin */
-    explicit UVMap(Origin o = Origin::TopLeft) : origin_{o} {}
+    explicit UVMap(Origin o = Origin::TopLeft);
     /**@}*/
 
     /**@{*/
     /** @brief Return the number of UV elements */
-    size_t size() const { return uvs_.size(); }
+    size_t size() const;
 
     /** @brief Return whether the UVMap is empty */
-    bool empty() const { return uvs_.empty(); }
+    bool empty() const;
     /**@}*/
 
     /**@{*/
@@ -83,10 +89,10 @@ public:
      * UV values inserted and retrieved after a call to setOrigin() will be
      * relative to his value.
      */
-    void setOrigin(const Origin& o) { origin_ = o; }
+    void setOrigin(const Origin& o);
 
     /** @brief Get the current origin of the UVMap */
-    Origin origin() const { return origin_; }
+    Origin origin() const;
     /**@}*/
 
     /**@{*/
@@ -150,18 +156,13 @@ public:
 
     /**@{*/
     /** @brief Get the size information (aspect ratio, width, height) */
-    Ratio ratio() const { return ratio_; }
+    Ratio ratio() const;
 
     /** @brief Set the aspect ratio */
-    void ratio(double a) { ratio_.aspect = a; }
+    void ratio(double a);
 
-    /** @brief Set the aspect ration by width and height parameters */
-    void ratio(double w, double h)
-    {
-        ratio_.width = w;
-        ratio_.height = h;
-        ratio_.aspect = w / h;
-    }
+    /** @brief Set the aspect ratio by width and height parameters */
+    void ratio(double w, double h);
     /**@}*/
 
 private:
@@ -175,7 +176,5 @@ private:
     Origin origin_;
     /** Aspect ratio */
     Ratio ratio_;
-
-    cv::Vec2d origin_vector_(const Origin& o);
 };
 }

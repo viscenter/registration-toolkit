@@ -1,6 +1,8 @@
 #pragma once
 
-#include "rt/ImageTypes.hpp"
+/** @file */
+
+#include "rt/ITKImageTypes.hpp"
 #include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt
@@ -9,7 +11,6 @@ namespace rt
  * @class AffineLandmarkRegistration
  * @brief Generate an affine transformation that maps an ordered set of
  * landmarks onto a fixed set of landmarks
- * @ingroup landmark
  */
 class AffineLandmarkRegistration : public LandmarkRegistrationBase
 {

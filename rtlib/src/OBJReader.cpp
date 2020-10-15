@@ -21,6 +21,12 @@ namespace fs = boost::filesystem;
 constexpr static int NOT_PRESENT = -1;
 constexpr static size_t VALID_FACE_SIZE = 3;
 
+void OBJReader::setPath(const boost::filesystem::path& p) { path_ = p; }
+
+ITKMesh::Pointer OBJReader::getMesh() { return mesh_; }
+
+UVMap OBJReader::getUVMap() { return uvMap_; }
+
 // Read the file
 ITKMesh::Pointer OBJReader::read()
 {

@@ -1,17 +1,20 @@
 //
 // Created by Seth Parker on 8/3/15.
 //
+#include <vtkCell.h>
+#include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
+#include <vtkIdList.h>
 #include <vtkPointData.h>
 
 #include <array>
 
 #include "rt/types/ITK2VTK.hpp"
 
-namespace rt
-{
+using namespace rt;
+
 ///// ITK Mesh -> VTK Polydata /////
-ITK2VTK::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
+void rt::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
 {
 
     // points + normals
@@ -57,7 +60,7 @@ ITK2VTK::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
 }
 
 ///// VTK Polydata -> ITK Mesh /////
-VTK2ITK::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
+void rt::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
 {
 
     // points + normals
@@ -87,5 +90,4 @@ VTK2ITK::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
 
         output->SetCell(cellId, cell);
     }
-};
 }

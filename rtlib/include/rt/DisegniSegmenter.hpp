@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <vector>
 
 #include <opencv2/core.hpp>

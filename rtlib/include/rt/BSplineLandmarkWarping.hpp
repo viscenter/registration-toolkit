@@ -1,9 +1,10 @@
 #pragma once
 
-#include <itkBSplineTransform.h>
-#include <itkLandmarkDisplacementFieldSource.h>
+/** @file */
 
-#include "rt/ImageTypes.hpp"
+#include <itkBSplineTransform.h>
+#include <opencv2/core.hpp>
+
 #include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt
@@ -12,7 +13,6 @@ namespace rt
  * @class BSplineLandmarkWarping
  * @brief Generate a B-spline-based transformation that maps an ordered set of
  * landmarks onto a fixed set of landmarks
- * @ingroup landmark
  */
 class BSplineLandmarkWarping : public LandmarkRegistrationBase
 {
@@ -25,7 +25,7 @@ public:
      *
      * This must be set in order to compute the transform.
      */
-    void setFixedImage(const Image8UC3::Pointer& f) { fixedImg_ = f; }
+    void setFixedImage(const cv::Mat& f);
 
     /** @brief Compute the transform */
     Transform::Pointer compute();
@@ -38,6 +38,6 @@ private:
     Transform::Pointer output_;
 
     /** Fixed image */
-    Image8UC3::Pointer fixedImg_;
+    cv::Mat fixedImg_;
 };
 }

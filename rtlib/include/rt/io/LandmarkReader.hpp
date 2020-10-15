@@ -1,8 +1,10 @@
 #pragma once
 
-#include <boost/filesystem.hpp>
+/** @file */
 
-#include "rt/ImageTypes.hpp"
+#include <boost/filesystem.hpp>
+#include <opencv2/core.hpp>
+
 #include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt
@@ -12,7 +14,6 @@ namespace rt
  * @author Zack Anderson
  * @brief Landmarks file reader
  *
- * @ingroup landmark
  */
 class LandmarkReader
 {
@@ -20,48 +21,29 @@ public:
     /** @brief Default constructor */
     LandmarkReader() = default;
 
-    explicit LandmarkReader(boost::filesystem::path landmarksPath)
-        : landmarksPath_(std::move(landmarksPath))
-    {
-    }
-
-    /** @brief Set the fixed image */
-    void setFixedImage(const Image8UC3::Pointer i) { fixedImage_ = i; }
-
-    /** @brief Set the moving image */
-    void setMovingImage(const Image8UC3::Pointer i) { movingImage_ = i; }
+    /** @brief Construct with path */
+    explicit LandmarkReader(boost::filesystem::path landmarksPath);
 
     /** @brief Set the path to the Landmarks file */
-    void setLandmarksPath(const boost::filesystem::path& path)
-    {
-        landmarksPath_ = path;
-    }
+    void setLandmarksPath(const boost::filesystem::path& path);
 
     /** @brief Read the Landmarks file */
     void read();
 
-    void readRaw();
-
     /** @brief Get the parsed fixed landmarks */
-    rt::LandmarkContainer getFixedLandmarks() { return fixedLandmarks_; }
+    rt::LandmarkContainer getFixedLandmarks();
 
     /** @brief Get the parsed moving landmarks */
-    rt::LandmarkContainer getMovingLandmarks() { return movingLandmarks_; }
+    rt::LandmarkContainer getMovingLandmarks();
 
 private:
     /** Path to the Landmarks file */
-    boost::filesystem::path landmarksPath_;
-
-    /** Fixed image */
-    Image8UC3::Pointer fixedImage_;
-
-    /** Moving image */
-    Image8UC3::Pointer movingImage_;
+    boost::filesystem::path path_;
 
     /** Fixed landmarks container */
-    rt::LandmarkContainer fixedLandmarks_;
+    rt::LandmarkContainer fixed_;
 
     /** Moving landmarks container */
-    rt::LandmarkContainer movingLandmarks_;
+    rt::LandmarkContainer moving_;
 };
 }  // namespace rt

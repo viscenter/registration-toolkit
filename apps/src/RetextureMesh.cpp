@@ -2,9 +2,8 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
+#include "rt/io/ImageIO.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
 
@@ -53,7 +52,7 @@ int main(int argc, char** argv)
 
     // Load the image
     fs::path imagePath = parsed["texture"].as<std::string>();
-    auto image = cv::imread(imagePath.string(), -1);
+    auto image = rt::ReadImage(imagePath);
 
     // Write the new mesh
     fs::path outputPath = parsed["output-mesh"].as<std::string>();

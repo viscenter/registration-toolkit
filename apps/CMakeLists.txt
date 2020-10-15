@@ -6,10 +6,7 @@ target_link_libraries(rt_apply_transform
     opencv_imgcodecs
     Boost::filesystem
     Boost::program_options
-    ITKIOTransformBase
-    ITKIOTransformHDF5
-    ITKIOTransformInsightLegacy
-    ITKIOTransformMatlab
+    ${ITKIOTransformLibs}
 )
 
 add_executable(rt_register2d src/Register2D.cpp)
@@ -19,10 +16,7 @@ target_link_libraries(rt_register2d
     opencv_imgcodecs
     Boost::filesystem
     Boost::program_options
-    ITKIOTransformBase
-    ITKIOTransformHDF5
-    ITKIOTransformInsightLegacy
-    ITKIOTransformMatlab
+    ${ITKIOTransformLibs}
 )
 
 # 3D Registration Apps
@@ -44,10 +38,7 @@ target_link_libraries(rt_register3d
     opencv_core
     opencv_imgcodecs
     Boost::program_options
-    ITKIOTransformBase
-    ITKIOTransformHDF5
-    ITKIOTransformInsightLegacy
-    ITKIOTransformMatlab
+    ${ITKIOTransformLibs}
 )
 
 add_executable(rt_generate_landmarks src/GenerateLandmarks.cpp)

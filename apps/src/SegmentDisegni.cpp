@@ -6,7 +6,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 #include "rt/DisegniSegmenter.hpp"
 #include "rt/io/ImageIO.hpp"
@@ -80,7 +79,7 @@ int main(int argc, char* argv[])
     }
     // Load input
     fs::path inputPath = parsed["input"].as<std::string>();
-    auto input = cv::imread(inputPath.string());
+    auto input = rt::ReadImage(inputPath);
     if (input.empty()) {
         std::cout << "Could not open or find the image" << std::endl;
         return EXIT_FAILURE;

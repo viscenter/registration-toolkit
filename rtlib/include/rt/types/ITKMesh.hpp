@@ -1,5 +1,6 @@
-/** @file ITKMesh.hpp @ingroup Types */
 #pragma once
+
+/** @file */
 
 #include <itkMesh.h>
 #include <itkPointsLocator.h>

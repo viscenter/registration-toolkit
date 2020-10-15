@@ -3,16 +3,13 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
-#include <itkOpenCVImageBridge.h>
 #include <itkTransformFileWriter.h>
 #include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
-#include "rt/ImageTypes.hpp"
 #include "rt/LandmarkDetector.hpp"
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkReader.hpp"
@@ -28,7 +25,6 @@ namespace fs = boost::filesystem;
 using CompositeTransform = itk::CompositeTransform<double, 2>;
 
 // IO
-using OCVB = itk::OpenCVImageBridge;
 using TransformWriter = itk::TransformFileWriter;
 
 int main(int argc, char* argv[])
@@ -90,36 +86,29 @@ int main(int argc, char* argv[])
     fs::path outputPath = parsed["output-file"].as<std::string>();
 
     ///// Setup input files /////
-    // Load the fixed and moving image at 8bpc
-    auto cvFixed = cv::imread(fixedPath.string());
-    auto fixedImage = OCVB::CVMatToITKImage<Image8UC3>(cvFixed);
-    auto cvMoving = cv::imread(movingPath.string());
-    auto movingImage = OCVB::CVMatToITKImage<Image8UC3>(cvMoving);
-
-    // Ignore spacing information
-    fixedImage->SetSpacing(1.0);
-    movingImage->SetSpacing(1.0);
+    auto fixed = ReadImage(fixedPath);
+    auto moving = ReadImage(movingPath);
+    cv::Mat tmpMoving;
 
     // Setup final transform
     auto compositeTrans = CompositeTransform::New();
     ///// Landmark Registration /////
     if (parsed.count("disable-landmark") == 0) {
-        LandmarkContainer fixedLandmarks, movingLandmarks;
+        LandmarkContainer fixedLandmarks;
+        LandmarkContainer movingLandmarks;
         if (parsed.count("input-landmarks") > 0) {
             std::cout << "Loading landmarks from file..." << std::endl;
             fs::path landmarksFileName =
                 parsed["input-landmarks"].as<std::string>();
             LandmarkReader landmarkReader(landmarksFileName);
-            landmarkReader.setFixedImage(fixedImage);
-            landmarkReader.setMovingImage(movingImage);
             landmarkReader.read();
             fixedLandmarks = landmarkReader.getFixedLandmarks();
             movingLandmarks = landmarkReader.getMovingLandmarks();
         } else {
             std::cout << "Detecting landmarks..." << std::endl;
             LandmarkDetector landmarkDetector;
-            landmarkDetector.setFixedImage(cvFixed);
-            landmarkDetector.setMovingImage(cvMoving);
+            landmarkDetector.setFixedImage(fixed);
+            landmarkDetector.setMovingImage(moving);
             landmarkDetector.compute();
             fixedLandmarks = landmarkDetector.getFixedLandmarks();
             movingLandmarks = landmarkDetector.getMovingLandmarks();
@@ -143,11 +132,6 @@ int main(int argc, char* argv[])
         auto ldmTransform = landmark.compute();
         compositeTrans->AddTransform(ldmTransform);
 
-        // Resample moving image for next stage
-        auto tmpMoving = ImageTransformResampler<Image8UC3>(
-            movingImage, fixedImage->GetLargestPossibleRegion().GetSize(),
-            compositeTrans);
-
         // B-Spline landmark warping
         if (parsed.count("disable-landmark-bspline") == 0) {
             printf("Running B-spline landmark registration...\n");
@@ -160,19 +144,17 @@ int main(int argc, char* argv[])
 
             // BSpline Warp
             BSplineLandmarkWarping bSplineLandmark;
-            bSplineLandmark.setFixedImage(fixedImage);
+            bSplineLandmark.setFixedImage(fixed);
             bSplineLandmark.setFixedLandmarks(fixedLandmarks);
             bSplineLandmark.setMovingLandmarks(movingLandmarks);
             auto warp = bSplineLandmark.compute();
             compositeTrans->AddTransform(warp);
-
-            // Resample moving image for next stage
-            tmpMoving = ImageTransformResampler<Image8UC3>(
-                movingImage, fixedImage->GetLargestPossibleRegion().GetSize(),
-                compositeTrans);
         }
 
-        movingImage = tmpMoving;
+        // Resample moving image for next stage
+        std::cout << "Resampling temporary image..." << std::endl;
+        tmpMoving =
+            ImageTransformResampler(moving, fixed.size(), compositeTrans);
     }
 
     ///// Deformable Registration /////
@@ -180,8 +162,8 @@ int main(int argc, char* argv[])
         printf("Running deformable registration...\n");
         auto iterations = parsed["deformable-iterations"].as<int>();
         rt::DeformableRegistration deformable;
-        deformable.setFixedImage(fixedImage);
-        deformable.setMovingImage(movingImage);
+        deformable.setFixedImage(fixed);
+        deformable.setMovingImage(tmpMoving);
         deformable.setNumberOfIterations(iterations);
         auto deformTransform = deformable.compute();
 
@@ -190,13 +172,12 @@ int main(int argc, char* argv[])
 
     ///// Resample the source image /////
     printf("Resampling the moving image...\n");
-    cvMoving = cv::imread(movingPath.string(), cv::IMREAD_UNCHANGED);
-    cv::Size s(cvFixed.cols, cvFixed.rows);
     if (parsed.count("enable-alpha") > 0 and
-        (cvMoving.channels() == 1 or cvMoving.channels() == 3)) {
-        cvMoving = rt::ColorConvertImage(cvMoving, cvMoving.channels() + 1);
+        (moving.channels() == 1 or moving.channels() == 3)) {
+        moving = ColorConvertImage(moving, moving.channels() + 1);
     }
-    auto cvFinal = ImageTransformResampler(cvMoving, s, compositeTrans);
+    auto cvFinal =
+        ImageTransformResampler(moving, fixed.size(), compositeTrans);
 
     ///// Write the output image /////
     printf("Writing output image to file...\n");

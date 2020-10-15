@@ -7,7 +7,6 @@
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/ITK2VTK.hpp"
 #include "rt/types/ITKMesh.hpp"
-#include "rt/types/UVMap.hpp"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -78,10 +77,8 @@ int main(int argc, char* argv[])
     // Reorder the texture
     std::cerr << "Reordering texture :: Sample Rate: " << sampleRate
               << std::endl;
-    vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    rt::ITK2VTK(mesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
-    r.setMesh(vtkMesh);
+    r.setMesh(mesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
     r.setSampleRate(sampleRate);
