@@ -12,6 +12,7 @@ set(io_srcs
 set(type_srcs
     src/UVMap.cpp
     src/ITK2VTK.cpp
+    src/CompositeTransform.cpp
 )
 
 set(util_srcs
@@ -51,12 +52,14 @@ target_link_libraries(${module}
         ITKTransform
         vtkCommonCore
         vtkCommonDataModel
+        smgl::smgl
     PRIVATE
         opencv_features2d
         opencv_imgcodecs
         opencv_imgproc
         opencv_stitching
         ITKOptimizers
+        ${ITKIOTransformLibs}
         vtkCommonTransforms
         vtkFiltersCore
         vtkFiltersGeneral

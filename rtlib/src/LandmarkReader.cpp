@@ -5,6 +5,7 @@
 #include <boost/algorithm/string.hpp>
 
 using namespace rt;
+namespace rtg = rt::graph;
 namespace fs = boost::filesystem;
 
 void LandmarkReader::read()
@@ -64,4 +65,30 @@ void LandmarkReader::setLandmarksPath(const boost::filesystem::path& path)
     path_ = path;
 }
 rt::LandmarkContainer LandmarkReader::getFixedLandmarks() { return fixed_; }
+
 rt::LandmarkContainer LandmarkReader::getMovingLandmarks() { return moving_; }
+
+rtg::LandmarkReaderNode::LandmarkReaderNode()
+{
+    registerInputPort("path", path);
+    registerOutputPort("fixed", fixedLandmarks);
+    registerOutputPort("moving", movingLandmarks);
+    compute = [this]() {
+        std::cout << "Loading landmarks from file..." << std::endl;
+        reader_.setLandmarksPath(path_);
+        reader_.read();
+        fixed_ = reader_.getFixedLandmarks();
+        moving_ = reader_.getMovingLandmarks();
+    };
+}
+
+smgl::Metadata rtg::LandmarkReaderNode::serialize_(bool, const Path&)
+{
+    return {{"path", path_.string()}};
+}
+
+void rtg::LandmarkReaderNode::deserialize_(const Metadata& meta, const Path&)
+{
+    path_ = meta["path"].get<std::string>();
+    compute();
+}

@@ -2,9 +2,9 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include <itkCompositeTransform.h>
-#include <itkTransformFileWriter.h>
+
 #include <opencv2/core.hpp>
+#include <smgl/Graph.hpp>
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
@@ -14,18 +14,16 @@
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/LandmarkWriter.hpp"
+#include "rt/types/CompositeTransform.hpp"
 #include "rt/util/ImageConversion.hpp"
 
 using namespace rt;
+using namespace rt::graph;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-// Composite Transform
-using CompositeTransform = itk::CompositeTransform<double, 2>;
-
 // IO
-using TransformWriter = itk::TransformFileWriter;
 
 int main(int argc, char* argv[])
 {
@@ -85,115 +83,121 @@ int main(int argc, char* argv[])
     fs::path movingPath = parsed["moving"].as<std::string>();
     fs::path outputPath = parsed["output-file"].as<std::string>();
 
+    ///// Start render graph /////
+    smgl::Graph graph;
+
     ///// Setup input files /////
-    auto fixed = ReadImage(fixedPath);
-    auto moving = ReadImage(movingPath);
-    cv::Mat tmpMoving;
+    auto fixed = std::make_shared<ImageReadNode>();
+    fixed->path(fixedPath);
+    auto moving = std::make_shared<ImageReadNode>();
+    moving->path(movingPath);
+    auto compositeTfms = std::make_shared<CompositeTransformNode>();
+    graph.insertNodes(fixed, moving, compositeTfms);
 
-    // Setup final transform
-    auto compositeTrans = CompositeTransform::New();
     ///// Landmark Registration /////
+    auto landmarkTfms = std::make_shared<CompositeTransformNode>();
     if (parsed.count("disable-landmark") == 0) {
-        LandmarkContainer fixedLandmarks;
-        LandmarkContainer movingLandmarks;
+        smgl::Node::Pointer ldmNode;
+        // Load landmarks from file
         if (parsed.count("input-landmarks") > 0) {
-            std::cout << "Loading landmarks from file..." << std::endl;
-            fs::path landmarksFileName =
-                parsed["input-landmarks"].as<std::string>();
-            LandmarkReader landmarkReader(landmarksFileName);
-            landmarkReader.read();
-            fixedLandmarks = landmarkReader.getFixedLandmarks();
-            movingLandmarks = landmarkReader.getMovingLandmarks();
-        } else {
-            std::cout << "Detecting landmarks..." << std::endl;
-            LandmarkDetector landmarkDetector;
-            landmarkDetector.setFixedImage(fixed);
-            landmarkDetector.setMovingImage(moving);
-            landmarkDetector.compute();
-            fixedLandmarks = landmarkDetector.getFixedLandmarks();
-            movingLandmarks = landmarkDetector.getMovingLandmarks();
+            auto readLdm = std::make_shared<LandmarkReaderNode>();
+            readLdm->path(parsed["input-landmarks"].as<std::string>());
+            ldmNode = readLdm;
 
-            if (parsed.count("output-ldm")) {
-                printf("Writing landmarks to file...\n");
-                fs::path landmarkFileName =
-                    parsed["output-ldm"].as<std::string>();
-                LandmarkWriter landmarksWriter;
-                landmarksWriter.setPath(landmarkFileName);
-                landmarksWriter.setFixedLandmarks(fixedLandmarks);
-                landmarksWriter.setMovingLandmarks(movingLandmarks);
-                landmarksWriter.write();
+            // Generate landmarks automatically
+        } else {
+            auto genLdm = std::make_shared<LandmarkDetectorNode>();
+            fixed->image >> genLdm->fixedImage;
+            moving->image >> genLdm->movingImage;
+            ldmNode = genLdm;
+
+            // Optionally write generated landmarks to file
+            if (parsed.count("output-ldm") > 0) {
+                auto writer = std::make_shared<LandmarkWriterNode>();
+                writer->path(parsed["output-ldm"].as<std::string>());
+                genLdm->fixedLandmarks >> writer->fixed;
+                genLdm->movingLandmarks >> writer->moving;
             }
         }
+        graph.insertNode(ldmNode);
 
-        std::cout << "Running affine registration..." << std::endl;
-        AffineLandmarkRegistration landmark;
-        landmark.setFixedLandmarks(fixedLandmarks);
-        landmark.setMovingLandmarks(movingLandmarks);
-        auto ldmTransform = landmark.compute();
-        compositeTrans->AddTransform(ldmTransform);
+        // Run affine registration
+        auto affine = std::make_shared<AffineLandmarkRegistrationNode>();
+        ldmNode->getOutputPort("fixedLandmarks") >> affine->fixedLandmarks;
+        ldmNode->getOutputPort("movingLandmarks") >> affine->movingLandmarks;
+        graph.insertNode(affine);
+
+        // Transform
+        affine->transform >> landmarkTfms->lhs;
+        graph.insertNode(affine);
 
         // B-Spline landmark warping
         if (parsed.count("disable-landmark-bspline") == 0) {
-            printf("Running B-spline landmark registration...\n");
-
             // Update the landmark positions
-            auto i = compositeTrans->GetInverseTransform();
-            for (auto& p : movingLandmarks) {
-                p = i->TransformPoint(p);
-            }
+            auto tfmLdm = std::make_shared<TransformLandmarksNode>();
+            affine->transform >> tfmLdm->transform;
+            ldmNode->getOutputPort("movingLandmarks") >> tfmLdm->landmarksIn;
+            graph.insertNode(tfmLdm);
 
             // BSpline Warp
-            BSplineLandmarkWarping bSplineLandmark;
-            bSplineLandmark.setFixedImage(fixed);
-            bSplineLandmark.setFixedLandmarks(fixedLandmarks);
-            bSplineLandmark.setMovingLandmarks(movingLandmarks);
-            auto warp = bSplineLandmark.compute();
-            compositeTrans->AddTransform(warp);
+            auto bspline = std::make_shared<BSplineLandmarkWarpingNode>();
+            fixed->image >> bspline->fixedImage;
+            ldmNode->getOutputPort("fixedLandmarks") >> bspline->fixedLandmarks;
+            ldmNode->getOutputPort("movingLandmarks") >>
+                bspline->movingLandmarks;
+            bspline->transform >> landmarkTfms->rhs;
+            graph.insertNode(bspline);
         }
 
-        // Resample moving image for next stage
-        std::cout << "Resampling temporary image..." << std::endl;
-        tmpMoving =
-            ImageTransformResampler(moving, fixed.size(), compositeTrans);
+        // Add landmark transforms to final transforms
+        landmarkTfms->result >> compositeTfms->lhs;
     }
+
+    // Resample moving image for next stage
+    auto resample1 = std::make_shared<ImageResampleNode>();
+    fixed->image >> resample1->fixedImage;
+    moving->image >> resample1->movingImage;
+    landmarkTfms->result >> resample1->transform;
+    graph.insertNode(resample1);
 
     ///// Deformable Registration /////
     if (parsed.count("disable-deformable") == 0) {
-        printf("Running deformable registration...\n");
-        auto iterations = parsed["deformable-iterations"].as<int>();
-        rt::DeformableRegistration deformable;
-        deformable.setFixedImage(fixed);
-        deformable.setMovingImage(tmpMoving);
-        deformable.setNumberOfIterations(iterations);
-        auto deformTransform = deformable.compute();
+        // Compute deformable
+        auto deformable = std::make_shared<DeformableRegistrationNode>();
+        deformable->iterations(parsed["deformable-iterations"].as<int>());
+        fixed->image >> deformable->fixedImage;
+        resample1->resampledImage >> deformable->movingImage;
+        graph.insertNode(deformable);
 
-        compositeTrans->AddTransform(deformTransform);
+        // Add transform to final composite
+        deformable->transform >> compositeTfms->rhs;
     }
 
     ///// Resample the source image /////
-    printf("Resampling the moving image...\n");
-    if (parsed.count("enable-alpha") > 0 and
-        (moving.channels() == 1 or moving.channels() == 3)) {
-        moving = ColorConvertImage(moving, moving.channels() + 1);
-    }
-    auto cvFinal =
-        ImageTransformResampler(moving, fixed.size(), compositeTrans);
+    auto resample2 = std::make_shared<ImageResampleNode>();
+    fixed->image >> resample2->fixedImage;
+    moving->image >> resample2->movingImage;
+    compositeTfms->result >> resample2->transform;
+    graph.insertNode(resample2);
 
     ///// Write the output image /////
-    printf("Writing output image to file...\n");
-    rt::WriteImage(outputPath, cvFinal);
+    auto writer = std::make_shared<ImageWriteNode>();
+    writer->path(outputPath);
+    resample2->resampledImage >> writer->image;
+    graph.insertNode(writer);
 
     ///// Write the final transformations /////
-    if (parsed.count("output-tfm")) {
-        fs::path transformFileName = parsed["output-tfm"].as<std::string>();
-        printf("Writing transformation to file...\n");
-
-        // Write deformable transform
-        auto transformWriter = TransformWriter::New();
-        transformWriter->SetFileName(transformFileName.string());
-        transformWriter->SetInput(compositeTrans);
-        transformWriter->Update();
-    }
+    //    if (parsed.count("output-tfm")) {
+    //        fs::path transformFileName =
+    //        parsed["output-tfm"].as<std::string>(); printf("Writing
+    //        transformation to file...\n");
+    //
+    //        // Write deformable transform
+    //        auto transformWriter = TransformWriter::New();
+    //        transformWriter->SetFileName(transformFileName.string());
+    //        transformWriter->SetInput(compositeTrans);
+    //        transformWriter->Update();
+    //    }
 
     return EXIT_SUCCESS;
 }

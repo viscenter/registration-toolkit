@@ -4,6 +4,8 @@
 
 #include <itkBSplineTransform.h>
 #include <opencv2/core.hpp>
+#include <smgl/Node.hpp>
+#include <smgl/Ports.hpp>
 
 namespace rt
 {
@@ -70,4 +72,31 @@ private:
     /** Stop condition if change in metric is less than this value */
     double gradientMagnitudeTolerance_{DEFAULT_GRAD_MAG_TOLERANCE};
 };
+
+namespace graph
+{
+
+class DeformableRegistrationNode : public smgl::Node
+{
+    using Transform = DeformableRegistration::Transform;
+
+public:
+    DeformableRegistrationNode();
+
+    smgl::InputPort<cv::Mat> fixedImage{
+        &reg_, &DeformableRegistration::setFixedImage};
+    smgl::InputPort<cv::Mat> movingImage{
+        &reg_, &DeformableRegistration::setMovingImage};
+    smgl::InputPort<int> iterations{
+        &reg_, &DeformableRegistration::setNumberOfIterations};
+    smgl::OutputPort<Transform::Pointer> transform{&tfm_};
+
+private:
+    DeformableRegistration reg_;
+    Transform::Pointer tfm_;
+
+    // TODO: Serialization
+};
+
+}  // namespace graph
 }

@@ -30,6 +30,9 @@ include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
 ### libtiff ###
 find_package(TIFF REQUIRED)
 
+### smeagol ###
+include(BuildSmeagol)
+
 ############
 # Optional #
 ############

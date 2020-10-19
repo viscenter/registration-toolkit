@@ -3,9 +3,12 @@
 #include <itkLandmarkDisplacementFieldSource.h>
 
 #include "rt/ITKImageTypes.hpp"
+#include "rt/types/CompositeTransform.hpp"
 #include "rt/util/ITKOpenCVBridge.hpp"
 
 using namespace rt;
+namespace rtg = rt::graph;
+namespace fs = boost::filesystem;
 
 void BSplineLandmarkWarping::setFixedImage(const cv::Mat& f) { fixedImg_ = f; }
 
@@ -42,4 +45,41 @@ BSplineLandmarkWarping::Transform::Pointer
 BSplineLandmarkWarping::getTransform()
 {
     return output_;
+}
+
+rtg::BSplineLandmarkWarpingNode::BSplineLandmarkWarpingNode()
+{
+    registerInputPort("fixedLandmarks", fixedLandmarks);
+    registerInputPort("fixedImage", fixedImage);
+    registerInputPort("movingLandmarks", movingLandmarks);
+    registerOutputPort("transform", transform);
+
+    compute = [=]() {
+        std::cout << "Running B-spline landmark registration..." << std::endl;
+        reg_.setFixedLandmarks(fixed_);
+        reg_.setFixedImage(fixedImg_);
+        reg_.setMovingLandmarks(moving_);
+        tfm_ = reg_.compute();
+    };
+}
+
+smgl::Metadata rtg::BSplineLandmarkWarpingNode::serialize_(
+    bool useCache, const Path& cacheDir)
+{
+    Metadata m;
+    if (useCache) {
+        WriteTransform(cacheDir / "bspline.tfm", tfm_);
+        m["transform"] = "bspline.tfm";
+    }
+
+    return m;
+}
+
+void rtg::BSplineLandmarkWarpingNode::deserialize_(
+    const Metadata& meta, const Path& cacheDir)
+{
+    if (meta.contains("transform")) {
+        auto file = meta["transform"].get<std::string>();
+        // TODO: Read affine transform
+    }
 }

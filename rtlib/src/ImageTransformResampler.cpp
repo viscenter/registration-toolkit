@@ -7,6 +7,7 @@
 #include "rt/util/ITKOpenCVBridge.hpp"
 
 using namespace rt;
+namespace rtg = rt::graph;
 
 using Transform = itk::CompositeTransform<double, 2>::Pointer;
 
@@ -121,4 +122,25 @@ cv::Mat rt::ImageTransformResampler(
         default:
             throw std::runtime_error("unsupported image type");
     }
+}
+
+rtg::ImageResampleNode::ImageResampleNode()
+{
+    registerInputPort("fixedImage", fixedImage);
+    registerInputPort("movingImage", movingImage);
+    registerInputPort("transform", transform);
+    registerOutputPort("resampledImage", resampledImage);
+
+    compute = [=]() {
+        // TODO: Don't do anything if the transform is identity
+        cv::Mat tmp;
+        auto cns = moving_.channels();
+        if (forceAlpha_ and (cns == 1 or cns == 3)) {
+            tmp = ColorConvertImage(moving_, cns + 1);
+        } else {
+            tmp = moving_;
+        }
+        std::cout << "Resampling temporary image..." << std::endl;
+        resampled_ = ImageTransformResampler(moving_, fixed_.size(), tfm_);
+    };
 }
