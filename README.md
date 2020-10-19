@@ -29,7 +29,15 @@ brew bundle
 ```
 
 ### vc-deps
-Coming soon.
+Our research group maintains a CMake project called 
+[vc-deps](https://gitlab.com/educelab/vc-deps) for building dependencies that 
+are common across many of our C++ projects. Once it is built, point this 
+project's CMake configuration at the `vc-deps` libraries using the 
+`CMAKE_PREFIX_PATH` flag:
+
+```shell
+cmake -DCMAKE_PREFIX_PATH=/path/to/vc-deps/deps/ ..
+```
 
 ## Build and Install
 This project uses a CMake build system and can be built using the default CMake 
