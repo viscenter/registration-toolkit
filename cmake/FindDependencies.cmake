@@ -2,10 +2,6 @@
 # Core #
 ########
 
-# For compiler sanitizers. Taken from:
-# https://github.com/arsenm/sanitizers-cmake/blob/master/README.md
-find_package(Sanitizers)
-
 ### Boost ###
 find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 

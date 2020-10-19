@@ -1,5 +1,7 @@
 #include "rt/io/LandmarkReader.hpp"
 
+#include <string>
+
 #include <boost/algorithm/string.hpp>
 
 using namespace rt;
@@ -24,6 +26,12 @@ void LandmarkReader::read()
     std::string line;
     std::vector<std::string> strs;
     while (std::getline(ifs, line)) {
+        // Remove comments
+        line = line.substr(0, line.find('#', 0));
+        if (line.empty()) {
+            continue;
+        }
+
         // Parse the line
         boost::trim(line);
         boost::split(strs, line, boost::is_any_of(" "));

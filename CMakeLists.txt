@@ -36,7 +36,7 @@ endif()
 ## Documentation
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
 CMAKE_DEPENDENT_OPTION(RT_BUILD_DOCS "Build Doxygen documentation" on "DOXYGEN_FOUND" off)
-CMAKE_DEPENDENT_OPTION(RT_INSTALL_DOCS "Install documentation" on "RT_BUILD_DOCS" off)
+CMAKE_DEPENDENT_OPTION(RT_INSTALL_DOCS "Install documentation" off "RT_BUILD_DOCS" off)
 if(RT_BUILD_DOCS)
     add_subdirectory(docs)
 endif()
