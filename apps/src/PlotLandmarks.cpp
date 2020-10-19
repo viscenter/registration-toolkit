@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
 
     ///// Setup input files /////
     // Load the fixed and moving image at 8bpc
-    auto cvFixed = cv::imread(fixedPath.string());
-    auto cvMoving = cv::imread(movingPath.string());
+    auto fixed = cv::imread(fixedPath.string());
+    auto moving = cv::imread(movingPath.string());
 
     // Load the landmarks
     LandmarkReader landmarkReader(landmarksFileName);
@@ -74,17 +74,17 @@ int main(int argc, char* argv[])
 
     for (const auto& p : fixedLandmarks) {
         cv::Point2f pt{static_cast<float>(p[0]), static_cast<float>(p[1])};
-        cv::circle(cvFixed, pt, 10, {0, 255, 0}, -1);
+        cv::circle(fixed, pt, 10, {0, 255, 0}, -1);
     }
 
     for (const auto& p : movingLandmarks) {
         cv::Point2f pt{static_cast<float>(p[0]), static_cast<float>(p[1])};
-        cv::circle(cvFixed, pt, 10, {0, 255, 0}, -1);
+        cv::circle(fixed, pt, 10, {0, 255, 0}, -1);
     }
 
     fs::path fixedPlot = fixedPath.stem().string() + "_plot.png";
-    rt::WriteImage(fixedPlot, cvFixed);
+    rt::WriteImage(fixedPlot, fixed);
 
     fs::path movingPlot = movingPath.stem().string() + "_plot.png";
-    rt::WriteImage(movingPlot, cvMoving);
+    rt::WriteImage(movingPlot, moving);
 }
