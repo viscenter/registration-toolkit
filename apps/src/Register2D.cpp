@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 
 #include <smgl/Graph.hpp>
+#include <smgl/Graphviz.hpp>
 
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
@@ -85,47 +86,42 @@ int main(int argc, char* argv[])
     smgl::Graph graph;
 
     ///// Setup input files /////
-    auto fixed = std::make_shared<ImageReadNode>();
+    auto fixed = graph.insertNode<ImageReadNode>();
     fixed->path(fixedPath);
-    auto moving = std::make_shared<ImageReadNode>();
+    auto moving = graph.insertNode<ImageReadNode>();
     moving->path(movingPath);
-    auto compositeTfms = std::make_shared<CompositeTransformNode>();
-    graph.insertNodes(fixed, moving, compositeTfms);
+    auto compositeTfms = graph.insertNode<CompositeTransformNode>();
 
     ///// Landmark Registration /////
-    auto landmarkTfms = std::make_shared<CompositeTransformNode>();
-    graph.insertNode(landmarkTfms);
+    auto landmarkTfms = graph.insertNode<CompositeTransformNode>();
     if (parsed.count("disable-landmark") == 0) {
         smgl::Node::Pointer ldmNode;
         // Load landmarks from file
         if (parsed.count("input-landmarks") > 0) {
-            auto readLdm = std::make_shared<LandmarkReaderNode>();
+            auto readLdm = graph.insertNode<LandmarkReaderNode>();
             readLdm->path(parsed["input-landmarks"].as<std::string>());
             ldmNode = readLdm;
         }
         // Generate landmarks automatically
         else {
-            auto genLdm = std::make_shared<LandmarkDetectorNode>();
+            auto genLdm = graph.insertNode<LandmarkDetectorNode>();
             fixed->image >> genLdm->fixedImage;
             moving->image >> genLdm->movingImage;
             ldmNode = genLdm;
 
             // Optionally write generated landmarks to file
             if (parsed.count("output-ldm") > 0) {
-                auto writer = std::make_shared<LandmarkWriterNode>();
+                auto writer = graph.insertNode<LandmarkWriterNode>();
                 writer->path(parsed["output-ldm"].as<std::string>());
                 genLdm->fixedLandmarks >> writer->fixed;
                 genLdm->movingLandmarks >> writer->moving;
-                graph.insertNode(writer);
             }
         }
-        graph.insertNode(ldmNode);
 
         // Run affine registration
-        auto affine = std::make_shared<AffineLandmarkRegistrationNode>();
+        auto affine = graph.insertNode<AffineLandmarkRegistrationNode>();
         ldmNode->getOutputPort("fixedLandmarks") >> affine->fixedLandmarks;
         ldmNode->getOutputPort("movingLandmarks") >> affine->movingLandmarks;
-        graph.insertNode(affine);
 
         // Transform
         affine->transform >> landmarkTfms->lhs;
@@ -133,18 +129,16 @@ int main(int argc, char* argv[])
         // B-Spline landmark warping
         if (parsed.count("disable-landmark-bspline") == 0) {
             // Update the landmark positions
-            auto tfmLdm = std::make_shared<TransformLandmarksNode>();
+            auto tfmLdm = graph.insertNode<TransformLandmarksNode>();
             affine->transform >> tfmLdm->transform;
             ldmNode->getOutputPort("movingLandmarks") >> tfmLdm->landmarksIn;
-            graph.insertNode(tfmLdm);
 
             // BSpline Warp
-            auto bspline = std::make_shared<BSplineLandmarkWarpingNode>();
+            auto bspline = graph.insertNode<BSplineLandmarkWarpingNode>();
             fixed->image >> bspline->fixedImage;
             ldmNode->getOutputPort("fixedLandmarks") >> bspline->fixedLandmarks;
             tfmLdm->landmarksOut >> bspline->movingLandmarks;
             bspline->transform >> landmarkTfms->rhs;
-            graph.insertNode(bspline);
         }
 
         // Add landmark transforms to final transforms
@@ -154,43 +148,55 @@ int main(int argc, char* argv[])
     ///// Deformable Registration /////
     if (parsed.count("disable-deformable") == 0) {
         // Resample moving image for next stage
-        auto resample1 = std::make_shared<ImageResampleNode>();
+        auto resample1 = graph.insertNode<ImageResampleNode>();
         fixed->image >> resample1->fixedImage;
         moving->image >> resample1->movingImage;
         landmarkTfms->result >> resample1->transform;
-        graph.insertNode(resample1);
 
         // Compute deformable
-        auto deformable = std::make_shared<DeformableRegistrationNode>();
+        auto deformable = graph.insertNode<DeformableRegistrationNode>();
         deformable->iterations(parsed["deformable-iterations"].as<int>());
         fixed->image >> deformable->fixedImage;
         resample1->resampledImage >> deformable->movingImage;
-        graph.insertNode(deformable);
 
         // Add transform to final composite
         deformable->transform >> compositeTfms->rhs;
     }
 
     ///// Resample the source image /////
-    auto resample2 = std::make_shared<ImageResampleNode>();
+    auto resample2 = graph.insertNode<ImageResampleNode>();
     fixed->image >> resample2->fixedImage;
     moving->image >> resample2->movingImage;
     compositeTfms->result >> resample2->transform;
-    graph.insertNode(resample2);
 
     ///// Write the output image /////
-    auto writer = std::make_shared<ImageWriteNode>();
+    auto writer = graph.insertNode<ImageWriteNode>();
     writer->path(outputPath);
     resample2->resampledImage >> writer->image;
-    graph.insertNode(writer);
 
     ///// Write the final transformations /////
     if (parsed.count("output-tfm") > 0) {
-        auto tfmWriter = std::make_shared<WriteTransformNode>();
+        auto tfmWriter = graph.insertNode<WriteTransformNode>();
         tfmWriter->path(parsed["output-tfm"].as<std::string>());
         compositeTfms->result >> tfmWriter->transform;
-        graph.insertNode(tfmWriter);
     }
+
+    // Register nodes
+    smgl::RegisterNode<ImageReadNode>();
+    smgl::RegisterNode<ImageWriteNode>();
+    smgl::RegisterNode<CompositeTransformNode>();
+    smgl::RegisterNode<LandmarkReaderNode>();
+    smgl::RegisterNode<LandmarkDetectorNode>();
+    smgl::RegisterNode<LandmarkWriterNode>();
+    smgl::RegisterNode<AffineLandmarkRegistrationNode>();
+    smgl::RegisterNode<TransformLandmarksNode>();
+    smgl::RegisterNode<BSplineLandmarkWarpingNode>();
+    smgl::RegisterNode<ImageResampleNode>();
+    smgl::RegisterNode<DeformableRegistrationNode>();
+    smgl::RegisterNode<WriteTransformNode>();
+
+    // Write dot file
+    smgl::WriteDotFile("graph.dot", graph);
 
     // Compute result
     graph.update();

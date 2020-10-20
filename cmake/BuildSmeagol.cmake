@@ -1,7 +1,7 @@
 FetchContent_Declare(
     smeagol
     GIT_REPOSITORY https://gitlab.com/educelab/smeagol.git
-    GIT_TAG dev
+    GIT_TAG 1-basic-graph-vis
     CMAKE_CACHE_ARGS
         -DSMGL_BUILD_JSON:BOOL=ON
         -DSMGL_USE_BOOSTFS:BOOL=ON
