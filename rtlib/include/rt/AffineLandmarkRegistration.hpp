@@ -8,6 +8,7 @@
 
 #include "rt/ITKImageTypes.hpp"
 #include "rt/LandmarkRegistrationBase.hpp"
+#include "rt/types/CompositeTransform.hpp"
 
 namespace rt
 {
@@ -47,13 +48,13 @@ public:
 
     smgl::InputPort<LandmarkContainer> fixedLandmarks{&fixed_};
     smgl::InputPort<LandmarkContainer> movingLandmarks{&moving_};
-    smgl::OutputPort<Transform::Pointer> transform{&tfm_};
+    smgl::OutputPort<CommonTransform::Pointer> transform{&tfm_};
 
 private:
     AffineLandmarkRegistration reg_;
     LandmarkContainer fixed_;
     LandmarkContainer moving_;
-    Transform::Pointer tfm_;
+    CommonTransform::Pointer tfm_;
 
     Metadata serialize_(bool useCache, const Path& cacheDir) override;
     void deserialize_(const Metadata& meta, const Path& cacheDir) override;

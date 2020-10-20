@@ -9,13 +9,11 @@
 using namespace rt;
 namespace rtg = rt::graph;
 
-using Transform = itk::CompositeTransform<double, 2>::Pointer;
-
 template <typename TImageType>
 typename TImageType::Pointer InterpolateImage(
     const typename TImageType::Pointer& m,
     typename TImageType::SizeType s,
-    itk::CompositeTransform<double, 2>::Pointer transform)
+    CommonTransform::Pointer transform)
 {
     using I = itk::NearestNeighborInterpolateImageFunction<TImageType, double>;
     using R = itk::ResampleImageFilter<TImageType, TImageType, double>;
@@ -32,7 +30,9 @@ typename TImageType::Pointer InterpolateImage(
 }
 
 cv::Mat rt::ImageTransformResampler(
-    const cv::Mat& m, const cv::Size& s, const Transform& transform)
+    const cv::Mat& m,
+    const cv::Size& s,
+    const CommonTransform::Pointer& transform)
 {
     switch (m.type()) {
         case CV_8UC1: {
@@ -140,7 +140,7 @@ rtg::ImageResampleNode::ImageResampleNode()
         } else {
             tmp = moving_;
         }
-        std::cout << "Resampling temporary image..." << std::endl;
+        std::cout << "Resampling image..." << std::endl;
         resampled_ = ImageTransformResampler(moving_, fixed_.size(), tfm_);
     };
 }

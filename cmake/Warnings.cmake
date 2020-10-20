@@ -51,7 +51,6 @@ list(APPEND project_warnings
     -Wc++11-long-long
     -Wclass-varargs
     -Wconditional-uninitialized
-    -Wcovered-switch-default
     -Wdeprecated-implementations
     -Wdirect-ivar-access
     -Wdivision-by-zero

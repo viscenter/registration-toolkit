@@ -10,8 +10,7 @@ namespace rtg = rt::graph;
 namespace fs = boost::filesystem;
 
 void rt::WriteTransform(
-    const fs::path& path,
-    const CompositeTransform::TransformTypePointer& transform)
+    const fs::path& path, const CommonTransform::Pointer& transform)
 {
     auto writer = itk::TransformFileWriter::New();
     writer->SetFileName(path.string());
@@ -40,13 +39,15 @@ rtg::CompositeTransformNode::CompositeTransformNode()
     registerOutputPort("result", result);
 
     compute = [=]() {
-        combined_ = CompositeTransform::New();
+        auto tfm = CompositeTransform::New();
         if (first_) {
-            combined_->AddTransform(first_);
+            tfm->AddTransform(first_);
         }
         if (second_) {
-            combined_->AddTransform(second_);
+            tfm->AddTransform(second_);
         }
+        tfm->FlattenTransformQueue();
+        combined_ = tfm;
     };
 }
 
@@ -96,4 +97,24 @@ void rtg::TransformLandmarksNode::deserialize_(
     const Metadata& meta, const Path& cacheDir)
 {
     // TODO:: Implement
+}
+
+rtg::WriteTransformNode::WriteTransformNode()
+{
+    registerInputPort("path", path);
+    registerInputPort("transform", transform);
+    compute = [this]() {
+        std::cout << "Writing transformation to file..." << std::endl;
+        WriteTransform(path_, tfm_);
+    };
+}
+
+smgl::Metadata rtg::WriteTransformNode::serialize_(bool, const Path&)
+{
+    return {{"path", path_.string()}};
+}
+
+void rtg::WriteTransformNode::deserialize_(const Metadata& meta, const Path&)
+{
+    path_ = meta["path"].get<std::string>();
 }

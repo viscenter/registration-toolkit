@@ -3,7 +3,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
-#include <opencv2/core.hpp>
 #include <smgl/Graph.hpp>
 
 #include "rt/AffineLandmarkRegistration.hpp"
@@ -15,7 +14,6 @@
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/LandmarkWriter.hpp"
 #include "rt/types/CompositeTransform.hpp"
-#include "rt/util/ImageConversion.hpp"
 
 using namespace rt;
 using namespace rt::graph;
@@ -96,6 +94,7 @@ int main(int argc, char* argv[])
 
     ///// Landmark Registration /////
     auto landmarkTfms = std::make_shared<CompositeTransformNode>();
+    graph.insertNode(landmarkTfms);
     if (parsed.count("disable-landmark") == 0) {
         smgl::Node::Pointer ldmNode;
         // Load landmarks from file
@@ -129,7 +128,6 @@ int main(int argc, char* argv[])
 
         // Transform
         affine->transform >> landmarkTfms->lhs;
-        graph.insertNode(affine);
 
         // B-Spline landmark warping
         if (parsed.count("disable-landmark-bspline") == 0) {
@@ -187,17 +185,15 @@ int main(int argc, char* argv[])
     graph.insertNode(writer);
 
     ///// Write the final transformations /////
-    //    if (parsed.count("output-tfm")) {
-    //        fs::path transformFileName =
-    //        parsed["output-tfm"].as<std::string>(); printf("Writing
-    //        transformation to file...\n");
-    //
-    //        // Write deformable transform
-    //        auto transformWriter = TransformWriter::New();
-    //        transformWriter->SetFileName(transformFileName.string());
-    //        transformWriter->SetInput(compositeTrans);
-    //        transformWriter->Update();
-    //    }
+    if (parsed.count("output-tfm") > 0) {
+        auto tfmWriter = std::make_shared<WriteTransformNode>();
+        tfmWriter->path(parsed["output-tfm"].as<std::string>());
+        compositeTfms->result >> tfmWriter->transform;
+        graph.insertNode(tfmWriter);
+    }
+
+    // Compute result
+    graph.update();
 
     return EXIT_SUCCESS;
 }

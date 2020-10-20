@@ -9,6 +9,7 @@
 #include <smgl/Ports.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
+#include "rt/types/CompositeTransform.hpp"
 
 namespace rt
 {
@@ -53,20 +54,21 @@ class BSplineLandmarkWarpingNode : public smgl::Node
     using Metadata = smgl::Metadata;
     using Transform = BSplineLandmarkWarping::Transform;
 
+    LandmarkContainer fixed_;
+    cv::Mat fixedImg_;
+    LandmarkContainer moving_;
+    CommonTransform::Pointer tfm_;
+
 public:
     BSplineLandmarkWarpingNode();
 
     smgl::InputPort<LandmarkContainer> fixedLandmarks{&fixed_};
-    smgl::InputPort<cv::Mat> fixedImage{fixedImg_};
+    smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
     smgl::InputPort<LandmarkContainer> movingLandmarks{&moving_};
-    smgl::OutputPort<Transform::Pointer> transform{&tfm_};
+    smgl::OutputPort<CommonTransform::Pointer> transform{&tfm_};
 
 private:
     BSplineLandmarkWarping reg_;
-    LandmarkContainer fixed_;
-    cv::Mat fixedImg_;
-    LandmarkContainer moving_;
-    Transform::Pointer tfm_;
 
     Metadata serialize_(bool useCache, const Path& cacheDir) override;
     void deserialize_(const Metadata& meta, const Path& cacheDir) override;

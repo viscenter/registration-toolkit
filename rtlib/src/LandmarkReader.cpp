@@ -71,8 +71,8 @@ rt::LandmarkContainer LandmarkReader::getMovingLandmarks() { return moving_; }
 rtg::LandmarkReaderNode::LandmarkReaderNode()
 {
     registerInputPort("path", path);
-    registerOutputPort("fixed", fixedLandmarks);
-    registerOutputPort("moving", movingLandmarks);
+    registerOutputPort("fixedLandmarks", fixedLandmarks);
+    registerOutputPort("movingLandmarks", movingLandmarks);
     compute = [this]() {
         std::cout << "Loading landmarks from file..." << std::endl;
         reader_.setLandmarksPath(path_);

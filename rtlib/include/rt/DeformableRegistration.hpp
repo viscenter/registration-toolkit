@@ -7,6 +7,8 @@
 #include <smgl/Node.hpp>
 #include <smgl/Ports.hpp>
 
+#include "rt/types/CompositeTransform.hpp"
+
 namespace rt
 {
 
@@ -89,11 +91,11 @@ public:
         &reg_, &DeformableRegistration::setMovingImage};
     smgl::InputPort<int> iterations{
         &reg_, &DeformableRegistration::setNumberOfIterations};
-    smgl::OutputPort<Transform::Pointer> transform{&tfm_};
+    smgl::OutputPort<CommonTransform::Pointer> transform{&tfm_};
 
 private:
     DeformableRegistration reg_;
-    Transform::Pointer tfm_;
+    CommonTransform::Pointer tfm_;
 
     // TODO: Serialization
 };
