@@ -116,6 +116,7 @@ int main(int argc, char* argv[])
                 writer->path(parsed["output-ldm"].as<std::string>());
                 genLdm->fixedLandmarks >> writer->fixed;
                 genLdm->movingLandmarks >> writer->moving;
+                graph.insertNode(writer);
             }
         }
         graph.insertNode(ldmNode);
