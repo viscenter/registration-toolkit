@@ -102,9 +102,9 @@ int main(int argc, char* argv[])
             auto readLdm = std::make_shared<LandmarkReaderNode>();
             readLdm->path(parsed["input-landmarks"].as<std::string>());
             ldmNode = readLdm;
-
-            // Generate landmarks automatically
-        } else {
+        }
+        // Generate landmarks automatically
+        else {
             auto genLdm = std::make_shared<LandmarkDetectorNode>();
             fixed->image >> genLdm->fixedImage;
             moving->image >> genLdm->movingImage;
@@ -141,8 +141,7 @@ int main(int argc, char* argv[])
             auto bspline = std::make_shared<BSplineLandmarkWarpingNode>();
             fixed->image >> bspline->fixedImage;
             ldmNode->getOutputPort("fixedLandmarks") >> bspline->fixedLandmarks;
-            ldmNode->getOutputPort("movingLandmarks") >>
-                bspline->movingLandmarks;
+            tfmLdm->landmarksOut >> bspline->movingLandmarks;
             bspline->transform >> landmarkTfms->rhs;
             graph.insertNode(bspline);
         }
@@ -151,15 +150,15 @@ int main(int argc, char* argv[])
         landmarkTfms->result >> compositeTfms->lhs;
     }
 
-    // Resample moving image for next stage
-    auto resample1 = std::make_shared<ImageResampleNode>();
-    fixed->image >> resample1->fixedImage;
-    moving->image >> resample1->movingImage;
-    landmarkTfms->result >> resample1->transform;
-    graph.insertNode(resample1);
-
     ///// Deformable Registration /////
     if (parsed.count("disable-deformable") == 0) {
+        // Resample moving image for next stage
+        auto resample1 = std::make_shared<ImageResampleNode>();
+        fixed->image >> resample1->fixedImage;
+        moving->image >> resample1->movingImage;
+        landmarkTfms->result >> resample1->transform;
+        graph.insertNode(resample1);
+
         // Compute deformable
         auto deformable = std::make_shared<DeformableRegistrationNode>();
         deformable->iterations(parsed["deformable-iterations"].as<int>());
