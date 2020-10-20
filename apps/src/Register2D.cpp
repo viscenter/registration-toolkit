@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
     smgl::WriteDotFile("graph.dot", graph);
 
     // Compute result
-    graph.update();
+    // graph.update();
 
     return EXIT_SUCCESS;
 }
