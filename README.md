@@ -1,5 +1,7 @@
 # registration-toolkit
 
+![Build and Test](https://github.com/viscenter/registration-toolkit/workflows/Build%20and%20Test/badge.svg)
+
 A set of utilities written in C++ for simplifying image alignment tasks. 
 Supports image-to-image and image-to-mesh registration across a range of image 
 depths and types. Fully supports gray, gray+alpha, RGB, and RGBA images in 8, 
