@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
     tfmReader->SetFileName(tfmPath.string());
     tfmReader->Update();
 
-    CompositeTransform::Pointer transform = dynamic_cast<CompositeTransform*>(
+    auto* transform = dynamic_cast<CompositeTransform*>(
         tfmReader->GetTransformList()->begin()->GetPointer());
 
     // Load the fixed image and moving image (at full depth)
