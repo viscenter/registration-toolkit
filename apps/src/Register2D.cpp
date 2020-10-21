@@ -5,7 +5,7 @@
 #include <smgl/Graph.hpp>
 #include <smgl/Graphviz.hpp>
 
-#include "rt/Graph.hpp"
+#include "rt/graph/Nodes.hpp"
 
 using namespace rt;
 using namespace rt::graph;

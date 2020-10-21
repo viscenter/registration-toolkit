@@ -1,8 +1,14 @@
 # Set Doxygen options
 set(DOXYGEN_GENERATE_HTML YES)
 set(DOXYGEN_GENERATE_LATEX YES)
-set(DOXYGEN_STRIP_FROM_INC_PATH ${PROJECT_SOURCE_DIR}/core/include/)
-set(DOXYGEN_STRIP_FROM_PATH ${PROJECT_SOURCE_DIR}/core/include/)
+set(DOXYGEN_STRIP_FROM_INC_PATH
+    ${PROJECT_SOURCE_DIR}/core/include/
+    ${PROJECT_SOURCE_DIR}/graph/include/
+)
+set(DOXYGEN_STRIP_FROM_PATH
+    ${PROJECT_SOURCE_DIR}/core/include/
+    ${PROJECT_SOURCE_DIR}/graph/include/
+)
 set(DOXYGEN_PROJECT_NAME ${PROJECT_NAME})
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${PROJECT_SOURCE_DIR}/README.md")
 set(DOXYGEN_SOURCE_BROWSER YES)
@@ -14,6 +20,7 @@ doxygen_add_docs(
     ${PROJECT_SOURCE_DIR}/README.md
     ${PROJECT_SOURCE_DIR}/docs/Modules.dox
     ${PROJECT_SOURCE_DIR}/core/include/
+    ${PROJECT_SOURCE_DIR}/graph/include/
     COMMENT "Generate Doxygen documentation"
 )
 

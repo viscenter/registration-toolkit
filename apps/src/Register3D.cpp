@@ -138,8 +138,8 @@ int main(int argc, char* argv[])
 
         // Resample moving image for next stage
         std::cout << "Resampling temporary image..." << std::endl;
-        tmpMoving =
-            ImageTransformResampler(moving, fixed.size(), compositeTrans);
+        Transform::Pointer t = compositeTrans;
+        tmpMoving = ImageTransformResampler(moving, fixed.size(), t);
     }
 
     ///// Deformable Registration /////
