@@ -6,12 +6,7 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/stitching/detail/matchers.hpp>
 
-#include "rt/io/LandmarkReader.hpp"
-#include "rt/io/LandmarkWriter.hpp"
-#include "rt/util/ImageConversion.hpp"
-
 using namespace rt;
-namespace rtg = rt::graph;
 
 void LandmarkDetector::setFixedImage(const cv::Mat& img) { fixedImg_ = img; }
 void LandmarkDetector::setFixedMask(const cv::Mat& img) { fixedMask_ = img; }
@@ -23,7 +18,7 @@ void LandmarkDetector::setMatchRatio(float r) { nnMatchRatio_ = r; }
 std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 {
     // Make sure we have the images
-    if (fixedImg_.data == nullptr || movingImg_.data == nullptr) {
+    if (not fixedImg_.empty() || not movingImg_.empty()) {
         throw std::runtime_error("Missing image(s)");
     }
 
@@ -119,49 +114,4 @@ LandmarkContainer LandmarkDetector::getMovingLandmarks() const
         res.push_back(l);
     }
     return res;
-}
-
-rtg::LandmarkDetectorNode::LandmarkDetectorNode()
-{
-    registerInputPort("fixedImage", fixedImage);
-    registerInputPort("movingImage", movingImage);
-    registerOutputPort("fixedLandmarks", fixedLandmarks);
-    registerOutputPort("movingLandmarks", movingLandmarks);
-    compute = [this]() {
-        std::cout << "Detecting landmarks..." << std::endl;
-        detector_.setFixedImage(fixedImg_);
-        detector_.setMovingImage(movingImg_);
-        detector_.compute();
-        fixedLdm_ = detector_.getFixedLandmarks();
-        movingLdm_ = detector_.getMovingLandmarks();
-    };
-}
-
-smgl::Metadata rtg::LandmarkDetectorNode::serialize_(
-    bool useCache, const Path& cacheDir)
-{
-    Metadata m;
-    if (useCache) {
-        LandmarkWriter writer;
-        writer.setPath(cacheDir / "landmarks.ldm");
-        writer.setFixedLandmarks(fixedLdm_);
-        writer.setMovingLandmarks(movingLdm_);
-        writer.write();
-        m["landmarks"] = "landmarks.ldm";
-    }
-
-    return m;
-}
-
-void rtg::LandmarkDetectorNode::deserialize_(
-    const Metadata& meta, const Path& cacheDir)
-{
-    if (meta.contains("landmarks")) {
-        auto file = meta["landmarks"].get<std::string>();
-        LandmarkReader reader;
-        reader.setLandmarksPath(cacheDir / file);
-        reader.read();
-        fixedLdm_ = reader.getFixedLandmarks();
-        movingLdm_ = reader.getMovingLandmarks();
-    }
 }

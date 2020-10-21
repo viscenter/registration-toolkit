@@ -5,8 +5,6 @@
 #include <vector>
 
 #include <opencv2/core.hpp>
-#include <smgl/Node.hpp>
-#include <smgl/Ports.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
 
@@ -77,32 +75,4 @@ private:
     /** Nearest-neighbor matching ratio */
     float nnMatchRatio_{0.2f};
 };
-
-namespace graph
-{
-
-class LandmarkDetectorNode : public smgl::Node
-{
-    using Path = boost::filesystem::path;
-    using Metadata = smgl::Metadata;
-
-public:
-    LandmarkDetectorNode();
-    smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
-    smgl::InputPort<cv::Mat> movingImage{&movingImg_};
-    smgl::OutputPort<LandmarkContainer> fixedLandmarks{&fixedLdm_};
-    smgl::OutputPort<LandmarkContainer> movingLandmarks{&movingLdm_};
-
-private:
-    LandmarkDetector detector_;
-    cv::Mat fixedImg_;
-    cv::Mat movingImg_;
-    LandmarkContainer fixedLdm_;
-    LandmarkContainer movingLdm_;
-
-    Metadata serialize_(bool useCache, const Path& cacheDir) override;
-    void deserialize_(const Metadata& meta, const Path& cacheDir) override;
-};
-
-}  // namespace graph
 }  // namespace rt

@@ -12,6 +12,7 @@ target_link_libraries(rt_apply_transform
 add_executable(rt_register2d src/Register2D.cpp)
 target_link_libraries(rt_register2d
     rt::core
+    rt::graph
     opencv_core
     opencv_imgcodecs
     Boost::filesystem

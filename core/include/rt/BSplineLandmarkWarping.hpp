@@ -2,14 +2,10 @@
 
 /** @file */
 
-#include <boost/filesystem.hpp>
 #include <itkBSplineTransform.h>
 #include <opencv2/core.hpp>
-#include <smgl/Node.hpp>
-#include <smgl/Ports.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
-#include "rt/types/CompositeTransform.hpp"
 
 namespace rt
 {
@@ -44,35 +40,4 @@ private:
     /** Fixed image */
     cv::Mat fixedImg_;
 };
-
-namespace graph
-{
-
-class BSplineLandmarkWarpingNode : public smgl::Node
-{
-    using Path = boost::filesystem::path;
-    using Metadata = smgl::Metadata;
-    using Transform = BSplineLandmarkWarping::Transform;
-
-    LandmarkContainer fixed_;
-    cv::Mat fixedImg_;
-    LandmarkContainer moving_;
-    CommonTransform::Pointer tfm_;
-
-public:
-    BSplineLandmarkWarpingNode();
-
-    smgl::InputPort<LandmarkContainer> fixedLandmarks{&fixed_};
-    smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
-    smgl::InputPort<LandmarkContainer> movingLandmarks{&moving_};
-    smgl::OutputPort<CommonTransform::Pointer> transform{&tfm_};
-
-private:
-    BSplineLandmarkWarping reg_;
-
-    Metadata serialize_(bool useCache, const Path& cacheDir) override;
-    void deserialize_(const Metadata& meta, const Path& cacheDir) override;
-};
-
-}  // namespace graph
 }  // namespace rt

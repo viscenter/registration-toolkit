@@ -1,36 +1,9 @@
-#include "rt/types/CompositeTransform.hpp"
+#include "rt/graph/Transforms.hpp"
 
-#include <itkCompositeTransformIOHelper.h>
-#include <itkTransformFactory.h>
-#include <itkTransformFileReader.h>
-#include <itkTransformFileWriter.h>
+#include "rt/ImageTransformResampler.hpp"
+#include "rt/util/ImageConversion.hpp"
 
-using namespace rt;
 namespace rtg = rt::graph;
-namespace fs = boost::filesystem;
-
-void rt::WriteTransform(
-    const fs::path& path, const CommonTransform::Pointer& transform)
-{
-    auto writer = itk::TransformFileWriter::New();
-    writer->SetFileName(path.string());
-    writer->SetInput(transform);
-    writer->Update();
-}
-
-CompositeTransform::Pointer rt::ReadTransform(const fs::path& path)
-{
-    // Register transforms
-    itk::TransformFactoryBase::RegisterDefaultTransforms();
-
-    // Read transform
-    auto reader = itk::TransformFileReader::New();
-    reader->SetFileName(path.string());
-    reader->Update();
-
-    return dynamic_cast<CompositeTransform*>(
-        reader->GetTransformList()->begin()->GetPointer());
-}
 
 rtg::CompositeTransformNode::CompositeTransformNode()
 {
@@ -71,6 +44,26 @@ void rtg::CompositeTransformNode::deserialize_(
     }
 }
 
+rtg::WriteTransformNode::WriteTransformNode()
+{
+    registerInputPort("path", path);
+    registerInputPort("transform", transform);
+    compute = [this]() {
+        std::cout << "Writing transformation to file..." << std::endl;
+        WriteTransform(path_, tfm_);
+    };
+}
+
+smgl::Metadata rtg::WriteTransformNode::serialize_(bool, const Path&)
+{
+    return {{"path", path_.string()}};
+}
+
+void rtg::WriteTransformNode::deserialize_(const Metadata& meta, const Path&)
+{
+    path_ = meta["path"].get<std::string>();
+}
+
 rtg::TransformLandmarksNode::TransformLandmarksNode()
 {
     registerInputPort("transform", transform);
@@ -99,22 +92,23 @@ void rtg::TransformLandmarksNode::deserialize_(
     // TODO:: Implement
 }
 
-rtg::WriteTransformNode::WriteTransformNode()
+rtg::ImageResampleNode::ImageResampleNode()
 {
-    registerInputPort("path", path);
+    registerInputPort("fixedImage", fixedImage);
+    registerInputPort("movingImage", movingImage);
     registerInputPort("transform", transform);
-    compute = [this]() {
-        std::cout << "Writing transformation to file..." << std::endl;
-        WriteTransform(path_, tfm_);
+    registerOutputPort("resampledImage", resampledImage);
+
+    compute = [=]() {
+        // TODO: Don't do anything if the transform is identity
+        cv::Mat tmp;
+        auto cns = moving_.channels();
+        if (forceAlpha_ and (cns == 1 or cns == 3)) {
+            tmp = ColorConvertImage(moving_, cns + 1);
+        } else {
+            tmp = moving_;
+        }
+        std::cout << "Resampling image..." << std::endl;
+        resampled_ = ImageTransformResampler(moving_, fixed_.size(), tfm_);
     };
-}
-
-smgl::Metadata rtg::WriteTransformNode::serialize_(bool, const Path&)
-{
-    return {{"path", path_.string()}};
-}
-
-void rtg::WriteTransformNode::deserialize_(const Metadata& meta, const Path&)
-{
-    path_ = meta["path"].get<std::string>();
 }

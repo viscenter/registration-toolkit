@@ -3,7 +3,6 @@
 /** @file */
 
 #include <itkImage.h>
-#include <itkLandmarkBasedTransformInitializer.h>
 #include <itkRGBAPixel.h>
 #include <itkRGBPixel.h>
 

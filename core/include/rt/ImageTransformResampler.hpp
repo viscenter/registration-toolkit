@@ -3,10 +3,8 @@
 /** @file */
 
 #include <opencv2/core.hpp>
-#include <smgl/Graph.hpp>
-#include <smgl/Node.hpp>
 
-#include "rt/types/CompositeTransform.hpp"
+#include "rt/types/Transforms.hpp"
 
 namespace rt
 {
@@ -17,33 +15,5 @@ namespace rt
  *
  */
 cv::Mat ImageTransformResampler(
-    const cv::Mat& m,
-    const cv::Size& s,
-    const CommonTransform::Pointer& transform);
-
-namespace graph
-{
-
-class ImageResampleNode : public smgl::Node
-{
-public:
-    ImageResampleNode();
-
-    smgl::InputPort<cv::Mat> fixedImage{&fixed_};
-    smgl::InputPort<cv::Mat> movingImage{&moving_};
-    smgl::InputPort<CommonTransform::Pointer> transform{&tfm_};
-    smgl::InputPort<bool> forceAlpha{&forceAlpha_};
-    smgl::OutputPort<cv::Mat> resampledImage{&resampled_};
-
-private:
-    bool forceAlpha_{false};
-    cv::Mat fixed_;
-    cv::Mat moving_;
-    CommonTransform::Pointer tfm_;
-    cv::Mat resampled_;
-
-    // TODO: Serialize
-};
-
-}  // namespace graph
+    const cv::Mat& m, const cv::Size& s, const Transform::Pointer& transform);
 }  // namespace rt

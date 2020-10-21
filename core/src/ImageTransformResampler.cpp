@@ -7,13 +7,12 @@
 #include "rt/util/ITKOpenCVBridge.hpp"
 
 using namespace rt;
-namespace rtg = rt::graph;
 
 template <typename TImageType>
 typename TImageType::Pointer InterpolateImage(
     const typename TImageType::Pointer& m,
     typename TImageType::SizeType s,
-    CommonTransform::Pointer transform)
+    Transform::Pointer transform)
 {
     using I = itk::NearestNeighborInterpolateImageFunction<TImageType, double>;
     using R = itk::ResampleImageFilter<TImageType, TImageType, double>;
@@ -30,9 +29,7 @@ typename TImageType::Pointer InterpolateImage(
 }
 
 cv::Mat rt::ImageTransformResampler(
-    const cv::Mat& m,
-    const cv::Size& s,
-    const CommonTransform::Pointer& transform)
+    const cv::Mat& m, const cv::Size& s, const Transform::Pointer& transform)
 {
     switch (m.type()) {
         case CV_8UC1: {
@@ -122,25 +119,4 @@ cv::Mat rt::ImageTransformResampler(
         default:
             throw std::runtime_error("unsupported image type");
     }
-}
-
-rtg::ImageResampleNode::ImageResampleNode()
-{
-    registerInputPort("fixedImage", fixedImage);
-    registerInputPort("movingImage", movingImage);
-    registerInputPort("transform", transform);
-    registerOutputPort("resampledImage", resampledImage);
-
-    compute = [=]() {
-        // TODO: Don't do anything if the transform is identity
-        cv::Mat tmp;
-        auto cns = moving_.channels();
-        if (forceAlpha_ and (cns == 1 or cns == 3)) {
-            tmp = ColorConvertImage(moving_, cns + 1);
-        } else {
-            tmp = moving_;
-        }
-        std::cout << "Resampling image..." << std::endl;
-        resampled_ = ImageTransformResampler(moving_, fixed_.size(), tfm_);
-    };
 }

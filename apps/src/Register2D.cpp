@@ -2,19 +2,10 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-
 #include <smgl/Graph.hpp>
 #include <smgl/Graphviz.hpp>
 
-#include "rt/AffineLandmarkRegistration.hpp"
-#include "rt/BSplineLandmarkWarping.hpp"
-#include "rt/DeformableRegistration.hpp"
-#include "rt/ImageTransformResampler.hpp"
-#include "rt/LandmarkDetector.hpp"
-#include "rt/io/ImageIO.hpp"
-#include "rt/io/LandmarkReader.hpp"
-#include "rt/io/LandmarkWriter.hpp"
-#include "rt/types/CompositeTransform.hpp"
+#include "rt/Graph.hpp"
 
 using namespace rt;
 using namespace rt::graph;
@@ -83,6 +74,7 @@ int main(int argc, char* argv[])
     fs::path outputPath = parsed["output-file"].as<std::string>();
 
     ///// Start render graph /////
+    rt::graph::RegisterAllNodeTypes();
     smgl::Graph graph;
 
     ///// Setup input files /////
@@ -180,20 +172,6 @@ int main(int argc, char* argv[])
         tfmWriter->path(parsed["output-tfm"].as<std::string>());
         compositeTfms->result >> tfmWriter->transform;
     }
-
-    // Register nodes
-    smgl::RegisterNode<ImageReadNode>();
-    smgl::RegisterNode<ImageWriteNode>();
-    smgl::RegisterNode<CompositeTransformNode>();
-    smgl::RegisterNode<LandmarkReaderNode>();
-    smgl::RegisterNode<LandmarkDetectorNode>();
-    smgl::RegisterNode<LandmarkWriterNode>();
-    smgl::RegisterNode<AffineLandmarkRegistrationNode>();
-    smgl::RegisterNode<TransformLandmarksNode>();
-    smgl::RegisterNode<BSplineLandmarkWarpingNode>();
-    smgl::RegisterNode<ImageResampleNode>();
-    smgl::RegisterNode<DeformableRegistrationNode>();
-    smgl::RegisterNode<WriteTransformNode>();
 
     // Compute result
     graph.update();

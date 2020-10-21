@@ -3,7 +3,6 @@
 #include <iostream>
 
 using namespace rt;
-namespace rtg = rt::graph;
 namespace fs = boost::filesystem;
 
 void LandmarkWriter::setPath(const fs::path& p) { path_ = p; }
@@ -46,28 +45,4 @@ void LandmarkWriter::write()
 
     // Close file
     file.close();
-}
-
-rtg::LandmarkWriterNode::LandmarkWriterNode()
-{
-    registerInputPort("path", path);
-    registerInputPort("fixed", fixed);
-    registerInputPort("moving", moving);
-    compute = [this]() {
-        std::cout << "Writing landmarks to file..." << std::endl;
-        writer_.setPath(path_);
-        writer_.setFixedLandmarks(fixed_);
-        writer_.setMovingLandmarks(moving_);
-        writer_.write();
-    };
-}
-
-smgl::Metadata rtg::LandmarkWriterNode::serialize_(bool, const Path&)
-{
-    return {{"path", path_.string()}};
-}
-
-void rtg::LandmarkWriterNode::deserialize_(const Metadata& meta, const Path&)
-{
-    path_ = meta["path"].get<std::string>();
 }

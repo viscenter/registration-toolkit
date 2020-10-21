@@ -9,7 +9,6 @@
 #include "rt/util/ITKOpenCVBridge.hpp"
 
 using namespace rt;
-namespace rtg = rt::graph;
 
 using GrayInterpolator =
     itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
@@ -127,17 +126,4 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
 
     output_->SetParameters(registration->GetLastTransformParameters());
     return output_;
-}
-
-rtg::DeformableRegistrationNode::DeformableRegistrationNode()
-{
-    registerInputPort("fixedImage", fixedImage);
-    registerInputPort("movingImage", movingImage);
-    registerInputPort("iterations", iterations);
-    registerOutputPort("transform", transform);
-
-    compute = [=]() {
-        std::cout << "Running deformable registration..." << std::endl;
-        tfm_ = reg_.compute();
-    };
 }
