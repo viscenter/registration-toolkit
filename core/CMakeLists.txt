@@ -1,4 +1,4 @@
-set(module "rtlib")
+set(module "core")
 
 set(io_srcs
     src/OBJReader.cpp

@@ -24,7 +24,7 @@ endif()
 include(Warnings)
 
 ## Libraries ##
-add_subdirectory(rtlib)
+add_subdirectory(core)
 
 ## Core Apps ##
 option(RT_BUILD_APPS "Compile core programs" on)

@@ -36,4 +36,4 @@ protected:
     /** Exception message */
     std::string msg_;
 };
-}
+}  // namespace rt

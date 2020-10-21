@@ -120,5 +120,5 @@ private:
     std::vector<OBJReader::Face> faces_;
 };
 
-}  // io
-}
+}  // namespace io
+}  // namespace rt

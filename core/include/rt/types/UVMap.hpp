@@ -177,4 +177,4 @@ private:
     /** Aspect ratio */
     Ratio ratio_;
 };
-}
+}  // namespace rt

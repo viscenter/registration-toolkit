@@ -37,4 +37,4 @@ protected:
     /** Moving landmarks container */
     LandmarkContainer movingLdmks_;
 };
-}
+}  // namespace rt

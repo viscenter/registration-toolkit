@@ -1,7 +1,7 @@
 # 2D Registration Apps
 add_executable(rt_apply_transform src/ApplyTransform.cpp)
 target_link_libraries(rt_apply_transform
-    rt::rtlib
+    rt::core
     opencv_core
     opencv_imgcodecs
     Boost::filesystem
@@ -11,7 +11,7 @@ target_link_libraries(rt_apply_transform
 
 add_executable(rt_register2d src/Register2D.cpp)
 target_link_libraries(rt_register2d
-    rt::rtlib
+    rt::core
     opencv_core
     opencv_imgcodecs
     Boost::filesystem
@@ -22,19 +22,19 @@ target_link_libraries(rt_register2d
 # 3D Registration Apps
 add_executable(rt_reorder_texture src/ReorderTexture.cpp)
 target_link_libraries(rt_reorder_texture
-    rt::rtlib
+    rt::core
     Boost::filesystem
     Boost::program_options
 )
 
 add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
 target_link_libraries(rt_raw_tiff_converter
-    rt::rtlib
+    rt::core
 )
 
 add_executable(rt_register3d src/Register3D.cpp)
 target_link_libraries(rt_register3d
-    rt::rtlib
+    rt::core
     opencv_core
     opencv_imgcodecs
     Boost::program_options
@@ -43,7 +43,7 @@ target_link_libraries(rt_register3d
 
 add_executable(rt_generate_landmarks src/GenerateLandmarks.cpp)
 target_link_libraries(rt_generate_landmarks
-    rt::rtlib
+    rt::core
     opencv_core
     opencv_imgcodecs
     opencv_features2d
@@ -52,7 +52,7 @@ target_link_libraries(rt_generate_landmarks
 
 add_executable(rt_plot_landmarks src/PlotLandmarks.cpp)
 target_link_libraries(rt_plot_landmarks
-    rt::rtlib
+    rt::core
     opencv_core
     opencv_imgcodecs
     opencv_imgproc
@@ -62,14 +62,14 @@ target_link_libraries(rt_plot_landmarks
 
 add_executable(rt_swap_landmarks src/SwapLandmarks.cpp)
 target_link_libraries(rt_swap_landmarks
-    rt::rtlib
+    rt::core
     Boost::filesystem
     Boost::program_options
 )
 
 add_executable(rt_segment_disegni src/SegmentDisegni.cpp)
 target_link_libraries(rt_segment_disegni
-    rt::rtlib
+    rt::core
     opencv_core
     opencv_imgcodecs
     opencv_highgui
@@ -79,7 +79,7 @@ target_link_libraries(rt_segment_disegni
 
 add_executable(rt_retexture_mesh src/RetextureMesh.cpp)
 target_link_libraries(rt_retexture_mesh
-    rt::rtlib
+    rt::core
     Boost::filesystem
     Boost::program_options
 )
@@ -88,7 +88,7 @@ target_link_libraries(rt_retexture_mesh
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
     target_link_libraries(rt_dewarp
-        rt::rtlib
+        rt::core
         VC::texturing
         Boost::filesystem
     )

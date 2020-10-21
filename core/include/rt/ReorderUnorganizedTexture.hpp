@@ -99,4 +99,4 @@ private:
     /** Output texture image */
     cv::Mat outputTexture_;
 };
-}
+}  // namespace rt

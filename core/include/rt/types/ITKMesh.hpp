@@ -45,4 +45,4 @@ using ITKCellIterator = ITKMesh::CellsContainer::Iterator;
 /** ITK Mesh Vertex ID In Cell Iterator */
 using ITKPointInCellIterator = ITKCell::PointIdIterator;
 /**@}*/
-}
+}  // namespace rt

@@ -195,11 +195,11 @@ int main(int argc, char* argv[])
     smgl::RegisterNode<DeformableRegistrationNode>();
     smgl::RegisterNode<WriteTransformNode>();
 
-    // Write dot file
-    smgl::WriteDotFile("graph.dot", graph);
-
     // Compute result
-    // graph.update();
+    graph.update();
+
+    // Write dot file
+    smgl::WriteDotFile("graph.gv", graph);
 
     return EXIT_SUCCESS;
 }

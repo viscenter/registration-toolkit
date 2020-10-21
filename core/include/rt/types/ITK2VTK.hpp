@@ -24,4 +24,4 @@ void ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output);
  *
  */
 void VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output);
-}
+}  // namespace rt

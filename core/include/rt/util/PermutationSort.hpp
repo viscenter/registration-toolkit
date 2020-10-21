@@ -39,4 +39,4 @@ std::vector<T> ApplyPermutation(const std::vector<T>& vec, const Permutation& p)
     });
     return sorted_vec;
 }
-}
+}  // namespace rt
