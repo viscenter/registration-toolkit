@@ -33,6 +33,12 @@ int main(int argc, char* argv[])
         ("enable-alpha", "If enabled, an alpha layer will be "
             "added to the moving image if it does not already have one.");
 
+    po::options_description graphOptions("Render Graph Options");
+    graphOptions.add_options()
+        ("output-graph,g", po::value<std::string>(), "Output file path for the "
+             "final render graph in the JSON file")
+        ("graph-cache-dir,c", po::value<std::string>(), "");
+
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
         ("disable-landmark", "Disable all landmark registration steps")
