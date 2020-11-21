@@ -13,8 +13,6 @@ using namespace rt::graph;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-// IO
-
 int main(int argc, char* argv[])
 {
     ///// Parse the command line options /////
@@ -35,9 +33,8 @@ int main(int argc, char* argv[])
 
     po::options_description graphOptions("Render Graph Options");
     graphOptions.add_options()
-        ("output-graph,g", po::value<std::string>(), "Output file path for the "
-             "final render graph in the JSON file")
-        ("graph-cache-dir,c", po::value<std::string>(), "");
+        ("output-graph,g", po::value<std::string>(), "Render graph JSON file")
+        ("output-dot", po::value<std::string>(), "Render graph Dot file");
 
     po::options_description ldmOptions("Landmark Registration Options");
     ldmOptions.add_options()
@@ -82,6 +79,13 @@ int main(int argc, char* argv[])
     ///// Start render graph /////
     rt::graph::RegisterAllNodeTypes();
     smgl::Graph graph;
+
+    ///// Setup caching /////
+    if (parsed.count("output-graph") > 0) {
+        fs::path cacheFile = parsed["output-graph"].as<std::string>();
+        graph.setEnableCache(true);
+        graph.setCacheFile(cacheFile);
+    }
 
     ///// Setup input files /////
     auto fixed = graph.insertNode<ImageReadNode>();
@@ -182,8 +186,10 @@ int main(int argc, char* argv[])
     // Compute result
     graph.update();
 
-    // Write dot file
-    smgl::WriteDotFile("graph.gv", graph);
+    // Write Dot file
+    if (parsed.count("output-dot") > 0) {
+        smgl::WriteDotFile(parsed["output-dot"].as<std::string>(), graph);
+    }
 
     return EXIT_SUCCESS;
 }
