@@ -2,8 +2,20 @@
 # Core #
 ########
 
+## Filesystem ##
+find_package(Filesystem)
+option(RT_USE_BOOSTFS "Use Boost as the filesystem library" "NOT Filesystem_FOUND")
+if(RT_USE_BOOSTFS)
+    add_compile_definitions(RT_USE_BOOSTFS)
+    find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem)
+    set(RT_FS_LIB Boost::filesystem)
+else()
+    set(RT_FS_LIB std::filesystem)
+endif()
+message(STATUS "Using filesystem library: ${RT_FS_LIB}")
+
 ### Boost ###
-find_package(Boost REQUIRED COMPONENTS filesystem program_options)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 ### OpenCV ###
 find_package(OpenCV 4 QUIET REQUIRED)

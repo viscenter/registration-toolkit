@@ -1,11 +1,12 @@
 #include "rt/io/LandmarkReader.hpp"
 
+#include <fstream>
 #include <string>
 
 #include <boost/algorithm/string.hpp>
 
 using namespace rt;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 void LandmarkReader::read()
 {
@@ -54,15 +55,13 @@ void LandmarkReader::read()
     ifs.close();
 }
 
-LandmarkReader::LandmarkReader(boost::filesystem::path landmarksPath)
+LandmarkReader::LandmarkReader(fs::path landmarksPath)
     : path_(std::move(landmarksPath))
 {
 }
 
-void LandmarkReader::setLandmarksPath(const boost::filesystem::path& path)
-{
-    path_ = path;
-}
+void LandmarkReader::setLandmarksPath(const fs::path& path) { path_ = path; }
+
 rt::LandmarkContainer LandmarkReader::getFixedLandmarks() { return fixed_; }
 
 rt::LandmarkContainer LandmarkReader::getMovingLandmarks() { return moving_; }

@@ -2,9 +2,8 @@
 
 /** @file */
 
-#include <boost/filesystem.hpp>
-
 #include "rt/LandmarkRegistrationBase.hpp"
+#include "rt/filesystem.hpp"
 
 namespace rt
 {
@@ -17,7 +16,7 @@ class LandmarkWriter
 {
 public:
     /** @brief Set the output file path */
-    void setPath(const boost::filesystem::path& p);
+    void setPath(const filesystem::path& p);
 
     /**
      * @brief Set the fixed landmarks
@@ -45,7 +44,7 @@ public:
 
 private:
     /** Output path */
-    boost::filesystem::path path_;
+    filesystem::path path_;
     /** Fixed landmarks */
     LandmarkContainer fixed_;
     /** Moving landmarks */

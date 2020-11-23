@@ -2,8 +2,9 @@
 
 /** @file */
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
+
+#include "rt/filesystem.hpp"
 
 namespace rt
 {
@@ -17,7 +18,7 @@ namespace rt
  * cv::imread(path.string(), cv::IMREAD_UNCHANGED);
  * @endcode
  */
-cv::Mat ReadImage(const boost::filesystem::path& path);
+cv::Mat ReadImage(const filesystem::path& path);
 
 /**
  * @brief Write image to the specified path
@@ -25,6 +26,6 @@ cv::Mat ReadImage(const boost::filesystem::path& path);
  * Use rt::WriteTIFF for all tiff images, which includes support for
  * transparency and floating-point images. Otherwise, uses cv::imwrite.
  */
-void WriteImage(const boost::filesystem::path& path, const cv::Mat& img);
+void WriteImage(const filesystem::path& path, const cv::Mat& img);
 
 }  // namespace rt

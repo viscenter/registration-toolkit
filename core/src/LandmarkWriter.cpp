@@ -1,9 +1,10 @@
 #include "rt/io/LandmarkWriter.hpp"
 
+#include <fstream>
 #include <iostream>
 
 using namespace rt;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 void LandmarkWriter::setPath(const fs::path& p) { path_ = p; }
 

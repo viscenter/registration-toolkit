@@ -2,7 +2,6 @@
 
 /** @file */
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
 #include "rt/types/ITKMesh.hpp"

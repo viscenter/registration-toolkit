@@ -8,10 +8,10 @@ set(proj_prefix "rt")
 set(include_install_dir "include/${proj_prefix}")
 
 # CMake config files
-set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+set(config_install_dir "lib/cmake/${proj_prefix}")
 
 # Extra resources
-set(share_install_dir "share/${PROJECT_NAME}")
+set(share_install_dir "share/${proj_prefix}")
 
 # Targets export name (Config)
 set(targets_export_name "${PROJECT_NAME}Targets")

@@ -4,9 +4,9 @@
 
 #include <fstream>
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
+#include "rt/filesystem.hpp"
 #include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
@@ -31,7 +31,7 @@ class OBJReader
 {
 public:
     /** @brief Set the OBJ file path */
-    void setPath(const boost::filesystem::path& p);
+    void setPath(const filesystem::path& p);
 
     /** @brief Read the mesh from file */
     ITKMesh::Pointer read();
@@ -102,9 +102,9 @@ private:
     void build_mesh_();
 
     /** Path to the OBJ file */
-    boost::filesystem::path path_;
+    filesystem::path path_;
     /** Path to the parsed texture image */
-    boost::filesystem::path texturePath_;
+    filesystem::path texturePath_;
     /** Internal representation of mesh structure */
     ITKMesh::Pointer mesh_;
     /** Internal representation of UV Map */

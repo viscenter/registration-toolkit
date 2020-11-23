@@ -1,11 +1,11 @@
 #pragma once
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 #include <smgl/Node.hpp>
 #include <smgl/Ports.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/types/Transforms.hpp"
 
 namespace rt
@@ -15,7 +15,7 @@ namespace graph
 
 class CompositeTransformNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:
@@ -35,7 +35,7 @@ private:
 
 class WriteTransformNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:
@@ -54,7 +54,7 @@ private:
 
 class TransformLandmarksNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:

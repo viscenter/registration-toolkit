@@ -14,7 +14,7 @@ namespace lt
 }
 
 using namespace rt;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 // Return a CV Mat type using TIF type (signed, unsigned, float),
 // bit-depth, and number of channels

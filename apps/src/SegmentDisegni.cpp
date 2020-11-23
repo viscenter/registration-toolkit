@@ -3,14 +3,14 @@
 #include <regex>
 #include <sstream>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <opencv2/core.hpp>
 
 #include "rt/DisegniSegmenter.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
 cv::Point ParsePointString(const std::string& s);

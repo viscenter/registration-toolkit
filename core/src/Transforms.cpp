@@ -6,7 +6,7 @@
 #include <itkTransformFileWriter.h>
 
 using namespace rt;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 void rt::WriteTransform(
     const fs::path& path, const Transform::Pointer& transform)

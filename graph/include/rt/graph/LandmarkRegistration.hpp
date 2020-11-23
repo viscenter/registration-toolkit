@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 #include <smgl/Node.hpp>
 #include <smgl/Ports.hpp>
@@ -8,6 +7,7 @@
 #include "rt/AffineLandmarkRegistration.hpp"
 #include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/LandmarkDetector.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/types/Transforms.hpp"
 
 namespace rt
@@ -17,7 +17,7 @@ namespace graph
 
 class LandmarkDetectorNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:
@@ -40,7 +40,7 @@ private:
 
 class AffineLandmarkRegistrationNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:
@@ -62,7 +62,7 @@ private:
 
 class BSplineLandmarkWarpingNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
     LandmarkContainer fixed_;

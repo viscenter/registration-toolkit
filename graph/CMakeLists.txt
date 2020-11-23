@@ -16,8 +16,8 @@ target_include_directories(rt_graph
 target_link_libraries(rt_graph
     PUBLIC
         rt::core
+        ${RT_FS_LIB}
         smgl::smgl
-        Boost::filesystem
         opencv_core
 )
 target_compile_features(rt_graph PUBLIC cxx_std_14)

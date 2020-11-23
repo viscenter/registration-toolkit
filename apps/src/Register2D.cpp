@@ -1,17 +1,17 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <smgl/Graph.hpp>
 #include <smgl/Graphviz.hpp>
 
+#include "rt/filesystem.hpp"
 #include "rt/graph/Nodes.hpp"
 
 using namespace rt;
 using namespace rt::graph;
 
 namespace po = boost::program_options;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 int main(int argc, char* argv[])
 {

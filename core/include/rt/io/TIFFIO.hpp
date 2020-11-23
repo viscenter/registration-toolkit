@@ -2,8 +2,9 @@
 
 /** @file */
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
+
+#include "rt/filesystem.hpp"
 
 namespace rt
 {
@@ -24,7 +25,7 @@ namespace io
  * @param path Path to TIFF file
  * @param offset Shift the encoded strip offset by a number of bytes
  */
-cv::Mat ReadRawTIFF(const boost::filesystem::path& path, int offset = 0);
+cv::Mat ReadRawTIFF(const filesystem::path& path, int offset = 0);
 
 /**
  * @brief Write a TIFF image to file
@@ -33,6 +34,6 @@ cv::Mat ReadRawTIFF(const boost::filesystem::path& path, int offset = 0);
  * unsigned 8 & 16 bit integer types. Also supports 1-4 channel images. Unless
  * you only need TIFF support, use rt::WriteImage instead.
  */
-void WriteTIFF(const boost::filesystem::path& path, const cv::Mat& img);
+void WriteTIFF(const filesystem::path& path, const cv::Mat& img);
 }  // namespace io
 }  // namespace rt

@@ -8,11 +8,11 @@
 #include "rt/io/TIFFIO.hpp"
 #include "rt/util/ImageConversion.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 static const auto IsFormat = rt::FileExtensionFilter;
 
-cv::Mat rt::ReadImage(const boost::filesystem::path& path)
+cv::Mat rt::ReadImage(const fs::path& path)
 {
     return cv::imread(path.string(), cv::IMREAD_UNCHANGED);
 }

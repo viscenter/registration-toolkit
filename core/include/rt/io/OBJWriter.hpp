@@ -6,9 +6,9 @@
 #include <map>
 #include <string>
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
+#include "rt/filesystem.hpp"
 #include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
@@ -36,11 +36,11 @@ public:
     OBJWriter() = default;
 
     /** @brief Constructor with output path and input mesh */
-    OBJWriter(boost::filesystem::path outputPath, ITKMesh::Pointer mesh);
+    OBJWriter(filesystem::path outputPath, ITKMesh::Pointer mesh);
 
     /** @brief Constructor with output path and textured mesh information */
     OBJWriter(
-        boost::filesystem::path outputPath,
+        filesystem::path outputPath,
         ITKMesh::Pointer mesh,
         UVMap uvMap,
         cv::Mat uvImg);
@@ -52,7 +52,7 @@ public:
      * write() and validate() will fail if path does not have an expected
      * file extension (.obj/.OBJ).
      */
-    void setPath(const boost::filesystem::path& path);
+    void setPath(const filesystem::path& path);
 
     /** @brief Set the input mesh */
     void setMesh(const ITKMesh::Pointer& mesh);
@@ -77,7 +77,7 @@ public:
 
 private:
     /** Output file path */
-    boost::filesystem::path outputPath_;
+    filesystem::path outputPath_;
     /** Output OBJ filestream */
     std::ofstream outputMesh_;
     /** Output MTL filestream */

@@ -4,7 +4,7 @@ FetchContent_Declare(
     GIT_TAG 1-basic-graph-vis
     CMAKE_CACHE_ARGS
         -DSMGL_BUILD_JSON:BOOL=ON
-        -DSMGL_USE_BOOSTFS:BOOL=ON
+        -DSMGL_USE_BOOSTFS:BOOL=${RT_USE_BOOSTFS}
         -DSMGL_BUILD_TESTS:BOOL=OFF
         -DSMGL_BUILD_DOCS:BOOL=OFF
 )
@@ -12,7 +12,7 @@ FetchContent_Declare(
 FetchContent_GetProperties(smeagol)
 if(NOT smeagol_POPULATED)
     set(SMGL_BUILD_JSON ON CACHE INTERNAL "")
-    set(SMGL_USE_BOOSTFS ON CACHE INTERNAL "")
+    set(SMGL_USE_BOOSTFS ${RT_USE_BOOSTFS} CACHE INTERNAL "")
     set(SMGL_BUILD_TESTS OFF CACHE INTERNAL "")
     set(SMGL_BUILD_DOCS OFF CACHE INTERNAL "")
     FetchContent_Populate(smeagol)

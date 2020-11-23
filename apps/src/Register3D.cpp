@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
 #include <itkTransformFileWriter.h>
@@ -10,6 +9,7 @@
 #include "rt/BSplineLandmarkWarping.hpp"
 #include "rt/DeformableRegistration.hpp"
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/OBJReader.hpp"
@@ -19,7 +19,7 @@
 
 using namespace rt;
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
 // Composite Transform

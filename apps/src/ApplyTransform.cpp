@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <itkCompositeTransform.h>
 #include <itkCompositeTransformIOHelper.h>
@@ -8,6 +7,7 @@
 #include <itkTransformFileReader.h>
 
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
 #include "rt/util/ImageConversion.hpp"
 
@@ -15,7 +15,7 @@ using CompositeTransform = itk::CompositeTransform<double, 2>;
 using TransformConverter = itk::CompositeTransformIOHelperTemplate<double>;
 
 namespace po = boost::program_options;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 int main(int argc, char* argv[])
 {

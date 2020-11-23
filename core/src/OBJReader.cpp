@@ -1,7 +1,3 @@
-//
-// Created by Seth Parker on 11/11/16.
-//
-
 #include "rt/io/OBJReader.hpp"
 
 #include <regex>
@@ -15,13 +11,13 @@
 using namespace rt;
 using namespace rt::io;
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 // Constant for validating face values
 constexpr static int NOT_PRESENT = -1;
 constexpr static size_t VALID_FACE_SIZE = 3;
 
-void OBJReader::setPath(const boost::filesystem::path& p) { path_ = p; }
+void OBJReader::setPath(const fs::path& p) { path_ = p; }
 
 ITKMesh::Pointer OBJReader::getMesh() { return mesh_; }
 

@@ -46,7 +46,7 @@ target_include_directories(rt_${module}
 )
 target_link_libraries(rt_${module}
     PUBLIC
-        Boost::filesystem
+        ${RT_FS_LIB}
         opencv_core
         ITKCommon
         ITKTransform

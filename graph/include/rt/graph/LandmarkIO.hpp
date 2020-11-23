@@ -1,9 +1,9 @@
 #pragma once
 
-#include <boost/filesystem.hpp>
 #include <smgl/Node.hpp>
 #include <smgl/Ports.hpp>
 
+#include "rt/filesystem.hpp"
 #include "rt/io/LandmarkReader.hpp"
 #include "rt/io/LandmarkWriter.hpp"
 
@@ -14,7 +14,7 @@ namespace graph
 
 class LandmarkReaderNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:
@@ -35,7 +35,7 @@ private:
 
 class LandmarkWriterNode : public smgl::Node
 {
-    using Path = boost::filesystem::path;
+    using Path = filesystem::path;
     using Metadata = smgl::Metadata;
 
 public:

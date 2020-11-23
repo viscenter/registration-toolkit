@@ -1,4 +1,11 @@
 @PACKAGE_INIT@
 
+if(@RT_USE_BOOSTFS@)
+    find_package(Boost 1.58 QUIET REQUIRED COMPONENTS system filesystem)
+    add_compile_definitions(RT_USE_BOOSTFS)
+else()
+    find_dependency(Filesystem QUIET REQUIRED)
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/@targets_export_name@.cmake")
 check_required_components("@PROJECT_NAME@")

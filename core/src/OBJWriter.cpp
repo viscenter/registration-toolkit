@@ -4,7 +4,7 @@
 
 #include "rt/io/ImageIO.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 static constexpr int UNSET_VALUE = -1;
 

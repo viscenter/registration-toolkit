@@ -2,15 +2,15 @@
 #include <iostream>
 #include <vector>
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/LandmarkDetector.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkWriter.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 void WriteLDM(const fs::path& path, const std::vector<rt::LandmarkPair>& pairs);
 

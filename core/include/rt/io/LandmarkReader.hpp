@@ -2,10 +2,10 @@
 
 /** @file */
 
-#include <boost/filesystem.hpp>
 #include <opencv2/core.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
+#include "rt/filesystem.hpp"
 
 namespace rt
 {
@@ -22,10 +22,10 @@ public:
     LandmarkReader() = default;
 
     /** @brief Construct with path */
-    explicit LandmarkReader(boost::filesystem::path landmarksPath);
+    explicit LandmarkReader(filesystem::path landmarksPath);
 
     /** @brief Set the path to the Landmarks file */
-    void setLandmarksPath(const boost::filesystem::path& path);
+    void setLandmarksPath(const filesystem::path& path);
 
     /** @brief Read the Landmarks file */
     void read();
@@ -38,7 +38,7 @@ public:
 
 private:
     /** Path to the Landmarks file */
-    boost::filesystem::path path_;
+    filesystem::path path_;
 
     /** Fixed landmarks container */
     LandmarkContainer fixed_;
