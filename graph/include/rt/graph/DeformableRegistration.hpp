@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include <opencv2/core.hpp>
 #include <smgl/Node.hpp>
 #include <smgl/Ports.hpp>
@@ -29,8 +31,7 @@ public:
     smgl::InputPort<cv::Mat> movingImage{
         &reg_, &DeformableRegistration::setMovingImage};
     /** @brief Deformable iterations port */
-    smgl::InputPort<int> iterations{
-        &reg_, &DeformableRegistration::setNumberOfIterations};
+    smgl::InputPort<int> iterations{&iters_};
     /**@}*/
 
     /** @name Output Ports */
