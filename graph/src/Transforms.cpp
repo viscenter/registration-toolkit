@@ -4,11 +4,12 @@
 #include "rt/util/ImageConversion.hpp"
 
 namespace rtg = rt::graph;
+namespace fs = rt::filesystem;
 
 rtg::CompositeTransformNode::CompositeTransformNode()
 {
-    registerInputPort("lhs", lhs);
-    registerInputPort("rhs", rhs);
+    registerInputPort("first", first);
+    registerInputPort("second", second);
     registerOutputPort("result", result);
 
     compute = [=]() {
@@ -20,27 +21,27 @@ rtg::CompositeTransformNode::CompositeTransformNode()
             tfm->AddTransform(second_);
         }
         tfm->FlattenTransformQueue();
-        combined_ = tfm;
+        result_ = tfm;
     };
 }
 
 smgl::Metadata rtg::CompositeTransformNode::serialize_(
-    bool useCache, const Path& cacheDir)
+    bool useCache, const fs::path& cacheDir)
 {
-    Metadata m;
+    smgl::Metadata m;
     if (useCache) {
-        WriteTransform(cacheDir / "composite.tfm", combined_);
+        WriteTransform(cacheDir / "composite.tfm", result_);
         m["transform"] = "composite.tfm";
     }
     return m;
 }
 
 void rtg::CompositeTransformNode::deserialize_(
-    const Metadata& meta, const Path& cacheDir)
+    const smgl::Metadata& meta, const fs::path& cacheDir)
 {
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();
-        combined_ = ReadTransform(cacheDir / file);
+        result_ = ReadTransform(cacheDir / file);
     }
 }
 
@@ -54,12 +55,13 @@ rtg::WriteTransformNode::WriteTransformNode()
     };
 }
 
-smgl::Metadata rtg::WriteTransformNode::serialize_(bool, const Path&)
+smgl::Metadata rtg::WriteTransformNode::serialize_(bool, const fs::path&)
 {
     return {{"path", path_.string()}};
 }
 
-void rtg::WriteTransformNode::deserialize_(const Metadata& meta, const Path&)
+void rtg::WriteTransformNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path&)
 {
     path_ = meta["path"].get<std::string>();
 }
@@ -80,14 +82,14 @@ rtg::TransformLandmarksNode::TransformLandmarksNode()
 }
 
 smgl::Metadata rtg::TransformLandmarksNode::serialize_(
-    bool useCache, const Path& cacheDir)
+    bool useCache, const fs::path& cacheDir)
 {
     // TODO: Implement
-    return Metadata::object();
+    return smgl::Metadata::object();
 }
 
 void rtg::TransformLandmarksNode::deserialize_(
-    const Metadata& meta, const Path& cacheDir)
+    const smgl::Metadata& meta, const fs::path& cacheDir)
 {
     // TODO:: Implement
 }
@@ -111,4 +113,17 @@ rtg::ImageResampleNode::ImageResampleNode()
         std::cout << "Resampling image..." << std::endl;
         resampled_ = ImageTransformResampler(moving_, fixed_.size(), tfm_);
     };
+}
+
+smgl::Metadata rt::graph::ImageResampleNode::serialize_(
+    bool useCache, const fs::path& cacheDir)
+{
+    // TODO: Implement
+    return smgl::Metadata::object();
+}
+
+void rt::graph::ImageResampleNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path& cacheDir)
+{
+    // TODO: Implement
 }

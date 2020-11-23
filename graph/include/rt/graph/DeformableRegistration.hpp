@@ -15,7 +15,10 @@ namespace rt
 namespace graph
 {
 
-/** @brief DeformableRegistration Graph Node */
+/**
+ * @brief B-Spline Deformable Registration
+ * @see DeformableRegistration
+ */
 class DeformableRegistrationNode : public smgl::Node
 {
 public:

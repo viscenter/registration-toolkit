@@ -3,6 +3,7 @@
 #include "rt/io/ImageIO.hpp"
 
 namespace rtg = rt::graph;
+namespace fs = rt::filesystem;
 
 rtg::ImageReadNode::ImageReadNode()
 {
@@ -11,12 +12,13 @@ rtg::ImageReadNode::ImageReadNode()
     compute = [this]() { img_ = ReadImage(path_); };
 }
 
-smgl::Metadata rtg::ImageReadNode::serialize_(bool, const Path&)
+smgl::Metadata rtg::ImageReadNode::serialize_(bool, const fs::path&)
 {
     return {{"path", path_.string()}};
 }
 
-void rtg::ImageReadNode::deserialize_(const Metadata& meta, const Path&)
+void rtg::ImageReadNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path&)
 {
     path_ = meta["path"].get<std::string>();
     img_ = rt::ReadImage(path_);
@@ -29,12 +31,13 @@ rtg::ImageWriteNode::ImageWriteNode()
     compute = [this]() { WriteImage(path_, img_); };
 }
 
-smgl::Metadata rtg::ImageWriteNode::serialize_(bool, const Path&)
+smgl::Metadata rtg::ImageWriteNode::serialize_(bool, const fs::path&)
 {
     return {{"path", path_.string()}};
 }
 
-void rtg::ImageWriteNode::deserialize_(const Metadata& meta, const Path&)
+void rtg::ImageWriteNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path&)
 {
     path_ = meta["path"].get<std::string>();
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+/** @file */
+
 #include "rt/graph/DeformableRegistration.hpp"
 #include "rt/graph/ImageIO.hpp"
 #include "rt/graph/LandmarkIO.hpp"
@@ -10,6 +12,7 @@ namespace rt
 {
 namespace graph
 {
+/** @brief Register all rt nodes with the graph system */
 inline void RegisterAllNodeTypes()
 {
     smgl::RegisterNode<ImageReadNode>();

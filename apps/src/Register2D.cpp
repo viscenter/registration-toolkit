@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
         ldmNode->getOutputPort("movingLandmarks") >> affine->movingLandmarks;
 
         // Transform
-        affine->transform >> landmarkTfms->lhs;
+        affine->transform >> landmarkTfms->first;
 
         // B-Spline landmark warping
         if (parsed.count("disable-landmark-bspline") == 0) {
@@ -140,11 +140,11 @@ int main(int argc, char* argv[])
             fixed->image >> bspline->fixedImage;
             ldmNode->getOutputPort("fixedLandmarks") >> bspline->fixedLandmarks;
             tfmLdm->landmarksOut >> bspline->movingLandmarks;
-            bspline->transform >> landmarkTfms->rhs;
+            bspline->transform >> landmarkTfms->second;
         }
 
         // Add landmark transforms to final transforms
-        landmarkTfms->result >> compositeTfms->lhs;
+        landmarkTfms->result >> compositeTfms->first;
     }
 
     ///// Deformable Registration /////
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
         resample1->resampledImage >> deformable->movingImage;
 
         // Add transform to final composite
-        deformable->transform >> compositeTfms->rhs;
+        deformable->transform >> compositeTfms->second;
     }
 
     ///// Resample the source image /////

@@ -4,6 +4,7 @@
 #include "rt/io/LandmarkWriter.hpp"
 
 namespace rtg = rt::graph;
+namespace fs = rt::filesystem;
 
 rtg::LandmarkDetectorNode::LandmarkDetectorNode()
 {
@@ -22,9 +23,9 @@ rtg::LandmarkDetectorNode::LandmarkDetectorNode()
 }
 
 smgl::Metadata rtg::LandmarkDetectorNode::serialize_(
-    bool useCache, const Path& cacheDir)
+    bool useCache, const fs::path& cacheDir)
 {
-    Metadata m;
+    smgl::Metadata m;
     if (useCache) {
         LandmarkWriter writer;
         writer.setPath(cacheDir / "landmarks.ldm");
@@ -38,7 +39,7 @@ smgl::Metadata rtg::LandmarkDetectorNode::serialize_(
 }
 
 void rtg::LandmarkDetectorNode::deserialize_(
-    const Metadata& meta, const Path& cacheDir)
+    const smgl::Metadata& meta, const fs::path& cacheDir)
 {
     if (meta.contains("landmarks")) {
         auto file = meta["landmarks"].get<std::string>();
@@ -65,9 +66,9 @@ rtg::AffineLandmarkRegistrationNode::AffineLandmarkRegistrationNode()
 }
 
 smgl::Metadata rtg::AffineLandmarkRegistrationNode::serialize_(
-    bool useCache, const Path& cacheDir)
+    bool useCache, const fs::path& cacheDir)
 {
-    Metadata m;
+    smgl::Metadata m;
     if (useCache) {
         WriteTransform(cacheDir / "affine.tfm", tfm_);
         m["transform"] = "affine.tfm";
@@ -77,7 +78,7 @@ smgl::Metadata rtg::AffineLandmarkRegistrationNode::serialize_(
 }
 
 void rtg::AffineLandmarkRegistrationNode::deserialize_(
-    const Metadata& meta, const Path& cacheDir)
+    const smgl::Metadata& meta, const fs::path& cacheDir)
 {
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();
@@ -102,9 +103,9 @@ rtg::BSplineLandmarkWarpingNode::BSplineLandmarkWarpingNode()
 }
 
 smgl::Metadata rtg::BSplineLandmarkWarpingNode::serialize_(
-    bool useCache, const Path& cacheDir)
+    bool useCache, const fs::path& cacheDir)
 {
-    Metadata m;
+    smgl::Metadata m;
     if (useCache) {
         WriteTransform(cacheDir / "bspline.tfm", tfm_);
         m["transform"] = "bspline.tfm";
@@ -114,7 +115,7 @@ smgl::Metadata rtg::BSplineLandmarkWarpingNode::serialize_(
 }
 
 void rtg::BSplineLandmarkWarpingNode::deserialize_(
-    const Metadata& meta, const Path& cacheDir)
+    const smgl::Metadata& meta, const fs::path& cacheDir)
 {
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();

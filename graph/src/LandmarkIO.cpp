@@ -1,6 +1,7 @@
 #include "rt/graph/LandmarkIO.hpp"
 
 namespace rtg = rt::graph;
+namespace fs = rt::filesystem;
 
 rtg::LandmarkReaderNode::LandmarkReaderNode()
 {
@@ -16,12 +17,13 @@ rtg::LandmarkReaderNode::LandmarkReaderNode()
     };
 }
 
-smgl::Metadata rtg::LandmarkReaderNode::serialize_(bool, const Path&)
+smgl::Metadata rtg::LandmarkReaderNode::serialize_(bool, const fs::path&)
 {
     return {{"path", path_.string()}};
 }
 
-void rtg::LandmarkReaderNode::deserialize_(const Metadata& meta, const Path&)
+void rtg::LandmarkReaderNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path&)
 {
     path_ = meta["path"].get<std::string>();
     compute();
@@ -41,12 +43,13 @@ rtg::LandmarkWriterNode::LandmarkWriterNode()
     };
 }
 
-smgl::Metadata rtg::LandmarkWriterNode::serialize_(bool, const Path&)
+smgl::Metadata rtg::LandmarkWriterNode::serialize_(bool, const fs::path&)
 {
     return {{"path", path_.string()}};
 }
 
-void rtg::LandmarkWriterNode::deserialize_(const Metadata& meta, const Path&)
+void rtg::LandmarkWriterNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path&)
 {
     path_ = meta["path"].get<std::string>();
 }
