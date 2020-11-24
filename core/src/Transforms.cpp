@@ -11,13 +11,18 @@ namespace fs = rt::filesystem;
 void rt::WriteTransform(
     const fs::path& path, const Transform::Pointer& transform)
 {
+    // Always write a composite transform
+    auto t = CompositeTransform::New();
+    t->AddTransform(transform);
+    t->FlattenTransformQueue();
+
     auto writer = itk::TransformFileWriter::New();
     writer->SetFileName(path.string());
-    writer->SetInput(transform);
+    writer->SetInput(t);
     writer->Update();
 }
 
-CompositeTransform::Pointer rt::ReadTransform(const fs::path& path)
+Transform::Pointer rt::ReadTransform(const fs::path& path)
 {
     // Register transforms
     itk::TransformFactoryBase::RegisterDefaultTransforms();

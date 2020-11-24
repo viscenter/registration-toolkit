@@ -1,8 +1,6 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
-#include <itkCompositeTransform.h>
-#include <itkTransformFileWriter.h>
 #include <opencv2/core.hpp>
 
 #include "rt/AffineLandmarkRegistration.hpp"
@@ -15,18 +13,13 @@
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/Exceptions.hpp"
+#include "rt/types/Transforms.hpp"
 #include "rt/types/UVMap.hpp"
 
 using namespace rt;
 
 namespace fs = rt::filesystem;
 namespace po = boost::program_options;
-
-// Composite Transform
-using CompositeTransform = itk::CompositeTransform<double, 2>;
-
-// IO
-using TransformWriter = itk::TransformFileWriterTemplate<double>;
 
 int main(int argc, char* argv[])
 {
@@ -146,7 +139,7 @@ int main(int argc, char* argv[])
     auto iterations = parsed["deformable-iterations"].as<int>();
     if (iterations > 0) {
         printf("Running deformable registration...\n");
-        rt::DeformableRegistration deformable;
+        DeformableRegistration deformable;
         deformable.setFixedImage(fixed);
         deformable.setMovingImage(tmpMoving);
         deformable.setNumberOfIterations(iterations);
@@ -189,14 +182,9 @@ int main(int argc, char* argv[])
 
     ///// Write the final transformations /////
     if (parsed.count("output-tfm")) {
-        fs::path transformPath = parsed["output-tfm"].as<std::string>();
         printf("Writing transformation to file...\n");
-
-        // Write deformable transform
-        auto transformWriter = TransformWriter::New();
-        transformWriter->SetFileName(transformPath.string());
-        transformWriter->SetInput(compositeTrans);
-        transformWriter->Update();
+        fs::path transformPath = parsed["output-tfm"].as<std::string>();
+        WriteTransform(transformPath, compositeTrans);
     }
 
     return EXIT_SUCCESS;

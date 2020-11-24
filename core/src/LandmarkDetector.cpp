@@ -18,7 +18,7 @@ void LandmarkDetector::setMatchRatio(float r) { nnMatchRatio_ = r; }
 std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 {
     // Make sure we have the images
-    if (not fixedImg_.empty() || not movingImg_.empty()) {
+    if (fixedImg_.empty() || movingImg_.empty()) {
         throw std::runtime_error("Missing image(s)");
     }
 

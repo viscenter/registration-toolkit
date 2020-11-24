@@ -18,6 +18,7 @@ target_link_libraries(rt_register2d
     opencv_imgcodecs
     Boost::program_options
     ${ITKIOTransformLibs}
+    smgl::smgl
 )
 
 # 3D Registration Apps

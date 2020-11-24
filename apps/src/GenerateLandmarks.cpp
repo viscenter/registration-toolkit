@@ -1,9 +1,4 @@
-#include <fstream>
 #include <iostream>
-#include <vector>
-
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 #include "rt/LandmarkDetector.hpp"
 #include "rt/filesystem.hpp"
@@ -11,8 +6,6 @@
 #include "rt/io/LandmarkWriter.hpp"
 
 namespace fs = rt::filesystem;
-
-void WriteLDM(const fs::path& path, const std::vector<rt::LandmarkPair>& pairs);
 
 int main(int argc, const char* argv[])
 {
