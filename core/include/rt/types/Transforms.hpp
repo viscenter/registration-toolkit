@@ -20,6 +20,12 @@ using CompositeTransform = itk::CompositeTransform<double, 2>;
 void WriteTransform(
     const filesystem::path& path, const Transform::Pointer& transform);
 
+template <typename T>
+void WriteTransform(const filesystem::path& path, const T& transform)
+{
+    WriteTransform(path, Transform::Pointer(transform.GetPointer()));
+}
+
 /** @brief Read Transform from a file */
 Transform::Pointer ReadTransform(const filesystem::path& path);
 }  // namespace rt
