@@ -94,6 +94,48 @@ void rtg::TransformLandmarksNode::deserialize_(
     // TODO:: Implement
 }
 
+rtg::TransformUVMapNode::TransformUVMapNode()
+{
+    registerInputPort("transform", transform);
+    registerInputPort("uvMapIn", uvMapIn);
+    registerInputPort("fixedImage", fixedImage);
+    registerInputPort("movingImage", movingImage);
+
+    registerOutputPort("uvMapOut", uvMapOut);
+
+    compute = [this]() {
+        std::cout << "Transform UV map..." << std::endl;
+        uvOut_ = UVMap();
+        uvOut_.ratio(fixed_.cols, fixed_.rows);
+        uvOut_.setOrigin(uvIn_.origin());
+
+        cv::Vec2d fixedSize{fixed_.cols - 1, fixed_.rows - 1};
+        cv::Vec2d movingSize{moving_.cols - 1, moving_.rows - 1};
+        for (const auto& origUV : uvIn_.uvs_as_vector()) {
+            // Transform the UV point
+            auto in = origUV.mul(fixedSize);
+            auto out = tfm_->TransformPoint(in.val);
+            cv::Vec2d newUV{out[0] / movingSize[0], out[1] / movingSize[1]};
+
+            // Assign to new UV map
+            uvOut_.addUV(newUV);
+        }
+    };
+}
+
+smgl::Metadata rtg::TransformUVMapNode::serialize_(
+    bool useCache, const fs::path& cacheDir)
+{
+    // TODO: Implement
+    return smgl::Metadata::object();
+}
+
+void rtg::TransformUVMapNode::deserialize_(
+    const smgl::Metadata& meta, const fs::path& cacheDir)
+{
+    // TODO:: Implement
+}
+
 rtg::ImageResampleNode::ImageResampleNode()
 {
     registerInputPort("fixedImage", fixedImage);

@@ -4,6 +4,7 @@ set(srcs
     src/LandmarkIO.cpp
     src/LandmarkRegistration.cpp
     src/Transforms.cpp
+    src/MeshIO.cpp
 )
 
 add_library(rt_graph ${srcs})

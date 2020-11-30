@@ -19,6 +19,10 @@ size_t UVMap::size() const { return uvs_.size(); }
 
 bool UVMap::empty() const { return uvs_.empty(); }
 
+std::vector<cv::Vec2d> UVMap::uvs_as_vector() const { return uvs_; }
+
+std::vector<UVMap::Face> UVMap::faces_as_vector() const { return faces_; }
+
 void UVMap::setOrigin(const UVMap::Origin& o) { origin_ = o; }
 
 UVMap::Origin UVMap::origin() const { return origin_; }

@@ -20,6 +20,7 @@ using CompositeTransform = itk::CompositeTransform<double, 2>;
 void WriteTransform(
     const filesystem::path& path, const Transform::Pointer& transform);
 
+/** @copydoc WriteTransform */
 template <typename T>
 void WriteTransform(const filesystem::path& path, const T& transform)
 {

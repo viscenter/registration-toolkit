@@ -38,6 +38,7 @@ add_executable(rt_register3d src/Register3D.cpp)
 target_link_libraries(rt_register3d
     rt::core
     ${RT_FS_LIB}
+    rt::graph
     opencv_core
     opencv_imgcodecs
     Boost::program_options

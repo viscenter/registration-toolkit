@@ -81,6 +81,12 @@ public:
 
     /** @brief Return whether the UVMap is empty */
     bool empty() const;
+
+    /** @brief Get the UV coordinates as a vector */
+    std::vector<cv::Vec2d> uvs_as_vector() const;
+
+    /** @brief Get the Face to UV mappings as a vector */
+    std::vector<Face> faces_as_vector() const;
     /**@}*/
 
     /**@{*/

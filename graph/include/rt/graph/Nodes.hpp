@@ -6,6 +6,7 @@
 #include "rt/graph/ImageIO.hpp"
 #include "rt/graph/LandmarkIO.hpp"
 #include "rt/graph/LandmarkRegistration.hpp"
+#include "rt/graph/MeshIO.hpp"
 #include "rt/graph/Transforms.hpp"
 
 namespace rt
@@ -27,6 +28,9 @@ inline void RegisterAllNodeTypes()
     smgl::RegisterNode<ImageResampleNode>();
     smgl::RegisterNode<DeformableRegistrationNode>();
     smgl::RegisterNode<WriteTransformNode>();
+    smgl::RegisterNode<MeshReadNode>();
+    smgl::RegisterNode<MeshWriteNode>();
+    smgl::RegisterNode<TransformUVMapNode>();
 }
 }  // namespace graph
 }  // namespace rt

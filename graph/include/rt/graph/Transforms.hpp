@@ -9,6 +9,7 @@
 #include "rt/LandmarkRegistrationBase.hpp"
 #include "rt/filesystem.hpp"
 #include "rt/types/Transforms.hpp"
+#include "rt/types/UVMap.hpp"
 
 namespace rt
 {
@@ -121,6 +122,56 @@ private:
     LandmarkContainer ldmIn_;
     /** Output landmarks */
     LandmarkContainer ldmOut_;
+    /** Graph serialize */
+    smgl::Metadata serialize_(
+        bool useCache, const filesystem::path& cacheDir) override;
+    /** Graph deserialize */
+    void deserialize_(
+        const smgl::Metadata& meta, const filesystem::path& cacheDir) override;
+};
+
+/**
+ * @brief Apply transform to a UVMap
+ *
+ * For every UV coordinate in the UVMap, computes:
+ * \f$l_{out} = T^{-1}(l_{in})\f$. This relies upon the assumption (inherited
+ * from ITK) that the transform maps from the output space to the input space.
+ */
+class TransformUVMapNode : public smgl::Node
+{
+public:
+    /** Default constructor */
+    TransformUVMapNode();
+
+    /** @name Input Ports */
+    /**@{*/
+    /** @brief Transform port */
+    smgl::InputPort<Transform::Pointer> transform{&tfm_};
+    /** @brief Input landmarks port */
+    smgl::InputPort<UVMap> uvMapIn{&uvIn_};
+    /** @brief Input fixed image */
+    smgl::InputPort<cv::Mat> fixedImage{&fixed_};
+    /** @brief Input moving image */
+    smgl::InputPort<cv::Mat> movingImage{&moving_};
+    /**@}*/
+
+    /** @name Output Ports */
+    /**@{*/
+    /** @brief Output landmarks port */
+    smgl::OutputPort<UVMap> uvMapOut{&uvOut_};
+    /**@}*/
+
+private:
+    /** Transform */
+    Transform::Pointer tfm_;
+    /** Input landmarks */
+    UVMap uvIn_;
+    /** Input fixed image */
+    cv::Mat fixed_;
+    /** Input moving image */
+    cv::Mat moving_;
+    /** Output landmarks */
+    UVMap uvOut_;
     /** Graph serialize */
     smgl::Metadata serialize_(
         bool useCache, const filesystem::path& cacheDir) override;

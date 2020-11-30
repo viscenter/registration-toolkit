@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Show the help message
-    if (parsed.count("help") || argc < 4) {
+    if (parsed.count("help")) {
         std::cerr << all << std::endl;
         return EXIT_SUCCESS;
     }
