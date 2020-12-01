@@ -17,6 +17,7 @@ endif()
 ## Build the tests ##
 set(tests
     src/TestITKOCVBridge.cpp
+    src/TestString.cpp
 )
 
 foreach(src ${tests})

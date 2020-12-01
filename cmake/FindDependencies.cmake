@@ -14,8 +14,10 @@ else()
 endif()
 message(STATUS "Using filesystem library: ${RT_FS_LIB}")
 
-### Boost ###
-find_package(Boost REQUIRED COMPONENTS program_options)
+### Boost Program Options ###
+if(RT_BUILD_APPS)
+    find_package(Boost REQUIRED COMPONENTS program_options)
+endif()
 
 ### OpenCV ###
 find_package(OpenCV 4 QUIET REQUIRED)

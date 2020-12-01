@@ -3,7 +3,7 @@
 #include "rt/LandmarkDetector.hpp"
 #include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
-#include "rt/io/LandmarkWriter.hpp"
+#include "rt/io/LandmarkIO.hpp"
 
 namespace fs = rt::filesystem;
 

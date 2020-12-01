@@ -5,7 +5,6 @@
 #include "rt/filesystem.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
-#include "rt/types/ITK2VTK.hpp"
 #include "rt/types/ITKMesh.hpp"
 
 namespace fs = rt::filesystem;

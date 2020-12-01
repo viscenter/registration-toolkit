@@ -3,10 +3,10 @@
 #include <regex>
 #include <string>
 
-#include <boost/algorithm/string.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 #include "rt/types/Exceptions.hpp"
+#include "rt/util/String.hpp"
 
 using namespace rt;
 using namespace rt::io;
@@ -67,14 +67,12 @@ void OBJReader::parse_()
     }
 
     std::string line;
-    std::vector<std::string> strs;
     while (std::getline(ifs, line)) {
         // Parse the line
-        boost::trim(line);
-        boost::split(strs, line, boost::is_any_of(" "));
-        std::for_each(std::begin(strs), std::end(strs), [](std::string& t) {
-            boost::trim(t);
-        });
+        trim(line);
+        auto strs = split(line, ' ');
+        std::for_each(
+            std::begin(strs), std::end(strs), [](auto& t) { trim(t); });
 
         // Handle vertices
         if (std::regex_match(strs[0], vertex)) {
@@ -100,9 +98,6 @@ void OBJReader::parse_()
         else if (std::regex_match(strs[0], mtllib)) {
             parse_mtllib_(strs);
         }
-
-        // Otherwise clear and continue
-        strs.clear();
     }
 
     ifs.close();
@@ -134,12 +129,11 @@ void OBJReader::parse_tcoord_(const std::vector<std::string>& strs)
 void OBJReader::parse_face_(const std::vector<std::string>& strs)
 {
     OBJReader::Face f;
-    std::vector<std::string> vinfo;
     std::vector<std::string> sub(std::begin(strs) + 1, std::end(strs));
     auto faceType = classify_vertref_(sub[0]);
 
-    for (auto s : sub) {
-        boost::split(vinfo, s, boost::is_any_of("/"));
+    for (const auto& s : sub) {
+        auto vinfo = split(s, '/');
         switch (faceType) {
             case RefType::Vertex:
                 f.emplace_back(std::stoi(vinfo[0]), NOT_PRESENT, NOT_PRESENT);
@@ -160,7 +154,6 @@ void OBJReader::parse_face_(const std::vector<std::string>& strs)
             case RefType::Invalid:
                 throw IOException("Invalid face in obj file");
         }
-        vinfo.clear();
     }
     faces_.push_back(f);
 }
@@ -183,13 +176,11 @@ void OBJReader::parse_mtllib_(const std::vector<std::string>& strs)
 
     // Parse the file
     std::string line;
-    std::vector<std::string> mtlstrs;
     while (std::getline(ifs, line)) {
-        boost::trim(line);
-        boost::split(mtlstrs, line, boost::is_any_of(" "));
+        trim(line);
+        auto mtlstrs = split(line, ' ');
         std::for_each(
-            std::begin(mtlstrs), std::end(mtlstrs),
-            [](std::string& t) { boost::trim(t); });
+            std::begin(mtlstrs), std::end(mtlstrs), [](auto& t) { trim(t); });
 
         // Handle map_Kd
         if (std::regex_match(mtlstrs[0], mapKd)) {

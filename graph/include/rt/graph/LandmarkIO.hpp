@@ -6,8 +6,7 @@
 #include <smgl/Ports.hpp>
 
 #include "rt/filesystem.hpp"
-#include "rt/io/LandmarkReader.hpp"
-#include "rt/io/LandmarkWriter.hpp"
+#include "rt/io/LandmarkIO.hpp"
 
 namespace rt
 {

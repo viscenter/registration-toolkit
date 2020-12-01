@@ -4,8 +4,7 @@ set(io_srcs
     src/OBJReader.cpp
     src/OBJWriter.cpp
     src/TIFFIO.cpp
-    src/LandmarkReader.cpp
-    src/LandmarkWriter.cpp
+    src/LandmarkIO.cpp
     src/ImageIO.cpp
 )
 

@@ -1,7 +1,6 @@
 #include "rt/graph/LandmarkRegistration.hpp"
 
-#include "rt/io/LandmarkReader.hpp"
-#include "rt/io/LandmarkWriter.hpp"
+#include "rt/io/LandmarkIO.hpp"
 
 namespace rtg = rt::graph;
 namespace fs = rt::filesystem;
@@ -82,7 +81,7 @@ void rtg::AffineLandmarkRegistrationNode::deserialize_(
 {
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();
-        // TODO: Read affine transform
+        tfm_ = ReadTransform(cacheDir / file);
     }
 }
 
@@ -119,6 +118,6 @@ void rtg::BSplineLandmarkWarpingNode::deserialize_(
 {
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();
-        // TODO: Read transform
+        tfm_ = ReadTransform(cacheDir / file);
     }
 }

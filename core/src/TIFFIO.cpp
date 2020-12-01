@@ -2,10 +2,10 @@
 
 #include <cstring>
 
-#include <boost/algorithm/string.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "rt/Version.hpp"
+#include "rt/util/String.hpp"
 
 // Wrapping in a namespace to avoid define collisions
 namespace lt
@@ -110,7 +110,7 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
     }
 
     auto ext = path.extension().string();
-    boost::to_upper(ext);
+    to_upper(ext);
     if (ext != ".TIF" && ext != ".TIFF") {
         throw std::runtime_error("Invalid file extension " + ext);
     }

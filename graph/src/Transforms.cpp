@@ -1,6 +1,7 @@
 #include "rt/graph/Transforms.hpp"
 
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/io/LandmarkIO.hpp"
 #include "rt/util/ImageConversion.hpp"
 
 namespace rtg = rt::graph;
@@ -84,14 +85,21 @@ rtg::TransformLandmarksNode::TransformLandmarksNode()
 smgl::Metadata rtg::TransformLandmarksNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
-    // TODO: Implement
-    return smgl::Metadata::object();
+    smgl::Metadata m;
+    if (useCache) {
+        WriteLandmarkContainer(cacheDir / "transformed.lc", ldmOut_);
+        m["landmarks"] = "transformed.lc";
+    }
+    return m;
 }
 
 void rtg::TransformLandmarksNode::deserialize_(
     const smgl::Metadata& meta, const fs::path& cacheDir)
 {
-    // TODO:: Implement
+    if (meta.contains("landmarks")) {
+        auto file = meta["landmarks"].get<std::string>();
+        ldmOut_ = ReadLandmarkContainer(cacheDir / file);
+    }
 }
 
 rtg::TransformUVMapNode::TransformUVMapNode()

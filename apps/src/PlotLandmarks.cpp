@@ -8,7 +8,7 @@
 
 #include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
-#include "rt/io/LandmarkReader.hpp"
+#include "rt/io/LandmarkIO.hpp"
 
 using namespace rt;
 

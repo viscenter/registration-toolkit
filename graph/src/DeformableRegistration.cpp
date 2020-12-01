@@ -25,7 +25,8 @@ smgl::Metadata rtg::DeformableRegistrationNode::serialize_(
     Meta m;
     m["iterations"] = iters_;
     if (useCache) {
-        // TODO: Serialize transform
+        WriteTransform(cacheDir / "deformable.tfm", tfm_);
+        m["transform"] = "deformable.tfm";
     }
     return m;
 }
@@ -34,4 +35,8 @@ void rtg::DeformableRegistrationNode::deserialize_(
     const Meta& meta, const fs::path& cacheDir)
 {
     iters_ = meta["iterations"].get<int>();
+    if (meta.contains("transform")) {
+        auto file = meta["transform"].get<std::string>();
+        tfm_ = ReadTransform(cacheDir / file);
+    }
 }
