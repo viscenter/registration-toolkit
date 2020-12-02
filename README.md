@@ -1,5 +1,7 @@
 # registration-toolkit
 
+[![Build and Test](https://github.com/viscenter/registration-toolkit/workflows/Build%20and%20Test/badge.svg)](https://github.com/viscenter/registration-toolkit/actions)
+
 A set of utilities written in C++ for simplifying image alignment tasks. 
 Supports image-to-image and image-to-mesh registration across a range of image 
 depths and types. Fully supports gray, gray+alpha, RGB, and RGBA images in 8, 
@@ -8,7 +10,11 @@ depths and types. Fully supports gray, gray+alpha, RGB, and RGBA images in 8,
 ## Requirements
 * C++14 compiler
 * Boost 1.58+
-    - Only Filesystem and Program Options are required
+    - Required: Program Options
+    - Optional: Filesystem - This project will automatically check if the 
+      compiler provides `std::filesystem`. If it is not found, then 
+      [Boost.Filesystem](https://www.boost.org/) is required. This behavior 
+      can be controlled with the `RT_USE_BOOSTFS` CMake flag.
 * OpenCV 4+
 * ITK 4+
 * VTK 6+
@@ -18,7 +24,7 @@ depths and types. Fully supports gray, gray+alpha, RGB, and RGBA images in 8,
 ### Ubuntu 20.04
 Install using apt:
 ```shell
-sudo apt-get install cmake libopencv-dev libvtk6-dev libboost-filesystem-dev libboost-program-options-dev libinsighttoolkit4-dev
+sudo apt-get install cmake libopencv-dev libvtk6-dev libboost-program-options-dev libinsighttoolkit4-dev
 ```
 
 ### macOS
@@ -65,6 +71,8 @@ The CMake project provides a number of flags for configuring the build:
 * `RT_INSTALL_DOCS`: Install HTML documentation to the system. (Default: OFF)
 * `RT_BUILD_TESTS`: Build project unit tests. This will download and build the 
   Google Test framework. (Default: OFF)
+* `RT_USE_BOOSTFS`: Use the `Boost::filesystem` library instead of 
+  `std::filesystem`. (Default: ON if `std::filesystem` is not found)
 * `RT_USE_VOLCART`: Build with optional Volume Cartographer components 
   (Default: OFF)
   

@@ -17,14 +17,17 @@ endif()
 ## Build the tests ##
 set(tests
     src/TestITKOCVBridge.cpp
+    src/TestString.cpp
+    src/TestUVMapIO.cpp
+    src/TestLandmarkIO.cpp
 )
 
 foreach(src ${tests})
     get_filename_component(filename ${src} NAME_WE)
-    set(testname rtlib_${filename})
+    set(testname rt_${filename})
     add_executable(${testname} ${src})
     target_link_libraries(${testname}
-        rt::rtlib
+        rt::core
         gtest_main
         gmock_main
     )

@@ -1,14 +1,13 @@
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "rt/ReorderUnorganizedTexture.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
-#include "rt/types/ITK2VTK.hpp"
 #include "rt/types/ITKMesh.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[])

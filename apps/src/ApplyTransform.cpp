@@ -1,21 +1,15 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include <itkCompositeTransform.h>
-#include <itkCompositeTransformIOHelper.h>
-#include <itkTransformFactory.h>
-#include <itkTransformFileReader.h>
 
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
+#include "rt/types/Transforms.hpp"
 #include "rt/util/ImageConversion.hpp"
 
-using CompositeTransform = itk::CompositeTransform<double, 2>;
-using TransformConverter = itk::CompositeTransformIOHelperTemplate<double>;
-
 namespace po = boost::program_options;
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 int main(int argc, char* argv[])
 {
@@ -60,16 +54,8 @@ int main(int argc, char* argv[])
     fs::path tfmPath = parsed["transform"].as<std::string>();
     fs::path outputPath = parsed["output-file"].as<std::string>();
 
-    // Register transforms
-    itk::TransformFactoryBase::RegisterDefaultTransforms();
-
     // Read transform
-    auto tfmReader = itk::TransformFileReader::New();
-    tfmReader->SetFileName(tfmPath.string());
-    tfmReader->Update();
-
-    CompositeTransform::Pointer transform = dynamic_cast<CompositeTransform*>(
-        tfmReader->GetTransformList()->begin()->GetPointer());
+    auto transform = rt::ReadTransform(tfmPath);
 
     // Load the fixed image and moving image (at full depth)
     auto fixed = rt::ReadImage(fixedPath);

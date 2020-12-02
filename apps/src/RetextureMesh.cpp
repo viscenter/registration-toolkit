@@ -1,13 +1,13 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
 int main(int argc, char** argv)

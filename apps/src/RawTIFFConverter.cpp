@@ -1,11 +1,10 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
-
+#include "rt/filesystem.hpp"
 #include "rt/io/ImageIO.hpp"
 #include "rt/io/TIFFIO.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 
 int main(int argc, char* argv[])
 {
