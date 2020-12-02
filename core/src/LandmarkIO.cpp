@@ -215,11 +215,12 @@ LandmarkContainer rt::ReadLandmarkContainer(const fs::path& path)
 
     // Read data
     LandmarkContainer lc;
-    std::array<double, 2> val;
+    Landmark l;
     for (size_t i = 0; i < h.size; i++) {
         std::ignore = i;
-        file.read(reinterpret_cast<char*>(val.data()), 2 * sizeof(double));
-        lc.emplace_back(val);
+        file.read(
+            reinterpret_cast<char*>(l.GetDataPointer()), 2 * sizeof(double));
+        lc.push_back(l);
     }
 
     return lc;

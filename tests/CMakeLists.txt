@@ -19,6 +19,7 @@ set(tests
     src/TestITKOCVBridge.cpp
     src/TestString.cpp
     src/TestUVMapIO.cpp
+    src/TestLandmarkIO.cpp
 )
 
 foreach(src ${tests})
