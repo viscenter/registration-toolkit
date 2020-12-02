@@ -4,7 +4,6 @@
 #include <sstream>
 
 #include <boost/program_options.hpp>
-#include <opencv2/core.hpp>
 
 #include "rt/DisegniSegmenter.hpp"
 #include "rt/filesystem.hpp"
