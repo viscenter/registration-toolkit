@@ -3,6 +3,7 @@ set(project_warnings
     -Wall
     -Wextra
     -pedantic
+    -Wno-error
 )
 
 # Extra warnings we want to enable
@@ -24,7 +25,6 @@ list(APPEND project_warnings
     -Woverloaded-virtual
     -Wpointer-arith
     -Wtautological-compare
-    -Wundef
     -Wuninitialized
     -Wunreachable-code
     -Wunused
@@ -51,7 +51,6 @@ list(APPEND project_warnings
     -Wc++11-long-long
     -Wclass-varargs
     -Wconditional-uninitialized
-    -Wcovered-switch-default
     -Wdeprecated-implementations
     -Wdirect-ivar-access
     -Wdivision-by-zero
@@ -89,7 +88,6 @@ list(APPEND project_warnings
     -Wunneeded-internal-declaration
     -Wunreachable-code-break
     -Wunreachable-code-return
-    -Wused-but-marked-unused
     -Wvexing-parse
     -Wno-c++1z-extensions
     -Wno-c++98-compat

@@ -2,15 +2,20 @@
 # Core #
 ########
 
-# For compiler sanitizers. Taken from:
-# https://github.com/arsenm/sanitizers-cmake/blob/master/README.md
-find_package(Sanitizers)
-
-### Boost ###
-find_package(Boost REQUIRED COMPONENTS filesystem program_options)
+## Filesystem ##
+find_package(Filesystem)
+option(RT_USE_BOOSTFS "Use Boost as the filesystem library" "NOT Filesystem_FOUND")
+if(RT_USE_BOOSTFS)
+    add_compile_definitions(RT_USE_BOOSTFS)
+    find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem)
+    set(RT_FS_LIB Boost::filesystem)
+else()
+    set(RT_FS_LIB std::filesystem)
+endif()
+message(STATUS "Using filesystem library: ${RT_FS_LIB}")
 
 ### OpenCV ###
-find_package(OpenCV 3 REQUIRED)
+find_package(OpenCV 4 QUIET REQUIRED)
 
 ### ITK ###
 find_package(ITK REQUIRED)
@@ -33,6 +38,9 @@ include_directories(SYSTEM ${VTK_INCLUDE_DIRS})
 
 ### libtiff ###
 find_package(TIFF REQUIRED)
+
+### smeagol ###
+include(BuildSmeagol)
 
 ############
 # Optional #

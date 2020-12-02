@@ -1,16 +1,11 @@
-#include <fstream>
 #include <iostream>
-#include <vector>
-
-#include <boost/filesystem.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 #include "rt/LandmarkDetector.hpp"
+#include "rt/filesystem.hpp"
+#include "rt/io/ImageIO.hpp"
+#include "rt/io/LandmarkIO.hpp"
 
-namespace fs = boost::filesystem;
-
-void WriteLDM(const fs::path& path, const std::vector<rt::LandmarkPair>& pairs);
+namespace fs = rt::filesystem;
 
 int main(int argc, const char* argv[])
 {
@@ -27,8 +22,8 @@ int main(int argc, const char* argv[])
     fs::path outputPath = argv[3];
 
     // Load images
-    auto fixedImg = cv::imread(fixedPath.string());
-    auto movingImg = cv::imread(movingPath.string());
+    auto fixedImg = rt::ReadImage(fixedPath);
+    auto movingImg = rt::ReadImage(movingPath);
 
     // Check that images opened correctly
     if (fixedImg.empty() || movingImg.empty()) {
@@ -41,31 +36,16 @@ int main(int argc, const char* argv[])
     rt::LandmarkDetector detector;
     detector.setFixedImage(fixedImg);
     detector.setMovingImage(movingImg);
-    auto matchedPairs = detector.compute();
+    auto matchedPairs = detector.compute().size();
+    std::cout << "Generated matches: " << matchedPairs << std::endl;
 
     // Write the output
-    WriteLDM(outputPath, matchedPairs);
+    std::cout << "Writing landmarks file..." << std::endl;
+    rt::LandmarkWriter writer;
+    writer.setPath(outputPath);
+    writer.setFixedLandmarks(detector.getFixedLandmarks());
+    writer.setMovingLandmarks(detector.getMovingLandmarks());
+    writer.write();
 
     return EXIT_SUCCESS;
-}
-
-void WriteLDM(const fs::path& path, const std::vector<rt::LandmarkPair>& pairs)
-{
-    std::ofstream ofs(path.string());
-    if (!ofs.good()) {
-        auto msg = "Failed to open file for writing: " + path.string();
-        throw std::runtime_error(msg);
-    }
-
-    // Write the data
-    for (auto& p : pairs) {
-        // Fixed
-        ofs << p.first.x << " " << p.first.y << " ";
-        // Moving
-        ofs << p.second.x << " " << p.second.y;
-        ofs << std::endl;
-    }
-
-    // Close the file
-    ofs.close();
 }

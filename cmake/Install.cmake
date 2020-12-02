@@ -41,6 +41,12 @@ install(
   COMPONENT "Resources"
 )
 
+install(
+    FILES
+    "${PROJECT_SOURCE_DIR}/cmake/FindFilesystem.cmake"
+    DESTINATION lib/cmake/rt/Modules
+)
+
 # What components to install
 set(install_components "")
 if(INSTALL_APPS)

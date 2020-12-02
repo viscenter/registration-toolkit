@@ -1,15 +1,13 @@
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "rt/ReorderUnorganizedTexture.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
-#include "rt/types/ITK2VTK.hpp"
 #include "rt/types/ITKMesh.hpp"
-#include "rt/types/UVMap.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[])
@@ -70,7 +68,7 @@ int main(int argc, char* argv[])
     // We don't support RGBA textures
     auto channels = texture.channels();
     if (channels == 4) {
-        cv::cvtColor(texture, texture, CV_BGRA2BGR);
+        cv::cvtColor(texture, texture, cv::COLOR_BGRA2BGR);
     } else if (channels != 1 && channels != 3) {
         std::cerr << "Texture has unsupported channels: " << channels << "\n";
     }
@@ -78,10 +76,8 @@ int main(int argc, char* argv[])
     // Reorder the texture
     std::cerr << "Reordering texture :: Sample Rate: " << sampleRate
               << std::endl;
-    vtkSmartPointer<vtkPolyData> vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    rt::ITK2VTK(mesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
-    r.setMesh(vtkMesh);
+    r.setMesh(mesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
     r.setSampleRate(sampleRate);

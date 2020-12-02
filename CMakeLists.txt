@@ -1,26 +1,13 @@
-# registration-toolkit
-# Written by: Stephen Parson, Zack Anderson, and the VC Project Team
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+project("registration-toolkit" VERSION 1.6.0)
 
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-
-project("registration-toolkit" VERSION 0.1.0)
+# Modules
+include(FetchContent)
+include(CMakeDependentOption)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
-# Use modern C++ for everything and generate compile_commands database.
-set(CMAKE_CXX_STANDARD 14)
-set(CXX_STANDARD_REQUIRED on)
-set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-
-# Choose what to build
-option(BUILD_APPS     "Compile core programs"    on)
-option(BUILD_DOC      "Compile documentation"    off)
-
-# Choose what to install
-option(INSTALL_APPS      "Install core programs"    on)
-option(INSTALL_DOC       "Install documentation"    off)
 
 # Look for external dependencies.
 include(FindDependencies)
@@ -37,16 +24,29 @@ endif()
 include(Warnings)
 
 ## Libraries ##
-add_subdirectory(rtlib)
+add_subdirectory(core)
+add_subdirectory(graph)
 
 ## Core Apps ##
-if (BUILD_APPS)
+option(RT_BUILD_APPS "Compile core programs" on)
+CMAKE_DEPENDENT_OPTION(RT_INSTALL_APPS "Install core programs" on "RT_BUILD_APPS" off)
+if (RT_BUILD_APPS)
     add_subdirectory(apps)
 endif()
 
 ## Documentation
-if (BUILD_DOC)
-    add_subdirectory(doc)
+find_package(Doxygen OPTIONAL_COMPONENTS dot)
+CMAKE_DEPENDENT_OPTION(RT_BUILD_DOCS "Build Doxygen documentation" on "DOXYGEN_FOUND" off)
+CMAKE_DEPENDENT_OPTION(RT_INSTALL_DOCS "Install documentation" off "RT_BUILD_DOCS" off)
+if(RT_BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
+
+## Tests
+option(RT_BUILD_TESTS "Compile unit tests" off)
+if(RT_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 # Install to system directories

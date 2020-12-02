@@ -1,12 +1,13 @@
 LandmarkGenerator/bin/
 LandmarkGenerator/runnable.jar
-*build/
-*cmake-build-*/
-*.png
+**build/
+**installed/
+**cmake-build-*/
+**.png
 !utils/crosshair.png
-*.jpg
-*.mhd
-*.raw
+**.jpg
+**.mhd
+**.raw
 
 *.iconset/
 *bin/
@@ -48,5 +49,5 @@ __pycache__
 .ropeproject
 
 #Doxygen
-doc/latex/
-doc/html/
+docs/latex/
+docs/html/

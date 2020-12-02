@@ -1,14 +1,13 @@
-#include <boost/filesystem.hpp>
 #include <vc/texturing/AngleBasedFlattening.hpp>
 
 #include "rt/ReorderUnorganizedTexture.hpp"
+#include "rt/filesystem.hpp"
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
-#include "rt/types/ITK2VTK.hpp"
 #include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs = rt::filesystem;
 namespace vct = volcart::texturing;
 
 int main(int argc, char* argv[])
@@ -40,10 +39,8 @@ int main(int argc, char* argv[])
 
     // Reorder the texture
     std::cerr << "Reordering texture..." << std::endl;
-    auto vtkMesh = vtkSmartPointer<vtkPolyData>::New();
-    rt::ITK2VTK(flatMesh, vtkMesh);
     rt::ReorderUnorganizedTexture r;
-    r.setMesh(vtkMesh);
+    r.setMesh(flatMesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
     r.setSampleRate(sampleRate);
