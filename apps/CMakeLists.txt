@@ -1,3 +1,6 @@
+# Only apps *require* Boost
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 # 2D Registration Apps
 add_executable(rt_apply_transform src/ApplyTransform.cpp)
 target_link_libraries(rt_apply_transform
