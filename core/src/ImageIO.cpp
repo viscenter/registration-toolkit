@@ -21,7 +21,8 @@ void rt::WriteImage(const fs::path& path, const cv::Mat& img)
 {
     // Do nothing on empty images
     if (img.empty()) {
-        std::cerr << "Warning: Not writing empty image" << std::endl;
+        std::cerr << "Warning: Not writing empty image: " << path.string();
+        std::cerr << std::endl;
         return;
     }
 

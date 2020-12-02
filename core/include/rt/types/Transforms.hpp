@@ -20,7 +20,12 @@ using CompositeTransform = itk::CompositeTransform<double, 2>;
 void WriteTransform(
     const filesystem::path& path, const Transform::Pointer& transform);
 
-/** @copydoc WriteTransform */
+/**
+ * @copydoc WriteTransform
+ *
+ * This version is required on older versions of ITK which don't automatically
+ * cast itk::Pointers of derived types to base types.
+ */
 template <typename T>
 void WriteTransform(const filesystem::path& path, const T& transform)
 {
