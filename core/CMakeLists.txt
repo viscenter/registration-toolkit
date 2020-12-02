@@ -1,5 +1,3 @@
-set(module "core")
-
 set(io_srcs
     src/OBJReader.cpp
     src/OBJWriter.cpp
@@ -31,20 +29,20 @@ set(srcs
 
 configure_file(src/Version.cpp.in Version.cpp)
 
-add_library(rt_${module}
+add_library(rt_core
     ${srcs}
     ${io_srcs}
     ${type_srcs}
     ${util_srcs}
     ${CMAKE_CURRENT_BINARY_DIR}/Version.cpp
 )
-add_library("${namespace}${module}" ALIAS "rt_${module}")
-target_include_directories(rt_${module}
+add_library("${namespace}core" ALIAS "rt_core")
+target_include_directories(rt_core
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(rt_${module}
+target_link_libraries(rt_core
     PUBLIC
         ${RT_FS_LIB}
         opencv_core
@@ -52,7 +50,6 @@ target_link_libraries(rt_${module}
         ITKTransform
         vtkCommonCore
         vtkCommonDataModel
-        smgl::smgl
     PRIVATE
         opencv_features2d
         opencv_imgcodecs
@@ -66,16 +63,16 @@ target_link_libraries(rt_${module}
         TIFF::TIFF
 )
 if(TARGET ITKSmoothing)
-    target_link_libraries(rt_${module} PRIVATE ITKSmoothing)
+    target_link_libraries(rt_core PRIVATE ITKSmoothing)
 endif()
-target_compile_features(rt_${module} PUBLIC cxx_std_14)
-set_target_properties(rt_${module} PROPERTIES
+target_compile_features(rt_core PUBLIC cxx_std_14)
+set_target_properties(rt_core PROPERTIES
     VERSION "${PROJECT_VERSION}"
-    EXPORT_NAME "${module}"
+    EXPORT_NAME "core"
 )
 
 install(
-    TARGETS "rt_${module}"
+    TARGETS "rt_core"
     EXPORT "${targets_export_name}"
     ARCHIVE DESTINATION "lib"
     LIBRARY DESTINATION "lib"
