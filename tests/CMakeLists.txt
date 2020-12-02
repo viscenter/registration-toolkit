@@ -24,7 +24,7 @@ set(tests
 
 foreach(src ${tests})
     get_filename_component(filename ${src} NAME_WE)
-    set(testname core_${filename})
+    set(testname rt_${filename})
     add_executable(${testname} ${src})
     target_link_libraries(${testname}
         rt::core
