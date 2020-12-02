@@ -79,6 +79,9 @@ public:
     /** @brief Return the number of UV elements */
     size_t size() const;
 
+    /** @brief Return the number of Face elements */
+    size_t size_faces() const;
+
     /** @brief Return whether the UVMap is empty */
     bool empty() const;
 

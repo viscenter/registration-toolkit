@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Show the help message
-    if (parsed.count("help")) {
+    if (parsed.count("help") or argc < 2) {
         std::cerr << all << std::endl;
         return EXIT_SUCCESS;
     }
@@ -77,6 +77,13 @@ int main(int argc, char* argv[])
     ///// Start render graph /////
     rt::graph::RegisterAllNodeTypes();
     smgl::Graph graph;
+
+    ///// Setup caching /////
+    if (parsed.count("output-graph") > 0) {
+        fs::path cacheFile = parsed["output-graph"].as<std::string>();
+        graph.setEnableCache(true);
+        graph.setCacheFile(cacheFile);
+    }
 
     ///// Setup input files /////
     // Read the OBJ file and static image

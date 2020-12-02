@@ -6,6 +6,7 @@ set(io_srcs
     src/TIFFIO.cpp
     src/LandmarkIO.cpp
     src/ImageIO.cpp
+    src/UVMapIO.cpp
 )
 
 set(type_srcs

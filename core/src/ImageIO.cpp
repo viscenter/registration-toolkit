@@ -19,6 +19,12 @@ cv::Mat rt::ReadImage(const fs::path& path)
 
 void rt::WriteImage(const fs::path& path, const cv::Mat& img)
 {
+    // Do nothing on empty images
+    if (img.empty()) {
+        std::cerr << "Warning: Not writing empty image" << std::endl;
+        return;
+    }
+
     // Use our TIFF writer
     if (IsFormat(path, {"tif", "tiff"})) {
         rt::io::WriteTIFF(path, img);

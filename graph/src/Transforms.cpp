@@ -1,7 +1,9 @@
 #include "rt/graph/Transforms.hpp"
 
 #include "rt/ImageTransformResampler.hpp"
+#include "rt/io/ImageIO.hpp"
 #include "rt/io/LandmarkIO.hpp"
+#include "rt/io/UVMapIO.hpp"
 #include "rt/util/ImageConversion.hpp"
 
 namespace rtg = rt::graph;
@@ -30,7 +32,7 @@ smgl::Metadata rtg::CompositeTransformNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
     smgl::Metadata m;
-    if (useCache) {
+    if (useCache and result_) {
         WriteTransform(cacheDir / "composite.tfm", result_);
         m["transform"] = "composite.tfm";
     }
@@ -134,14 +136,21 @@ rtg::TransformUVMapNode::TransformUVMapNode()
 smgl::Metadata rtg::TransformUVMapNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
-    // TODO: Implement
-    return smgl::Metadata::object();
+    smgl::Metadata m;
+    if (useCache) {
+        WriteUVMap(cacheDir / "transformed.uvm", uvOut_);
+        m["uvMap"] = "transformed.uvm";
+    }
+    return m;
 }
 
 void rtg::TransformUVMapNode::deserialize_(
     const smgl::Metadata& meta, const fs::path& cacheDir)
 {
-    // TODO:: Implement
+    if (meta.contains("uvMap")) {
+        auto file = meta["uvMap"].get<std::string>();
+        uvOut_ = ReadUVMap(cacheDir / file);
+    }
 }
 
 rtg::ImageResampleNode::ImageResampleNode()
@@ -152,7 +161,6 @@ rtg::ImageResampleNode::ImageResampleNode()
     registerOutputPort("resampledImage", resampledImage);
 
     compute = [=]() {
-        // TODO: Don't do anything if the transform is identity
         cv::Mat tmp;
         auto cns = moving_.channels();
         if (forceAlpha_ and (cns == 1 or cns == 3)) {
@@ -168,12 +176,19 @@ rtg::ImageResampleNode::ImageResampleNode()
 smgl::Metadata rt::graph::ImageResampleNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
-    // TODO: Implement
-    return smgl::Metadata::object();
+    smgl::Metadata m;
+    if (useCache and not resampled_.empty()) {
+        WriteImage(cacheDir / "resampled.tif", resampled_);
+        m["image"] = "resampled.tif";
+    }
+    return m;
 }
 
 void rt::graph::ImageResampleNode::deserialize_(
     const smgl::Metadata& meta, const fs::path& cacheDir)
 {
-    // TODO: Implement
+    if (meta.contains("image")) {
+        auto file = meta["image"].get<std::string>();
+        resampled_ = ReadImage(cacheDir / file);
+    }
 }

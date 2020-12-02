@@ -68,7 +68,7 @@ smgl::Metadata rtg::AffineLandmarkRegistrationNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
     smgl::Metadata m;
-    if (useCache) {
+    if (useCache and tfm_) {
         WriteTransform(cacheDir / "affine.tfm", tfm_);
         m["transform"] = "affine.tfm";
     }
@@ -105,7 +105,7 @@ smgl::Metadata rtg::BSplineLandmarkWarpingNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
     smgl::Metadata m;
-    if (useCache) {
+    if (useCache and tfm_) {
         WriteTransform(cacheDir / "bspline.tfm", tfm_);
         m["transform"] = "bspline.tfm";
     }

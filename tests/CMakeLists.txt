@@ -18,6 +18,7 @@ endif()
 set(tests
     src/TestITKOCVBridge.cpp
     src/TestString.cpp
+    src/TestUVMapIO.cpp
 )
 
 foreach(src ${tests})

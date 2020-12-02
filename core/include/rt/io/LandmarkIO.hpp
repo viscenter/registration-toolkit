@@ -91,9 +91,21 @@ private:
     LandmarkContainer moving_;
 };
 
+/**
+ * @brief Write a LandmarkContainer to a file
+ *
+ * This saves a list of Landmarks to a LandmarksContainer file (.lc).
+ * To save a Landmarks file (.ldm) of matching pairs, use LandmarkWriter.
+ */
 void WriteLandmarkContainer(
     const filesystem::path& path, const LandmarkContainer& lc);
 
+/**
+ * @brief Read a LandmarkContainer file
+ *
+ * This loads a list of Landmarks from a LandmarksContainer file (.lc).
+ * To read a Landmarks file (.ldm) of matching pairs, use LandmarkReader.
+ */
 LandmarkContainer ReadLandmarkContainer(const filesystem::path& path);
 
 }  // namespace rt

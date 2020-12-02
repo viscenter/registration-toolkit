@@ -24,7 +24,7 @@ smgl::Metadata rtg::DeformableRegistrationNode::serialize_(
 {
     Meta m;
     m["iterations"] = iters_;
-    if (useCache) {
+    if (useCache and tfm_) {
         WriteTransform(cacheDir / "deformable.tfm", tfm_);
         m["transform"] = "deformable.tfm";
     }
