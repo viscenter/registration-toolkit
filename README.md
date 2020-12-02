@@ -24,7 +24,7 @@ depths and types. Fully supports gray, gray+alpha, RGB, and RGBA images in 8,
 ### Ubuntu 20.04
 Install using apt:
 ```shell
-sudo apt-get install cmake libopencv-dev libvtk6-dev libboost-filesystem-dev libboost-program-options-dev libinsighttoolkit4-dev
+sudo apt-get install cmake libopencv-dev libvtk6-dev libboost-program-options-dev libinsighttoolkit4-dev
 ```
 
 ### macOS
