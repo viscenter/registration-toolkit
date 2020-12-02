@@ -43,7 +43,7 @@ install(
 
 install(
     FILES
-    "${CMAKE_MODULE_PATH}/FindFilesystem.cmake"
+    "${PROJECT_SOURCE_DIR}/cmake/FindFilesystem.cmake"
     DESTINATION lib/cmake/rt/Modules
 )
 
