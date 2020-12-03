@@ -53,36 +53,33 @@ namespace cvd = cv::detail;
 
 using ImgList = std::vector<cv::UMat>;
 using FeatureList = std::vector<cvd::ImageFeatures>;
+using MatchesList = std::vector<cvd::MatchesInfo>;
 using LdmPairList = std::vector<ImageStitcher::LandmarkPair>;
 
 static ImgList ScaleImages(
     const ImgList& imgs,
     double scale,
-    cv::InterpolationFlags interp = cv::INTER_LINEAR)
-{
-    ImgList scaled;
-    scaled.reserve(imgs.size());
-    for (const auto& i : imgs) {
-        cv::UMat s;
-        cv::resize(i, s, cv::Size(), scale, scale, interp);
-        scaled.emplace_back(s);
-    }
-    return scaled;
-}
+    cv::InterpolationFlags interp = cv::INTER_LINEAR);
 
 static FeatureList DetectFeatures(
     const ImgList& imgs,
     const ImgList& masks,
     double workScale,
     const cv::Ptr<cv::Feature2D>& finder);
+
 static cvd::ImageFeatures LandmarkToFeature(
     const Landmark& l, const cv::Ptr<cv::Feature2D>& finder);
-static FeatureList LandmarkContainerToFeatureList(
-    const LandmarkContainer& lc, const cv::Ptr<cv::Feature2D>& finder);
 
-int FindFeatureIndex(size_t idx, const FeatureList& fl);
+int FindFeatureIndex(int idx, const FeatureList& fl);
+
+static void InsertUserMatches(
+    const LdmPairList& lpl,
+    FeatureList& fl,
+    MatchesList& ml,
+    const ImgList& imgs);
 
 int search_(cvd::ImageFeatures& features, Landmark& point);
+
 void filter_matched_features_(
     cvd::ImageFeatures& features,
     LandmarkContainer& points1,
@@ -99,8 +96,8 @@ void ImageStitcher::setImages(const std::vector<cv::Mat>& images)
 
 void ImageStitcher::setLandmarkMode(LandmarkMode option) { ldmMode_ = option; }
 
-cvd::MatchesInfo ImageStitcher::compute_homography_(
-    cvd::MatchesInfo matchesInfo)
+static cvd::MatchesInfo ComputeHomography(
+    cvd::MatchesInfo matchesInfo, const FeatureList& fl)
 {
     // Construct point-point correspondences for transform estimation
     cv::Mat srcPoints(1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
@@ -109,11 +106,12 @@ cvd::MatchesInfo ImageStitcher::compute_homography_(
     {
         const cv::DMatch &m = matchesInfo.matches[i];
         srcPoints.at<cv::Point2f>(0, static_cast<int>(i)) =
-            features[matchesInfo.src_img_idx].keypoints[m.queryIdx].pt;
+            fl[matchesInfo.src_img_idx].keypoints[m.queryIdx].pt;
         dstPoints.at<cv::Point2f>(0, static_cast<int>(i)) =
-            features[matchesInfo.dst_img_idx].keypoints[m.trainIdx].pt;
+            fl[matchesInfo.dst_img_idx].keypoints[m.trainIdx].pt;
     }
-    matchesInfo.H = estimateAffinePartial2D(srcPoints, dstPoints, matchesInfo.inliers_mask);
+    matchesInfo.H = cv::estimateAffinePartial2D(
+        srcPoints, dstPoints, matchesInfo.inliers_mask);
 
     if (matchesInfo.H.empty()) {
         // could not find transformation
@@ -193,19 +191,12 @@ void ImageStitcher::setLandmarks(std::vector<LandmarkPair> ldms){
 }
 
 void ImageStitcher::find_matches_(double confThresh, std::vector<cv::UMat>& seamEstImgs, std::vector<cv::Size>& fullImgSizes) {
-    auto featuresMatcher =
-        cv::makePtr<cvd::AffineBestOf2NearestMatcher>(false, false);
+    auto matcher = cv::makePtr<cvd::AffineBestOf2NearestMatcher>(false, false);
     cv::UMat matchingMask;
 
-    (*featuresMatcher)(features, allPairwiseMatches_, matchingMask);
-    featuresMatcher->collectGarbage();
+    (*matcher)(features, allPairwiseMatches_, matchingMask);
+    matcher->collectGarbage();
 
-    // This is for option 1 with placing the matches before filtering the images
-    if (ldmMode_ == LandmarkMode::ManualPreMatch && !landmarks_.empty()) {
-        for(int i = 0; i < landmarks_.size(); i++){
-            insert_user_matches_(landmarks_[i]);
-        }
-    }
     // Leave only images we are sure are from the same panorama
     auto indices_ = cvd::leaveBiggestComponent(
         features, allPairwiseMatches_, (float)confThresh);
@@ -578,28 +569,28 @@ cv::Mat ImageStitcher::compute()
     // Setup feature finder
     featureFinder_ = cv::ORB::create();
 
-    // Always generate landmarks unless we're in full manual mode
+    // Setup features and matches containers
     FeatureList features;
+    MatchesList matches;
+
+    // Always generate auto-landmarks unless we're in full manual mode
     if (ldmMode_ != LandmarkMode::Manual) {
         features = DetectFeatures(umats, masks, workScale, featureFinder_);
     }
 
-    // If manual or if pre-filter, insert user landmarks
-    if (ldmMode_ == LandmarkMode::Manual or
-        ldmMode_ == LandmarkMode::ManualPreMatch) {
-        for (const auto& l : landmarks_) {
-            insert_user_matches_(l);
-        }
+    // If manual or if pre-matching, insert user landmarks
+    if (ldmMode_ == LandmarkMode::ManualPreMatch) {
+        InsertUserMatches(landmarks_, features, matches, umats);
     }
 
-    // Match landmarks
-    find_matches_(confThresh, seamEstImgs, fullImgSizes);
+    // Perform matching
+    // TODO: If manual, features will be empty
+    matches = find_matches_(confThresh, umats);
 
-    // If post-filter, insert landmarks
-    if (ldmMode_ == LandmarkMode::ManualPostMatch) {
-        for (const auto& l : landmarks_) {
-            insert_user_matches_(l);
-        }
+    // If post-matching, insert user landmarks
+    if (ldmMode_ == LandmarkMode::Manual or
+        ldmMode_ == LandmarkMode::ManualPostMatch) {
+        InsertUserMatches(landmarks_, features, matches, umats);
     }
 
     //////////////////////////////////
@@ -616,6 +607,20 @@ cv::Mat ImageStitcher::compute()
         fullImgSizes);
 
     return result_;
+}
+
+/////// HELPER FUNCTIONS ///////
+static ImgList ScaleImages(
+    const ImgList& imgs, double scale, cv::InterpolationFlags interp)
+{
+    ImgList scaled;
+    scaled.reserve(imgs.size());
+    for (const auto& i : imgs) {
+        cv::UMat s;
+        cv::resize(i, s, cv::Size(), scale, scale, interp);
+        scaled.emplace_back(s);
+    }
+    return scaled;
 }
 
 static FeatureList DetectFeatures(
@@ -644,14 +649,26 @@ static FeatureList DetectFeatures(
     return features;
 }
 
-int FindFeatureIndex(size_t idx, const FeatureList& fl)
+int FindFeatureIndex(int idx, const FeatureList& fl)
 {
     int it{0};
     for (const auto& f : fl) {
-        if (it == f.img_idx) {
+        if (idx == f.img_idx) {
             return it;
         }
         it++;
+    }
+    return -1;
+}
+
+int FindMatchesIndex(int srcIdx, int dstIdx, const MatchesList& ml)
+{
+    int it{0};
+    for (const auto& m : ml) {
+        if (m.src_img_idx == srcIdx and m.dst_img_idx == dstIdx) {
+            return it;
+        }
+        return it;
     }
     return -1;
 }
@@ -675,9 +692,10 @@ inline int InsertLandmarks(
             // TODO: Size/Diameter is a magic number
             f.keypoints.emplace_back(ldm[0], ldm[1], 31);
         }
+        fl.emplace_back(f);
     }
 
-    // Feature list already exists, so append
+    // Feature already exists, so append
     else {
         size = fl[idx].keypoints.size();
         for (const auto& ldm : lpLdms) {
@@ -688,33 +706,59 @@ inline int InsertLandmarks(
     return size;
 }
 
-static FeatureList InsertUserMatches(
-    const LdmPairList& lpl, FeatureList fl, const ImgList& imgs)
+static void InsertUserMatches(
+    const LdmPairList& lpl,
+    FeatureList& fl,
+    MatchesList& ml,
+    const ImgList& imgs)
 {
     // For each LandmarkPair
     for (const auto& lp : lpl) {
+        // Insert landmarks into feature list
         auto srcSize = InsertLandmarks(lp.srcIdx, lp.srcLdms, fl, imgs);
         auto dstSize = InsertLandmarks(lp.dstIdx, lp.dstLdms, fl, imgs);
 
-        // Populate the matches and put them into pairwise matches
-        int srcDstIdx = search_matches_(ldmPair.srcIdx, ldmPair.dstIdx);
-        cvd::MatchesInfo matches1 = allPairwiseMatches_[srcDstIdx];
-        for (int i = 0; i < ldmPair.srcLdms.size(); i++) {
-            matches1.matches.emplace_back(srcSize + i, dstSize + i, 0);
+        // Make a new MatchesInfo if one doesnt exist
+        // src->dest
+        auto idxS2D = FindMatchesIndex(lp.srcIdx, lp.dstIdx, ml);
+        if (idxS2D < 0) {
+            idxS2D = ml.size();
+            cvd::MatchesInfo match;
+            match.src_img_idx = lp.srcIdx;
+            match.dst_img_idx = lp.dstIdx;
+            ml.push_back(match);
         }
-        matches1 = compute_homography_(matches1);
-        allPairwiseMatches_[srcDstIdx] = matches1;
+        // dest->src
+        auto idxD2S = FindMatchesIndex(lp.dstIdx, lp.srcIdx, ml);
+        if (idxD2S < 0) {
+            idxD2S = ml.size();
+            cvd::MatchesInfo match;
+            match.src_img_idx = lp.dstIdx;
+            match.dst_img_idx = lp.srcIdx;
+            ml.push_back(match);
+        }
 
-        int dstSrcIdx = search_matches_(ldmPair.dstIdx, ldmPair.srcIdx);
-        cvd::MatchesInfo matches2 = allPairwiseMatches_[dstSrcIdx];
-        for (int i = 0; i < matches1.matches.size(); i++) {
-            matches2.matches.emplace_back(
-                matches1.matches[i].trainIdx, matches1.matches[i].queryIdx, 0);
+        // Get the matches
+        auto matchS2D = ml[idxS2D];
+        auto matchD2S = ml[idxD2S];
+
+        // Add the landmark indices to the matches info
+        for (int i = 0; i < lp.srcLdms.size(); i++) {
+            matchS2D.matches.emplace_back(srcSize + i, dstSize + i, 0);
+            matchD2S.matches.emplace_back(dstSize + i, srcSize + i, 0);
         }
-        matches2.inliers_mask = matches1.inliers_mask;
-        matches2.confidence = matches1.confidence;
-        matches2.num_inliers = matches1.num_inliers;
-        matches2.H = matches1.H.inv();
-        allPairwiseMatches_[dstSrcIdx] = matches2;
+
+        // Compute homography
+        matchS2D = ComputeHomography(matchS2D, fl);
+
+        // Copy MatchInfo properties
+        matchD2S.inliers_mask = matchS2D.inliers_mask;
+        matchD2S.confidence = matchS2D.confidence;
+        matchD2S.num_inliers = matchS2D.num_inliers;
+        matchD2S.H = matchS2D.H.inv();
+
+        // Reassign to the matches list
+        ml[idxS2D] = matchS2D;
+        ml[idxD2S] = matchD2S;
     }
 }
