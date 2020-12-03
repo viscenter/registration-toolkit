@@ -9,7 +9,6 @@
 
 #include "rt/ImageStitcher.hpp"
 
-
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
@@ -93,10 +92,12 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-        auto manualLdmPos = static_cast<rt::ImageStitcher::ManualLdmPosition>(parsed["insert-ldm-pos"].as<int>());
+    auto manualLdmPos = static_cast<rt::ImageStitcher::LandmarkMode>(
+        parsed["insert-ldm-pos"].as<int>());
 
-    if(manualLdmPos != rt::ImageStitcher::ManualLdmPosition::AfterFilter && manualLdmPos != rt::ImageStitcher::ManualLdmPosition::AfterMatching
-            && manualLdmPos != rt::ImageStitcher::ManualLdmPosition::FallbackOnly){
+    if (manualLdmPos != rt::ImageStitcher::LandmarkMode::ManualPostMatch &&
+        manualLdmPos != rt::ImageStitcher::LandmarkMode::ManualPreMatch &&
+        manualLdmPos != rt::ImageStitcher::LandmarkMode::ManualFallback) {
         std::cerr << "Insert landmark position can only be 1, 2, or 3 when giving user generated landmarks." << std::endl;
         return EXIT_FAILURE;
     }
@@ -130,12 +131,7 @@ int main(int argc, char* argv[])
         stitcher.setLandmarks(landmarks);
     }
 
-    // Set the bool that tells the program if landmarks should automatically be generated
-    // NOTE: This sets a variable to true if landmarks will be generated which will happen if
-    //       the user does not set the flag for disable-auto-ldm
-    stitcher.setGenerateLandmarks(!parsed.count("disable-auto-ldm"));
-
-    stitcher.setOption(manualLdmPos);
+    stitcher.setLandmarkMode(manualLdmPos);
 
     try {
         // Stitch the images together

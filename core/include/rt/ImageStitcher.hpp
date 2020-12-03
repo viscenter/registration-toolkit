@@ -1,10 +1,12 @@
 #pragma once
 
+#include <string>
 #include <vector>
-#include <iostream>
 
 #include <opencv2/core.hpp>
 #include <opencv2/stitching.hpp>
+
+#include "rt/LandmarkRegistrationBase.hpp"
 
 namespace rt
 {
@@ -12,52 +14,45 @@ namespace rt
 class ImageStitcher
 {
 public:
-
-    enum class ManualLdmPosition { AfterMatching = 1,  AfterFilter, FallbackOnly };
+    enum class LandmarkMode {
+        Automatic,
+        Manual,
+        ManualFallback,
+        ManualPreMatch,
+        ManualPostMatch
+    };
 
     struct LandmarkPair{
         int srcIdx;
         int dstIdx;
-        std::vector<std::pair<float, float> > srcLdms;
-        std::vector<std::pair<float, float> > dstLdms;
+        LandmarkContainer srcLdms;
+        LandmarkContainer dstLdms;
     };
 
-    ImageStitcher() = default;
-
     // Sets the images to be stitched
-    void setImages(std::vector<cv::Mat> i);
-
-    // Stitches the images together
-    cv::Mat compute();
+    void setImages(const std::vector<cv::Mat>& i);
 
     // Sets the user generated landmarks
     void setLandmarks(std::vector<LandmarkPair> ldms);
 
-    // Sets the bool to whether or not landmarks should be generated
-    void setGenerateLandmarks(bool generate);
+    void setLandmarkMode(LandmarkMode option);
 
-    void setOption(ManualLdmPosition option);
+    // Stitches the images together
+    cv::Mat compute();
 
     void printFeatures(std::string filePath);
 
     void printMatches(std::string filePath);
 
 private:
-    std::vector<cv::UMat> imgs_;
-    std::vector<cv::Mat> imgsMat_;
-    std::vector<cv::UMat> masks_;
-    std::vector<cv::detail::ImageFeatures> allFeatures_;
-    std::vector<cv::detail::MatchesInfo> allPairwiseMatches_;
-    bool generateLandmarks_ = true;
-    ManualLdmPosition option_ = ManualLdmPosition::AfterFilter;
+    std::vector<cv::Mat> input_;
+    std::vector<cv::Mat> masks_;
     std::vector<LandmarkPair> landmarks_;
+    LandmarkMode ldmMode_{LandmarkMode::ManualPostMatch};
 
-    void convert_imgs_to_UMat_();
+    cv::Mat result_;
 
-    void insert_user_matches_(const LandmarkPair& ldmPair);
-
-    // Automatically finds features for the images
-    std::vector<cv::detail::ImageFeatures> find_features_(double workScale);
+    cv::Ptr<cv::Feature2D> featureFinder_;
 
     // Automatically finds the matches between features for the images
     void find_matches_(double confThresh, std::vector<cv::UMat>& seamEstImgs, std::vector<cv::Size>& fullImgSizes);
