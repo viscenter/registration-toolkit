@@ -1,10 +1,8 @@
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include <opencv2/core.hpp>
-#include <opencv2/features2d.hpp>
 
 #include "rt/LandmarkRegistrationBase.hpp"
 
@@ -17,9 +15,9 @@ public:
     enum class LandmarkMode {
         Automatic = 0,
         Manual,
-        ManualFallback,
         ManualPreMatch,
-        ManualPostMatch
+        ManualPostMatch,
+        ManualFallback
     };
 
     struct LandmarkPair{
@@ -47,7 +45,6 @@ private:
     LandmarkMode ldmMode_{LandmarkMode::ManualPostMatch};
 
     cv::Mat result_;
-    cv::Ptr<cv::Feature2D> featureFinder_;
 };
 
 }  // namespace rt

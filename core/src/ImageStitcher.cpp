@@ -42,10 +42,13 @@
 //M*/
 // clang-format on
 
+#include <algorithm>
+
 #include "rt/ImageStitcher.hpp"
 
 #include <opencv2/calib3d.hpp>
 #include <opencv2/stitching.hpp>
+#include <opencv2/features2d.hpp>
 
 using namespace rt;
 namespace cvd = cv::detail;
@@ -60,13 +63,13 @@ using CameraList = std::vector<cvd::CameraParams>;
 ///// Predeclarations /////
 static ImgList ScaleImages(
     const ImgList& imgs,
-    double scale,
+    float scale,
     cv::InterpolationFlags interp = cv::INTER_LINEAR);
 
 static FeatureList DetectFeatures(
     const ImgList& imgs,
     const ImgList& masks,
-    double workScale,
+    float workScale,
     const cv::Ptr<cv::Feature2D>& finder);
 
 static void MatchFeatures(float confThresh, FeatureList& fl, MatchesList& ml);
@@ -91,7 +94,7 @@ static void InsertUserMatches(
     const ImgList& imgs);
 
 template <typename ObjList, typename IndexList>
-void RemoveByIndex(ObjList& ol, const IndexList& il);
+ObjList KeepByIndex(const ObjList& ol, const IndexList& il);
 
 static CameraList EstimateCameras(
     const FeatureList& fl,
@@ -134,11 +137,11 @@ cv::Mat ImageStitcher::compute()
     }
 
     // Confidence threshold
-    float confThresh{0.3};
+    float confThresh{0.3F};
 
     // Calculate working scale for registration and seam finding
-    float regResol{-0.6};
-    float seamEstResol{0.1};
+    float regResol{-0.6F};
+    float seamEstResol{0.1F};
     float workScale{1};
     float seamScale{1};
     float seamWorkAspect{1};
@@ -162,16 +165,14 @@ cv::Mat ImageStitcher::compute()
     //////////////////////
     //// match images ////
     //////////////////////
-    // Setup feature finder
-    featureFinder_ = cv::ORB::create();
-
     // Setup features and matches containers
     FeatureList features;
     MatchesList matches;
 
     // Always generate auto-landmarks unless we're in full manual mode
     if (ldmMode_ != LandmarkMode::Manual) {
-        features = DetectFeatures(umats, masks, workScale, featureFinder_);
+        auto featureFinder = cv::ORB::create();
+        features = DetectFeatures(umats, masks, workScale, featureFinder);
     }
 
     // If pre-matching, insert user landmarks
@@ -209,9 +210,9 @@ cv::Mat ImageStitcher::compute()
     auto filtered = cvd::leaveBiggestComponent(features, matches, confThresh);
 
     // Remove the images that aren't going to get matched
-    RemoveByIndex(umats, filtered);
+    umats = KeepByIndex(umats, filtered);
     if (not masks.empty()) {
-        RemoveByIndex(masks, filtered);
+        umats = KeepByIndex(masks, filtered);
     }
 
     //////////////////////////////////
@@ -230,7 +231,7 @@ cv::Mat ImageStitcher::compute()
 
 /////// HELPER FUNCTIONS ///////
 static ImgList ScaleImages(
-    const ImgList& imgs, double scale, cv::InterpolationFlags interp)
+    const ImgList& imgs, float scale, cv::InterpolationFlags interp)
 {
     ImgList scaled;
     scaled.reserve(imgs.size());
@@ -245,10 +246,9 @@ static ImgList ScaleImages(
 static FeatureList DetectFeatures(
     const ImgList& imgs,
     const ImgList& masks,
-    double workScale,
+    float workScale,
     const cv::Ptr<cv::Feature2D>& finder)
 {
-
     ImgList scaledImgs;
     ImgList scaledMasks;
 
@@ -264,6 +264,9 @@ static FeatureList DetectFeatures(
     // Compute features using ORB
     std::vector<cvd::ImageFeatures> features(imgs.size());
     cvd::computeImageFeatures(finder, scaledImgs, features, scaledMasks);
+
+    scaledImgs.clear();
+    scaledMasks.clear();
 
     return features;
 }
@@ -296,7 +299,7 @@ static int FindMatchesIndex(int srcIdx, int dstIdx, const MatchesList& ml)
         if (m.src_img_idx == srcIdx and m.dst_img_idx == dstIdx) {
             return it;
         }
-        return it;
+        it++;
     }
     return -1;
 }
@@ -371,7 +374,7 @@ static void InsertUserMatches(
         auto matchD2S = ml[idxD2S];
 
         // Add the landmark indices to the matches info
-        for (int i = 0; i < lp.srcLdms.size(); i++) {
+        for (int i = 0; size_t(i) < lp.srcLdms.size(); i++) {
             matchS2D.matches.emplace_back(srcSize + i, dstSize + i, 0);
             matchD2S.matches.emplace_back(dstSize + i, srcSize + i, 0);
         }
@@ -392,23 +395,19 @@ static void InsertUserMatches(
 }
 
 template <typename ObjList, typename IndexList>
-void RemoveByIndex(ObjList& ol, const IndexList& il)
+ObjList KeepByIndex(const ObjList& ol, const IndexList& il)
 {
     // Nothing to remove
     if (ol.empty()) {
-        return;
+        return ol;
     }
-    // Sort indices in descending order
-    std::sort(std::begin(il), std::end(il), std::greater<>());
 
+    // Move to new list
+    ObjList ret;
     for (const auto& i : il) {
-        // Index is beyond the size of the container
-        // This doesn't seem right...
-        if (i >= ol.size()) {
-            break;
-        }
-        ol.erase(std::begin(ol) + i);
+        ret.emplace_back(ol[i]);
     }
+    return ret;
 }
 
 static CameraList EstimateCameras(
