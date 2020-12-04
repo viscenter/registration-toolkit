@@ -1,6 +1,6 @@
+#include <exception>
 #include <iostream>
 #include <vector>
-#include <exception>
 
 #include <boost/program_options.hpp>
 #include <opencv2/core.hpp>
@@ -80,7 +80,8 @@ int main(int argc, char* argv[])
     po::variables_map parsed;
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
-    // Checks if the user asked for help or if there are not enough arguments given
+    // Checks if the user asked for help or if there are not enough arguments
+    // given
     if (parsed.count("help") || argc < 2) {
         std::cerr << all << std::endl;
         return EXIT_FAILURE;

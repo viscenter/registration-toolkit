@@ -225,7 +225,8 @@ cv::Mat ImageStitcher::compute()
     //////////////////////
     //// compose pano ////
     //////////////////////
-    result_ = ComposePano(umats, cams, seamWorkAspect, seamScale, workScale, warpedScale);
+    result_ = ComposePano(
+        umats, cams, seamWorkAspect, seamScale, workScale, warpedScale);
 
     return result_;
 }

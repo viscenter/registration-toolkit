@@ -20,7 +20,7 @@ public:
         ManualFallback
     };
 
-    struct LandmarkPair{
+    struct LandmarkPair {
         int srcIdx;
         int dstIdx;
         LandmarkContainer srcLdms;
