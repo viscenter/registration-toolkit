@@ -107,6 +107,7 @@ static cv::Mat ComposePano(
     const CameraList& cams,
     float seamAspect,
     float seamScale,
+    float workScale,
     float warpScale);
 
 static cvd::MatchesInfo ComputeHomography(
@@ -224,7 +225,7 @@ cv::Mat ImageStitcher::compute()
     //////////////////////
     //// compose pano ////
     //////////////////////
-    result_ = ComposePano(umats, cams, seamWorkAspect, seamScale, warpedScale);
+    result_ = ComposePano(umats, cams, seamWorkAspect, seamScale, workScale, warpedScale);
 
     return result_;
 }
@@ -417,7 +418,6 @@ static CameraList EstimateCameras(
     float& warpedScale)
 {
     // estimate homography in global frame
-    auto bundleAdjuster = cv::makePtr<cvd::BundleAdjusterAffinePartial>();
     auto estimator = cv::makePtr<cvd::AffineBasedEstimator>();
     CameraList cameras;
     if (!(*estimator)(fl, ml, cameras)) {
@@ -432,6 +432,7 @@ static CameraList EstimateCameras(
     }
 
     // Perform bundle adjustment
+    auto bundleAdjuster = cv::makePtr<cvd::BundleAdjusterAffinePartial>();
     bundleAdjuster->setConfThresh(confThresh);
     if (!(*bundleAdjuster)(fl, ml, cameras)) {
         throw std::runtime_error("Failed bundle adjustment");
@@ -467,10 +468,11 @@ static cv::Mat ComposePano(
     const CameraList& cams,
     float seamAspect,
     float seamScale,
+    float workScale,
     float warpScale)
 {
     // Prepare seam images
-    auto seamImgs = ScaleImages(imgs, seamScale);
+    auto seamImgs = ScaleImages(imgs, seamScale, cv::INTER_LINEAR_EXACT);
 
     // Prepare seam seamMasks
     ImgList seamMasks;
@@ -543,7 +545,7 @@ static cv::Mat ComposePano(
     }
 
     // Compute relative scales
-    auto composeWorkAspect = composeScale / seamScale;
+    auto composeWorkAspect = composeScale / workScale;
 
     // Update warper scale factor
     warper = warperCreator->create(warpScale * composeWorkAspect);
