@@ -47,12 +47,12 @@ target_link_libraries(rt_core
     PUBLIC
         ${RT_FS_LIB}
         opencv_core
+        opencv_features2d
         ITKCommon
         ITKTransform
         vtkCommonCore
         vtkCommonDataModel
     PRIVATE
-        opencv_features2d
         opencv_imgcodecs
         opencv_imgproc
         opencv_stitching

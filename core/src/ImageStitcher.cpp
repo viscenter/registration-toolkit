@@ -45,17 +45,19 @@
 #include "rt/ImageStitcher.hpp"
 
 #include <opencv2/calib3d.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/features2d.hpp>
+#include <opencv2/stitching.hpp>
 
 using namespace rt;
 namespace cvd = cv::detail;
 
+///// Type aliases /////
 using ImgList = std::vector<cv::UMat>;
 using FeatureList = std::vector<cvd::ImageFeatures>;
 using MatchesList = std::vector<cvd::MatchesInfo>;
 using LdmPairList = std::vector<ImageStitcher::LandmarkPair>;
+using CameraList = std::vector<cvd::CameraParams>;
 
+///// Predeclarations /////
 static ImgList ScaleImages(
     const ImgList& imgs,
     double scale,
@@ -67,10 +69,20 @@ static FeatureList DetectFeatures(
     double workScale,
     const cv::Ptr<cv::Feature2D>& finder);
 
+static void MatchFeatures(float confThresh, FeatureList& fl, MatchesList& ml);
+
 static cvd::ImageFeatures LandmarkToFeature(
     const Landmark& l, const cv::Ptr<cv::Feature2D>& finder);
 
-int FindFeatureIndex(int idx, const FeatureList& fl);
+static int FindFeatureIndex(int idx, const FeatureList& fl);
+
+static int FindMatchesIndex(int srcIdx, int dstIdx, const MatchesList& ml);
+
+static int InsertLandmarks(
+    int lpIdx,
+    const LandmarkContainer& lpLdms,
+    FeatureList& fl,
+    const ImgList& imgs);
 
 static void InsertUserMatches(
     const LdmPairList& lpl,
@@ -78,17 +90,26 @@ static void InsertUserMatches(
     MatchesList& ml,
     const ImgList& imgs);
 
-int search_(cvd::ImageFeatures& features, Landmark& point);
+template <typename ObjList, typename IndexList>
+void RemoveByIndex(ObjList& ol, const IndexList& il);
 
-void filter_matched_features_(
-    cvd::ImageFeatures& features,
-    LandmarkContainer& points1,
-    LandmarkContainer& points2);
-void reduce_img_points_(
-    const double& work_scale,
-    LandmarkContainer& features1,
-    LandmarkContainer& features2);
+static CameraList EstimateCameras(
+    const FeatureList& fl,
+    const MatchesList& ml,
+    float confThresh,
+    float& warpedScale);
 
+static cv::Mat ComposePano(
+    const ImgList& imgs,
+    const CameraList& cams,
+    float seamAspect,
+    float seamScale,
+    float warpScale);
+
+static cvd::MatchesInfo ComputeHomography(
+    cvd::MatchesInfo matchesInfo, const FeatureList& fl);
+
+///// Member functions /////
 void ImageStitcher::setImages(const std::vector<cv::Mat>& images)
 {
     input_ = images;
@@ -96,434 +117,11 @@ void ImageStitcher::setImages(const std::vector<cv::Mat>& images)
 
 void ImageStitcher::setLandmarkMode(LandmarkMode option) { ldmMode_ = option; }
 
-static cvd::MatchesInfo ComputeHomography(
-    cvd::MatchesInfo matchesInfo, const FeatureList& fl)
+// This will probably need to be changed to account for having more than 2
+// images
+void ImageStitcher::setLandmarks(const std::vector<LandmarkPair>& ldms)
 {
-    // Construct point-point correspondences for transform estimation
-    cv::Mat srcPoints(1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
-    cv::Mat dstPoints(1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
-    for (size_t i = 0; i < matchesInfo.matches.size(); ++i)
-    {
-        const cv::DMatch &m = matchesInfo.matches[i];
-        srcPoints.at<cv::Point2f>(0, static_cast<int>(i)) =
-            fl[matchesInfo.src_img_idx].keypoints[m.queryIdx].pt;
-        dstPoints.at<cv::Point2f>(0, static_cast<int>(i)) =
-            fl[matchesInfo.dst_img_idx].keypoints[m.trainIdx].pt;
-    }
-    matchesInfo.H = cv::estimateAffinePartial2D(
-        srcPoints, dstPoints, matchesInfo.inliers_mask);
-
-    if (matchesInfo.H.empty()) {
-        // could not find transformation
-        matchesInfo.confidence = 0;
-        matchesInfo.num_inliers = 0;
-        return matchesInfo;
-    }
-
-    // Find number of inliers
-    matchesInfo.num_inliers = 0;
-    for (size_t i = 0; i < matchesInfo.inliers_mask.size(); ++i) {
-        if (matchesInfo.inliers_mask[i]) {
-            matchesInfo.num_inliers++;
-        }
-    }
-
-    // These coeffs are from paper M. Brown and D. Lowe. "Automatic Panoramic
-    // Image Stitching using Invariant Features"
-    matchesInfo.confidence =
-            matchesInfo.num_inliers / (8 + 0.3 * matchesInfo.matches.size());
-
-    // extend H to represent linear transformation in homogeneous coordinates
-    matchesInfo.H.push_back(cv::Mat::zeros(1, 3, CV_64F));
-    matchesInfo.H.at<double>(2, 2) = 1;
-
-    return matchesInfo;
-}
-
-int search_(cvd::ImageFeatures& features, Landmark& point)
-{
-    for (int j = 0; j < features.keypoints.size(); j++) {
-        if (std::abs(features.keypoints[j].pt.x - point.first) < 0.001) {
-            if (std::abs(features.keypoints[j].pt.y - point.second) < 0.001) {
-                return j;
-            }
-        }
-    }
-    return -1;
-}
-
-void filter_matched_features_(
-    cvd::ImageFeatures& features,
-    LandmarkContainer& points1,
-    LandmarkContainer& points2)
-{
-    for(int i = 0; i < points1.size(); i++){
-        // Implement search so it finds the index for the point
-        // Returns -1 if the points cannot be found
-        int index = search_(features, points1[i]);
-        if(index < 0){
-            // Check to see if this is the right way to do this
-            // Want to remove the points that are filtered out for points1
-            // Want to take out the match for the point that isn't there anymore
-            points1.erase(points1.begin() + i);
-            points2.erase(points2.begin() + i);
-            i--;
-        }
-    }
-}
-
-void reduce_img_points_(
-    const double& work_scale,
-    LandmarkContainer& features1,
-    LandmarkContainer& features2)
-{
-    for(int i = 0; i < features1.size(); i++){
-        features1[i].first = features1[i].first * work_scale;
-        features1[i].second = features1[i].second * work_scale;
-        features2[i].first = features1[i].first * work_scale;
-        features2[i].second = features2[i].second * work_scale;
-    }
-}
-
-// This will probably need to be changed to account for having more than 2 images
-void ImageStitcher::setLandmarks(std::vector<LandmarkPair> ldms){
     landmarks_ = ldms;
-}
-
-void ImageStitcher::find_matches_(double confThresh, std::vector<cv::UMat>& seamEstImgs, std::vector<cv::Size>& fullImgSizes) {
-    auto matcher = cv::makePtr<cvd::AffineBestOf2NearestMatcher>(false, false);
-    cv::UMat matchingMask;
-
-    (*matcher)(features, allPairwiseMatches_, matchingMask);
-    matcher->collectGarbage();
-
-    // Leave only images we are sure are from the same panorama
-    auto indices_ = cvd::leaveBiggestComponent(
-        features, allPairwiseMatches_, (float)confThresh);
-    std::vector<cv::UMat> seamEstImgsSubset;
-    std::vector<cv::UMat> imgsSubset;
-    std::vector<cv::Size> fullImgSizesSubset;
-    for (size_t i = 0; i < indices_.size(); ++i) {
-        imgsSubset.push_back(imgs_[indices_[i]]);
-        seamEstImgsSubset.push_back(seamEstImgs[indices_[i]]);
-        fullImgSizesSubset.push_back(fullImgSizes[indices_[i]]);
-    }
-    seamEstImgs = seamEstImgsSubset;
-    imgs_ = imgsSubset;
-    fullImgSizes = fullImgSizesSubset;
-
-}
-
-std::vector<cvd::CameraParams> ImageStitcher::estimate_camera_params_(
-    double confThresh, float& warpedImageScale)
-{
-    //////////////////////////////////
-    ///// Estimate camera params /////
-    //////////////////////////////////
-    // estimate homography in global frame
-    cv::Ptr<cvd::BundleAdjusterBase> bundleAdjuster =
-        cv::makePtr<cvd::BundleAdjusterAffinePartial>();
-    cv::Ptr<cvd::Estimator> estimator =
-        cv::makePtr<cvd::AffineBasedEstimator>();
-    std::vector<cvd::CameraParams> cameras;
-    if (!(*estimator)(features, allPairwiseMatches_, cameras)) {
-        throw std::runtime_error("Could not estimate camera homography");
-    }
-
-    for (size_t i = 0; i < cameras.size(); ++i) {
-        cv::Mat R;
-        cameras[i].R.convertTo(R, CV_32F);
-        cameras[i].R = R;
-    }
-
-    bundleAdjuster->setConfThresh(confThresh);
-    if (!(*bundleAdjuster)(features, allPairwiseMatches_, cameras)) {
-        throw std::runtime_error("Failed bundle adjustment");
-    }
-
-    // Find median focal length and use it as final image scale
-    std::vector<double> focals;
-    for (size_t i = 0; i < cameras.size(); ++i) {
-        focals.push_back(cameras[i].focal);
-    }
-
-    std::sort(focals.begin(), focals.end());
-    bool do_wave_correct_{false};
-    cvd::WaveCorrectKind wave_correct_kind_{
-        cvd::WaveCorrectKind::WAVE_CORRECT_HORIZ};
-    if (focals.size() % 2 == 1) {
-        warpedImageScale = static_cast<float>(focals[focals.size() / 2]);
-    }
-    else {
-        warpedImageScale =
-                static_cast<float>(
-                        focals[focals.size() / 2 - 1] + focals[focals.size() / 2]) *
-                0.5f;
-    }
-
-    if (do_wave_correct_) {
-        std::vector<cv::Mat> rmats;
-        for (size_t i = 0; i < cameras.size(); ++i)
-            rmats.push_back(cameras[i].R.clone());
-        cvd::waveCorrect(rmats, wave_correct_kind_);
-        for (size_t i = 0; i < cameras.size(); ++i)
-            cameras[i].R = rmats[i];
-    }
-    return cameras;
-}
-
-cv::Mat ImageStitcher::compose_pano_(
-    double seamWorkAspect,
-    float warpedImageScale,
-    double workScale,
-    std::vector<cv::UMat>& seamEstImgs,
-    std::vector<cvd::CameraParams>& cameras,
-    std::vector<cv::Size>& fullImgSizes)
-{
-    //////////////////////
-    //// compose pano ////
-    //////////////////////
-    cv::Mat pano;
-
-    double composeResol{cv::Stitcher::ORIG_RESOL};
-    std::vector<cv::Point> corners(imgs_.size());
-    std::vector<cv::UMat> masksWarped(imgs_.size());
-    std::vector<cv::UMat> imagesWarped(imgs_.size());
-    std::vector<cv::Size> sizes(imgs_.size());
-    std::vector<cv::UMat> masks(imgs_.size());
-
-    // Prepare image masks
-    for (size_t i = 0; i < imgs_.size(); ++i) {
-        masks[i].create(seamEstImgs[i].size(), CV_8U);
-        masks[i].setTo(cv::Scalar::all(255));
-    }
-
-    // Warp images and their masks
-    cv::Ptr<cv::WarperCreator> warper = cv::makePtr<cv::AffineWarper>();
-    cv::Ptr<cvd::RotationWarper> w =
-        (warper)->create(float(warpedImageScale * seamWorkAspect));
-    cv::InterpolationFlags interpFlags{cv::INTER_LINEAR};
-    for (size_t i = 0; i < imgs_.size(); ++i) {
-        cv::Mat_<float> K;
-        cameras[i].K().convertTo(K, CV_32F);
-        K(0, 0) *= (float)seamWorkAspect;
-        K(0, 2) *= (float)seamWorkAspect;
-        K(1, 1) *= (float)seamWorkAspect;
-        K(1, 2) *= (float)seamWorkAspect;
-
-        corners[i] = w->warp(
-                seamEstImgs[i], K, cameras[i].R, interpFlags,
-                cv::BORDER_REFLECT, imagesWarped[i]);
-        sizes[i] = imagesWarped[i].size();
-
-        w->warp(
-                masks[i], K, cameras[i].R, cv::INTER_NEAREST, cv::BORDER_CONSTANT,
-                masksWarped[i]);
-    }
-
-    // Compensate exposure before finding seams
-    cv::Ptr<cvd::ExposureCompensator> exposureComp =
-        cv::makePtr<cvd::NoExposureCompensator>();
-    exposureComp->feed(corners, imagesWarped, masksWarped);
-    for (size_t i = 0; i < imgs_.size(); ++i) {
-        exposureComp->apply(
-                int(i), corners[i], imagesWarped[i], masksWarped[i]);
-    }
-
-    // Find seams
-    cv::Ptr<cvd::SeamFinder> seamFinder = cv::makePtr<cvd::GraphCutSeamFinder>(
-        cvd::GraphCutSeamFinderBase::COST_COLOR);
-    std::vector<cv::UMat> imagesWarpedF(imgs_.size());
-    for (size_t i = 0; i < imgs_.size(); ++i) {
-        imagesWarped[i].convertTo(imagesWarpedF[i], CV_32F);
-    }
-    seamFinder->find(imagesWarpedF, corners, masksWarped);
-
-    // Release unused memory
-    seamEstImgs.clear();
-    imagesWarped.clear();
-    imagesWarpedF.clear();
-    masks.clear();
-
-    // Compositing
-    cv::UMat imgWarped, imgWarpedS;
-    cv::UMat dilatedMask, seamMask, mask, maskWarped;
-
-    // double compose_seam_aspect = 1;
-    double composeWorkAspect = 1;
-    bool isBlenderPrepared = false;
-
-    double composeScale = 1;
-    bool isComposeScaleSet = false;
-
-    std::vector<cvd::CameraParams> camerasScaled(cameras);
-
-    cv::UMat fullImg, img;
-    cv::Ptr<cvd::Blender> blender = cv::makePtr<cvd::MultiBandBlender>(false);
-
-    for (size_t img_idx = 0; img_idx < imgs_.size(); ++img_idx) {
-        // Read image and resize it if necessary
-        fullImg = imgs_[img_idx];
-        if (!isComposeScaleSet) {
-            if (composeResol > 0) {
-                composeScale = std::min(
-                        1.0,
-                        std::sqrt(composeResol * 1e6 / fullImg.size().area()));
-            }
-            isComposeScaleSet = true;
-
-            // Compute relative scales
-            // compose_seam_aspect = composeScale / seam_scale_;
-            composeWorkAspect = composeScale / workScale;
-
-            // Update warped image scale
-            float warpScale =
-                    static_cast<float>(warpedImageScale * composeWorkAspect);
-            w = warper->create(warpScale);
-
-            // Update corners and sizes
-            for (size_t i = 0; i < imgs_.size(); ++i) {
-                // Update intrinsics
-                camerasScaled[i].ppx *= composeWorkAspect;
-                camerasScaled[i].ppy *= composeWorkAspect;
-                camerasScaled[i].focal *= composeWorkAspect;
-
-                // Update corner and size
-                cv::Size sz = fullImgSizes[i];
-                if (std::abs(composeScale - 1) > 1e-1) {
-                    sz.width =
-                            cvRound(fullImgSizes[i].width * composeScale);
-                    sz.height =
-                            cvRound(fullImgSizes[i].height * composeScale);
-                }
-
-                cv::UMat K;
-                camerasScaled[i].K().convertTo(K, CV_32F);
-                cv::Rect roi = w->warpRoi(sz, K, camerasScaled[i].R);
-                corners[i] = roi.tl();
-                sizes[i] = roi.size();
-            }
-        }
-        if (std::abs(composeScale - 1) > 1e-1) {
-            resize(
-                    fullImg, img, cv::Size(), composeScale, composeScale,
-                    cv::INTER_LINEAR);
-        } else {
-            img = fullImg;
-        }
-        fullImg.release();
-        cv::Size imgSize = img.size();
-
-        cv::UMat K;
-        camerasScaled[img_idx].K().convertTo(K, CV_32F);
-
-        // Warp the current image
-        w->warp(
-                img, K, cameras[img_idx].R, interpFlags, cv::BORDER_REFLECT,
-                imgWarped);
-
-        // Warp the current image mask
-        mask.create(imgSize, CV_8U);
-        mask.setTo(cv::Scalar::all(255));
-        w->warp(
-                mask, K, cameras[img_idx].R, cv::INTER_NEAREST,
-                cv::BORDER_CONSTANT, maskWarped);
-
-        // Compensate exposure
-        exposureComp->apply(
-                (int)img_idx, corners[img_idx], imgWarped, maskWarped);
-
-        imgWarped.convertTo(imgWarpedS, CV_16S);
-        imgWarped.release();
-        img.release();
-        mask.release();
-
-        // Make sure seam mask has proper size
-        cv::dilate(masksWarped[img_idx], dilatedMask, cv::UMat());
-        cv::resize(
-                dilatedMask, seamMask, maskWarped.size(), 0, 0,
-                cv::INTER_LINEAR);
-
-        cv::bitwise_and(seamMask, maskWarped, maskWarped);
-
-        // Blender
-        if (!isBlenderPrepared) {
-            blender->prepare(corners, sizes);
-            isBlenderPrepared = true;
-        }
-
-        // Blend the current image
-        blender->feed(imgWarpedS, maskWarped, corners[img_idx]);
-    }
-
-    cv::UMat result;
-    cv::UMat resultMask;
-    blender->blend(result, resultMask);
-
-    // Preliminary result is in CV_16SC3 format, but all values are in [0,255]
-    // range, so convert it to avoid user confusing
-    result.convertTo(pano, CV_8U);
-    return pano;
-}
-
-int ImageStitcher::search_matches_(int src, int dst){
-    // Need to find more efficient way to search
-    for(int i = 0; i < allPairwiseMatches_.size(); i++){
-        if (src == allPairwiseMatches_[i].src_img_idx) {
-            if (dst == allPairwiseMatches_[i].dst_img_idx) {
-                return i;
-            }
-        }
-    }
-    return -1;
-}
-
-void ImageStitcher::create_matches_() {
-    for(int i = 0; i < imgs_.size(); i++){
-        for(int j = 0; j < imgs_.size(); j++){
-            cvd::MatchesInfo match;
-            if( i == j){
-                match.src_img_idx = -1;
-                match.dst_img_idx = -1;
-            }
-            else {
-                match.src_img_idx = i;
-                match.dst_img_idx = j;
-            }
-            allPairwiseMatches_.push_back(match);
-        }
-    }
-}
-
-// Need to give a flag that will print the images within a certain folder
-void ImageStitcher::printFeatures(std::string filePath){
-    cv::UMat output;
-    for (int i = 0; i < features.size(); i++) {
-        cv::drawKeypoints(
-            imgs_[features[i].img_idx], features[i].keypoints, output,
-            cv::Scalar(0, 255, 0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        cv::imwrite(filePath + "features_" + std::to_string(i) + ".jpg", output);
-    }
-}
-
-// Need to give a flag that will print the images within a certain folder
-void ImageStitcher::printMatches(std::string filePath){
-    cv::UMat matchesOutput;
-    for(int i = 0; i < allPairwiseMatches_.size(); i++) {
-        if(allPairwiseMatches_[i].src_img_idx != -1 && allPairwiseMatches_[i].dst_img_idx != -1 && allPairwiseMatches_[i].src_img_idx != allPairwiseMatches_[i].dst_img_idx) {
-            if (!allPairwiseMatches_[i].matches.empty()) {
-                int src = allPairwiseMatches_[i].src_img_idx;
-                int dest = allPairwiseMatches_[i].dst_img_idx;
-                cv::drawMatches(
-                    imgs_[src], features[src].keypoints, imgs_[dest],
-                    features[dest].keypoints, allPairwiseMatches_[i].matches,
-                    matchesOutput, cv::Scalar(0, 255, 0),
-                    cv::Scalar(0, 255, 0));
-                cv::imwrite(filePath + "matches_" + std::to_string(i) + ".jpg",
-                            matchesOutput);
-            }
-        }
-    }
 }
 
 // The implementation of this function is a modified version of
@@ -535,22 +133,20 @@ cv::Mat ImageStitcher::compute()
         throw std::runtime_error("Not enough images to perform stitching");
     }
 
-    // Currently conf_thres = 1 if using automatic stitching
-    // and conf_thres = 0.1 if using user landmarks
-    //double confThresh{1};
-    double confThresh{0.1};
+    // Confidence threshold
+    float confThresh{0.3};
 
     // Calculate working scale for registration and seam finding
-    double regResol{-0.6};
-    double seamEstResol{0.1};
-    double workScale{1};
-    double seamScale{1};
-    double seamWorkAspect{1};
-    auto sizeEst = input_[0].size();
+    float regResol{-0.6};
+    float seamEstResol{0.1};
+    float workScale{1};
+    float seamScale{1};
+    float seamWorkAspect{1};
+    auto area = static_cast<float>(input_[0].size().area());
     if (regResol > 0) {
-        workScale = std::min(1.0, std::sqrt(regResol * 1e6 / sizeEst.area()));
+        workScale = std::min(1.F, std::sqrt(regResol * 1e6F / area));
     }
-    seamScale = std::min(1.0, std::sqrt(seamEstResol * 1e6 / sizeEst.area()));
+    seamScale = std::min(1.F, std::sqrt(seamEstResol * 1e6F / area));
     seamWorkAspect = seamScale / workScale;
 
     // Convert images to umats
@@ -578,33 +174,56 @@ cv::Mat ImageStitcher::compute()
         features = DetectFeatures(umats, masks, workScale, featureFinder_);
     }
 
-    // If manual or if pre-matching, insert user landmarks
+    // If pre-matching, insert user landmarks
+    // Note: Matches will get ignored by matcher, so prob not great?
     if (ldmMode_ == LandmarkMode::ManualPreMatch) {
         InsertUserMatches(landmarks_, features, matches, umats);
     }
 
     // Perform matching
     // TODO: If manual, features will be empty
-    matches = find_matches_(confThresh, umats);
+    MatchFeatures(confThresh, features, matches);
 
-    // If post-matching, insert user landmarks
+    // If manual or post-matching, insert user landmarks and matches
     if (ldmMode_ == LandmarkMode::Manual or
         ldmMode_ == LandmarkMode::ManualPostMatch) {
         InsertUserMatches(landmarks_, features, matches, umats);
     }
 
+    // If fallback, insert landmarks for the images that got removed
+    // TODO: Fallback matches should be added after biggest component filtering
+    // but src and dst indices won't match
+    if (ldmMode_ == LandmarkMode::ManualFallback) {
+        std::vector<LandmarkPair> fallbackLdms;
+        for (const auto& l : landmarks_) {
+            auto idx = FindMatchesIndex(l.srcIdx, l.dstIdx, matches);
+            // Match will be below BC threshold, so add as a landmark
+            if (matches[idx].confidence < confThresh) {
+                fallbackLdms.emplace_back(l);
+            }
+        }
+        InsertUserMatches(fallbackLdms, features, matches, umats);
+    }
+
+    // Leave only matches we are sure are from the same panorama
+    auto filtered = cvd::leaveBiggestComponent(features, matches, confThresh);
+
+    // Remove the images that aren't going to get matched
+    RemoveByIndex(umats, filtered);
+    if (not masks.empty()) {
+        RemoveByIndex(masks, filtered);
+    }
+
     //////////////////////////////////
-    ///// Estimate camera params /////
+    ///// estimate camera params /////
     //////////////////////////////////
-    float warpedImageScale;
-    auto cameras = estimate_camera_params_(confThresh, warpedImageScale);
+    float warpedScale{1.F};
+    auto cams = EstimateCameras(features, matches, confThresh, warpedScale);
 
     //////////////////////
     //// compose pano ////
     //////////////////////
-    result_ = compose_pano_(
-        seamWorkAspect, warpedImageScale, seamScale, seamEstImgs, cameras,
-        fullImgSizes);
+    result_ = ComposePano(umats, cams, seamWorkAspect, seamScale, warpedScale);
 
     return result_;
 }
@@ -649,7 +268,16 @@ static FeatureList DetectFeatures(
     return features;
 }
 
-int FindFeatureIndex(int idx, const FeatureList& fl)
+static void MatchFeatures(float confThresh, FeatureList& fl, MatchesList& ml)
+{
+    // TODO: Full affine? BestOf2 (non-affine)? Hamming (from features2d)?
+    auto matcher =
+        cv::makePtr<cvd::AffineBestOf2NearestMatcher>(false, false, confThresh);
+    (*matcher)(fl, ml);
+    matcher->collectGarbage();
+}
+
+static int FindFeatureIndex(int idx, const FeatureList& fl)
 {
     int it{0};
     for (const auto& f : fl) {
@@ -661,7 +289,7 @@ int FindFeatureIndex(int idx, const FeatureList& fl)
     return -1;
 }
 
-int FindMatchesIndex(int srcIdx, int dstIdx, const MatchesList& ml)
+static int FindMatchesIndex(int srcIdx, int dstIdx, const MatchesList& ml)
 {
     int it{0};
     for (const auto& m : ml) {
@@ -673,7 +301,7 @@ int FindMatchesIndex(int srcIdx, int dstIdx, const MatchesList& ml)
     return -1;
 }
 
-inline int InsertLandmarks(
+static int InsertLandmarks(
     int lpIdx,
     const LandmarkContainer& lpLdms,
     FeatureList& fl,
@@ -761,4 +389,296 @@ static void InsertUserMatches(
         ml[idxS2D] = matchS2D;
         ml[idxD2S] = matchD2S;
     }
+}
+
+template <typename ObjList, typename IndexList>
+void RemoveByIndex(ObjList& ol, const IndexList& il)
+{
+    // Nothing to remove
+    if (ol.empty()) {
+        return;
+    }
+    // Sort indices in descending order
+    std::sort(std::begin(il), std::end(il), std::greater<>());
+
+    for (const auto& i : il) {
+        // Index is beyond the size of the container
+        // This doesn't seem right...
+        if (i >= ol.size()) {
+            break;
+        }
+        ol.erase(std::begin(ol) + i);
+    }
+}
+
+static CameraList EstimateCameras(
+    const FeatureList& fl,
+    const MatchesList& ml,
+    float confThresh,
+    float& warpedScale)
+{
+    // estimate homography in global frame
+    auto bundleAdjuster = cv::makePtr<cvd::BundleAdjusterAffinePartial>();
+    auto estimator = cv::makePtr<cvd::AffineBasedEstimator>();
+    CameraList cameras;
+    if (!(*estimator)(fl, ml, cameras)) {
+        throw std::runtime_error("Could not estimate camera homography");
+    }
+
+    // Convert rotation matrix to floats
+    for (auto& c : cameras) {
+        cv::Mat R;
+        c.R.convertTo(R, CV_32F);
+        c.R = R;
+    }
+
+    // Perform bundle adjustment
+    bundleAdjuster->setConfThresh(confThresh);
+    if (!(*bundleAdjuster)(fl, ml, cameras)) {
+        throw std::runtime_error("Failed bundle adjustment");
+    }
+
+    // Find median focal length and use it as final image scale
+    std::vector<float> focals;
+    for (const auto& c : cameras) {
+        focals.push_back(static_cast<float>(c.focal));
+    }
+    std::nth_element(
+        focals.begin(), focals.begin() + focals.size() / 2, focals.end());
+    warpedScale = focals[focals.size() / 2];
+
+    // Wave correct rotations
+    auto doWaveCorrect{false};
+    auto waveCorrectKind{cvd::WaveCorrectKind::WAVE_CORRECT_HORIZ};
+    if (doWaveCorrect) {
+        std::vector<cv::Mat> rmats;
+        for (const auto& c : cameras) {
+            rmats.push_back(c.R.clone());
+        }
+        cvd::waveCorrect(rmats, waveCorrectKind);
+        for (size_t i = 0; i < cameras.size(); ++i) {
+            cameras[i].R = rmats[i];
+        }
+    }
+    return cameras;
+}
+
+static cv::Mat ComposePano(
+    const ImgList& imgs,
+    const CameraList& cams,
+    float seamAspect,
+    float seamScale,
+    float warpScale)
+{
+    // Prepare seam images
+    auto seamImgs = ScaleImages(imgs, seamScale);
+
+    // Prepare seam seamMasks
+    ImgList seamMasks;
+    seamMasks.reserve(seamImgs.size());
+    for (const auto& i : seamImgs) {
+        auto m = cv::UMat(i.size(), CV_8U);
+        m.setTo(cv::Scalar::all(255));
+        seamMasks.push_back(m);
+    }
+
+    // Setup warper
+    auto warperCreator = cv::makePtr<cv::AffineWarper>();
+    auto warper = warperCreator->create(warpScale * seamAspect);
+    cv::InterpolationFlags interpFlags{cv::INTER_LINEAR};
+
+    // Warp images and their seam masks
+    ImgList imgsWarped(imgs.size());
+    ImgList masksWarped(imgs.size());
+    std::vector<cv::Point> corners(imgs.size());
+    std::vector<cv::Size> sizes(imgs.size());
+    for (size_t i = 0; i < seamImgs.size(); ++i) {
+        cv::Mat_<float> K;
+        cams[i].K().convertTo(K, CV_32F);
+        K(0, 0) *= seamAspect;
+        K(0, 2) *= seamAspect;
+        K(1, 1) *= seamAspect;
+        K(1, 2) *= seamAspect;
+
+        corners[i] = warper->warp(
+            seamImgs[i], K, cams[i].R, interpFlags, cv::BORDER_REFLECT,
+            imgsWarped[i]);
+        sizes[i] = imgsWarped[i].size();
+
+        warper->warp(
+            seamMasks[i], K, cams[i].R, cv::INTER_NEAREST, cv::BORDER_CONSTANT,
+            masksWarped[i]);
+    }
+
+    // Compensate exposure before finding seams
+    // TODO: Make into a user parameter
+    cv::Ptr<cvd::ExposureCompensator> exposureComp =
+        cv::makePtr<cvd::NoExposureCompensator>();
+    exposureComp->feed(corners, imgsWarped, masksWarped);
+    for (size_t i = 0; i < imgsWarped.size(); ++i) {
+        exposureComp->apply(int(i), corners[i], imgsWarped[i], masksWarped[i]);
+    }
+
+    // Find seams
+    cv::Ptr<cvd::SeamFinder> seamFinder = cv::makePtr<cvd::GraphCutSeamFinder>(
+        cvd::GraphCutSeamFinderBase::COST_COLOR);
+    ImgList imgsWarpedF(imgsWarped.size());
+    for (size_t i = 0; i < imgsWarped.size(); ++i) {
+        imgsWarped[i].convertTo(imgsWarpedF[i], CV_32F);
+    }
+    seamFinder->find(imgsWarpedF, corners, masksWarped);
+
+    // Release unused memory
+    seamImgs.clear();
+    imgsWarped.clear();
+    imgsWarpedF.clear();
+    seamMasks.clear();
+
+    ///// Compositing /////
+    // Setup compositing scale
+    float composeScale{1};
+    float composeResol{cv::Stitcher::ORIG_RESOL};
+    if (composeResol > 0) {
+        auto area = static_cast<float>(imgs[0].size().area());
+        composeScale = std::min(1.F, std::sqrt(composeResol * 1e6F / area));
+    }
+
+    // Compute relative scales
+    auto composeWorkAspect = composeScale / seamScale;
+
+    // Update warper scale factor
+    warper = warperCreator->create(warpScale * composeWorkAspect);
+
+    // Update corners and sizes
+    CameraList camsScaled(cams);
+    for (size_t i = 0; i < imgs.size(); ++i) {
+        // Update intrinsics
+        camsScaled[i].ppx *= composeWorkAspect;
+        camsScaled[i].ppy *= composeWorkAspect;
+        camsScaled[i].focal *= composeWorkAspect;
+
+        // Update corner and size
+        auto sz = imgs[i].size();
+        if (std::abs(composeScale - 1) > 1e-1F) {
+            sz.width = cvRound(static_cast<float>(sz.width) * composeScale);
+            sz.height = cvRound(static_cast<float>(sz.height) * composeScale);
+        }
+
+        cv::UMat K;
+        camsScaled[i].K().convertTo(K, CV_32F);
+        auto roi = warper->warpRoi(sz, K, camsScaled[i].R);
+        corners[i] = roi.tl();
+        sizes[i] = roi.size();
+    }
+
+    // Setup blender
+    cv::Ptr<cvd::Blender> blender = cv::makePtr<cvd::MultiBandBlender>(false);
+    blender->prepare(corners, sizes);
+
+    // Composite all images
+    cv::UMat img;
+    cv::UMat imgWarped;
+    cv::UMat imgWarpedS;
+    cv::UMat dilatedMask;
+    cv::UMat seamMask;
+    cv::UMat mask;
+    cv::UMat maskWarped;
+    for (size_t idx = 0; idx < imgs.size(); ++idx) {
+        // Scale image to compose scale
+        if (std::abs(composeScale - 1) > 1e-1F) {
+            cv::resize(
+                imgs[idx], img, cv::Size(), composeScale, composeScale,
+                cv::INTER_LINEAR);
+        } else {
+            img = imgs[idx];
+        }
+        auto imgSize = img.size();
+
+        // Convert K to float
+        cv::UMat K;
+        camsScaled[idx].K().convertTo(K, CV_32F);
+
+        // Warp the current image
+        warper->warp(
+            img, K, cams[idx].R, interpFlags, cv::BORDER_REFLECT, imgWarped);
+
+        // Warp the current image mask
+        mask.create(imgSize, CV_8U);
+        mask.setTo(cv::Scalar::all(255));
+        warper->warp(
+            mask, K, cams[idx].R, cv::INTER_NEAREST, cv::BORDER_CONSTANT,
+            maskWarped);
+
+        // Compensate exposure
+        exposureComp->apply(idx, corners[idx], imgWarped, maskWarped);
+
+        imgWarped.convertTo(imgWarpedS, CV_16S);
+        imgWarped.release();
+        img.release();
+        mask.release();
+
+        // Make sure seam mask has proper size
+        cv::dilate(masksWarped[idx], dilatedMask, cv::UMat());
+        cv::resize(
+            dilatedMask, seamMask, maskWarped.size(), 0, 0, cv::INTER_LINEAR);
+        cv::bitwise_and(seamMask, maskWarped, maskWarped);
+
+        // Blend the current image
+        blender->feed(imgWarpedS, maskWarped, corners[idx]);
+    }
+
+    cv::UMat result;
+    cv::UMat resultMask;
+    blender->blend(result, resultMask);
+
+    // Preliminary result is in CV_16SC3 format, but all values are in [0,255]
+    // range, so convert it to avoid user confusing
+    cv::Mat pano;
+    result.convertTo(pano, CV_8U);
+    return pano;
+}
+
+static cvd::MatchesInfo ComputeHomography(
+    cvd::MatchesInfo matchesInfo, const FeatureList& fl)
+{
+    // Construct point-point correspondences for transform estimation
+    cv::Mat srcPoints(
+        1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
+    cv::Mat dstPoints(
+        1, static_cast<int>(matchesInfo.matches.size()), CV_32FC2);
+    for (size_t i = 0; i < matchesInfo.matches.size(); ++i) {
+        const cv::DMatch& m = matchesInfo.matches[i];
+        srcPoints.at<cv::Point2f>(0, static_cast<int>(i)) =
+            fl[matchesInfo.src_img_idx].keypoints[m.queryIdx].pt;
+        dstPoints.at<cv::Point2f>(0, static_cast<int>(i)) =
+            fl[matchesInfo.dst_img_idx].keypoints[m.trainIdx].pt;
+    }
+    matchesInfo.H = cv::estimateAffinePartial2D(
+        srcPoints, dstPoints, matchesInfo.inliers_mask);
+
+    if (matchesInfo.H.empty()) {
+        // could not find transformation
+        matchesInfo.confidence = 0;
+        matchesInfo.num_inliers = 0;
+        return matchesInfo;
+    }
+
+    // Find number of inliers
+    matchesInfo.num_inliers = 0;
+    for (size_t i = 0; i < matchesInfo.inliers_mask.size(); ++i) {
+        if (matchesInfo.inliers_mask[i]) {
+            matchesInfo.num_inliers++;
+        }
+    }
+
+    // These coeffs are from paper M. Brown and D. Lowe. "Automatic Panoramic
+    // Image Stitching using Invariant Features"
+    matchesInfo.confidence =
+        matchesInfo.num_inliers / (8 + 0.3 * matchesInfo.matches.size());
+
+    // extend H to represent linear transformation in homogeneous coordinates
+    matchesInfo.H.push_back(cv::Mat::zeros(1, 3, CV_64F));
+    matchesInfo.H.at<double>(2, 2) = 1;
+
+    return matchesInfo;
 }
