@@ -33,7 +33,7 @@ smooth and do not contain much detail, then using approximately
 are detailed, it may be necessary to use a much higher proportion,
 such as 20 percent. */
 static constexpr size_t DEFAULT_HISTOGRAM_BINS = 50;
-static constexpr double DEFAULT_SAMPLE_FACTOR = 1.0 / 80.0;
+static constexpr double DEFAULT_SAMPLE_FACTOR = 0.20;
 
 using Transform = DeformableRegistration::Transform;
 
@@ -82,8 +82,7 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
     output_->SetTransformDomainMeshSize(meshSize);
     output_->SetTransformDomainDirection(fixed->GetDirection());
 
-    const auto numParams = output_->GetNumberOfParameters();
-    BSplineParameters parameters(numParams);
+    BSplineParameters parameters(output_->GetNumberOfParameters());
     parameters.Fill(0.0);
     output_->SetParameters(parameters);
 
@@ -110,7 +109,8 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
     metric->SetNumberOfSpatialSamples(numSamples);
 
     ///// Setup Optimizer /////
-    auto regionWidth = fixed->GetLargestPossibleRegion().GetSize()[0];
+    auto regionWidth =
+        static_cast<double>(fixed->GetLargestPossibleRegion().GetSize()[0]);
     auto maxStepLength = regionWidth * DEFAULT_MAX_STEP_FACTOR;
     auto minStepLength = regionWidth * DEFAULT_MIN_STEP_FACTOR;
 
