@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
     ldmOptions.add_options()
         ("disable-landmark", "Disable all landmark registration steps")
         ("disable-landmark-bspline", "Disable secondary B-Spline landmark registration")
+        ("landmark-match-ratio", po::value<float>()->default_value(0.3F), "Auto-landmark matching ratio")
         ("input-landmarks,l", po::value<std::string>(),
             "Input landmarks file. If not provided, landmark features "
             "are automatically detected from the input images.");
@@ -109,6 +110,7 @@ int main(int argc, char* argv[])
             auto genLdm = graph.insertNode<LandmarkDetectorNode>();
             fixed->image >> genLdm->fixedImage;
             moving->image >> genLdm->movingImage;
+            genLdm->matchRatio(parsed["landmark-match-ratio"].as<float>());
             ldmNode = genLdm;
 
             // Optionally write generated landmarks to file
@@ -170,6 +172,7 @@ int main(int argc, char* argv[])
     fixed->image >> resample2->fixedImage;
     moving->image >> resample2->movingImage;
     compositeTfms->result >> resample2->transform;
+    resample2->forceAlpha(parsed.count("enable-alpha") > 0);
 
     ///// Write the output image /////
     auto writer = graph.insertNode<ImageWriteNode>();

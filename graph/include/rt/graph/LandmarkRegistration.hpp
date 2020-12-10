@@ -33,6 +33,8 @@ public:
     smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
     /** @brief Moving image port */
     smgl::InputPort<cv::Mat> movingImage{&movingImg_};
+    /** @brief Match ratio */
+    smgl::InputPort<float> matchRatio{&matchRatio_};
     /**@}*/
 
     /** @name Output Ports */
@@ -50,6 +52,8 @@ private:
     cv::Mat fixedImg_;
     /** Moving image */
     cv::Mat movingImg_;
+    /** Match ratio */
+    float matchRatio_{0.3F};
     /** Detected fixed landmarks */
     LandmarkContainer fixedLdm_;
     /** Detected moving landmarks */
