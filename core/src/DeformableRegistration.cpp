@@ -1,5 +1,6 @@
 #include "rt/DeformableRegistration.hpp"
 
+#include <itkImageMaskSpatialObject.h>
 #include <itkImageRegistrationMethod.h>
 #include <itkMattesMutualInformationImageToImageMetric.h>
 #include <itkNearestNeighborInterpolateImageFunction.h>
@@ -17,6 +18,7 @@ using Metric =
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
 using Registration = itk::ImageRegistrationMethod<Image8UC1, Image8UC1>;
 using BSplineParameters = DeformableRegistration::Transform::ParametersType;
+using Mask = itk::ImageMaskSpatialObject<2>;
 
 static constexpr double DEFAULT_MAX_STEP_FACTOR = 1.0 / 500.0;
 static constexpr double DEFAULT_MIN_STEP_FACTOR = 1.0 / 500000.0;
@@ -33,7 +35,6 @@ smooth and do not contain much detail, then using approximately
 are detailed, it may be necessary to use a much higher proportion,
 such as 20 percent. */
 static constexpr size_t DEFAULT_HISTOGRAM_BINS = 50;
-static constexpr double DEFAULT_SAMPLE_FACTOR = 0.20;
 
 using Transform = DeformableRegistration::Transform;
 
@@ -47,9 +48,22 @@ void DeformableRegistration::setMovingImage(const cv::Mat& i)
     movingImage_ = i;
 }
 
+void DeformableRegistration::setFixedMask(const cv::Mat& i) { fixedMask_ = i; }
+
+void DeformableRegistration::setMovingMask(const cv::Mat& i)
+{
+    movingMask_ = i;
+}
+
 void DeformableRegistration::setNumberOfIterations(size_t i)
 {
     iterations_ = i;
+}
+
+void DeformableRegistration::setSampleFactor(double f)
+{
+    // Bound to [0.1, 1.0]%
+    sampleFactor_ = std::min(std::max(f, 0.01), 1.0);
 }
 
 Transform::Pointer DeformableRegistration::getTransform() { return output_; }
@@ -100,13 +114,25 @@ DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
     registration->SetTransform(output_);
     registration->SetInitialTransformParameters(output_->GetParameters());
 
-    auto fixedRegion = fixed->GetBufferedRegion();
-    registration->SetFixedImageRegion(fixedRegion);
+    auto region = fixed->GetBufferedRegion();
+    registration->SetFixedImageRegion(region);
 
     metric->SetNumberOfHistogramBins(DEFAULT_HISTOGRAM_BINS);
-    auto numSamples = static_cast<size_t>(
-        fixedRegion.GetNumberOfPixels() * DEFAULT_SAMPLE_FACTOR);
+    auto numSamples =
+        static_cast<size_t>(region.GetNumberOfPixels() * sampleFactor_);
     metric->SetNumberOfSpatialSamples(numSamples);
+
+    if (not fixedMask_.empty()) {
+        auto mask = Mask::New();
+        mask->SetImage(rt::CVMatToITKImage<Image8UC1>(fixedMask_));
+        metric->SetFixedImageMask(mask);
+    }
+
+    if (not movingMask_.empty()) {
+        auto mask = Mask::New();
+        mask->SetImage(rt::CVMatToITKImage<Image8UC1>(movingMask_));
+        metric->SetMovingImageMask(mask);
+    }
 
     ///// Setup Optimizer /////
     auto regionWidth =

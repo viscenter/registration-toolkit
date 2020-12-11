@@ -33,6 +33,12 @@ public:
     /** @brief Moving image port */
     smgl::InputPort<cv::Mat> movingImage{
         &reg_, &DeformableRegistration::setMovingImage};
+    smgl::InputPort<cv::Mat> fixedMask{
+        &reg_, &DeformableRegistration::setFixedMask};
+    smgl::InputPort<cv::Mat> movingMask{
+        &reg_, &DeformableRegistration::setMovingMask};
+    smgl::InputPort<double> sampleFactor{
+        &reg_, &DeformableRegistration::setSampleFactor};
     /** @brief Deformable iterations port */
     smgl::InputPort<int> iterations{&iters_};
     /**@}*/

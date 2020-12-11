@@ -9,6 +9,8 @@ rtg::DeformableRegistrationNode::DeformableRegistrationNode()
 {
     registerInputPort("fixedImage", fixedImage);
     registerInputPort("movingImage", movingImage);
+    registerInputPort("fixedMask", fixedMask);
+    registerInputPort("movingMask", movingMask);
     registerInputPort("iterations", iterations);
     registerOutputPort("transform", transform);
 

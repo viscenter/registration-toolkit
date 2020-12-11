@@ -57,6 +57,7 @@ target_link_libraries(rt_core
         opencv_imgproc
         opencv_stitching
         ITKOptimizers
+        ITKSpatialObjects
         ${ITKIOTransformLibs}
         vtkCommonTransforms
         vtkFiltersCore
