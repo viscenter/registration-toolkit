@@ -14,8 +14,9 @@ jobs:
     # See: https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#configuring-a-build-matrix
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-          os: [macos-10.15, ubuntu-20.04]
+          os: [macos-10.15, macos-11.0, ubuntu-20.04]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,10 +27,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake libopencv-dev libvtk6-dev libboost-program-options-dev libinsighttoolkit4-dev
 
-    - name: Setup macOS
+    - name: Setup macOS 10.15
       if: matrix.os == 'macos-10.15'
       run: |
-        sudo xcode-select -s /Applications/Xcode_12.1.1.app/Contents/Developer/
+        sudo xcode-select -s /Library/Developer/CommandLineTools/
+        sudo rm /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+        sudo rm -rf /Library/Developer/CommandLineTools/SDKs/MacOSX11.0.sdk
+        sudo ln -sf MacOSX10.15.sdk /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+        brew bundle
+
+    - name: Setup macOS 11
+      if: matrix.os == 'macos-11.0'
+      run: |
+        sudo xcode-select -s /Library/Developer/CommandLineTools/
         brew bundle
 
     - name: Create Build Environment
