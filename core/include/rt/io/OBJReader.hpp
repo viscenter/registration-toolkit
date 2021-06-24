@@ -64,7 +64,7 @@ private:
      *
      * VertexRefs { v, vt, vn }
      */
-    using VertexRefs = cv::Vec3i;
+    using VertexRefs = cv::Vec<std::size_t, 3>;
 
     /** A list of at least three OBJReader::VertexRefs comprise a face */
     using Face = std::vector<VertexRefs>;

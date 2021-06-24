@@ -60,11 +60,10 @@ TEST(UVMapIO, RoundTrip)
 
     // Compare faces
     // cv::Vec_<size_t> doesn't define equality operator so manually compare
-    auto rfv = result.faces_as_vector();
-    auto ofv = orig.faces_as_vector();
-    for (size_t i = 0; i < rfv.size(); i++) {
-        EXPECT_EQ(rfv[i][0], ofv[i][0]);
-        EXPECT_EQ(rfv[i][1], ofv[i][1]);
-        EXPECT_EQ(rfv[i][2], ofv[i][2]);
+    for (const auto& [idx, resFace] : result.faces_as_map()) {
+        auto origFace = orig.getFace(idx);
+        EXPECT_EQ(resFace[0], origFace[0]);
+        EXPECT_EQ(resFace[1], origFace[1]);
+        EXPECT_EQ(resFace[2], origFace[2]);
     }
 }

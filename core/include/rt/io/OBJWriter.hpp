@@ -83,16 +83,18 @@ private:
     /** Output MTL filestream */
     std::ofstream outputMTL_;
 
-    /** Keeps track of what info we have about each point in the mesh. Used for
+    /**
+     * Keeps track of what info we have about each point in the mesh. Used for
      * building OBJ faces.
-     *
-     * [ Point Index, {v, vt, vn} ]
      *
      * v = vertex index number \n
      * vt = UV coordinate index number \n
      * vn = vertex normal index number \n
      */
-    std::map<uint32_t, cv::Vec3i> pointLinks_;
+    using PointLink = cv::Vec<std::size_t, 3>;
+
+    /** [ Point Index, {v, vt, vn} ] */
+    std::map<std::size_t, PointLink> pointLinks_;
 
     /** Input mesh */
     ITKMesh::Pointer mesh_;

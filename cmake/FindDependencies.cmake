@@ -42,6 +42,9 @@ find_package(TIFF REQUIRED)
 ### smeagol ###
 include(BuildSmeagol)
 
+### bvh ###
+include(Buildbvh)
+
 ############
 # Optional #
 ############

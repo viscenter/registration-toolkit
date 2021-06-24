@@ -23,7 +23,10 @@ bool UVMap::empty() const { return uvs_.empty(); }
 
 std::vector<cv::Vec2d> UVMap::uvs_as_vector() const { return uvs_; }
 
-std::vector<UVMap::Face> UVMap::faces_as_vector() const { return faces_; }
+std::unordered_map<std::size_t, UVMap::Face> UVMap::faces_as_map() const
+{
+    return faces_;
+}
 
 void UVMap::setOrigin(const UVMap::Origin& o) { origin_ = o; }
 
@@ -52,7 +55,7 @@ size_t UVMap::addUV(const cv::Vec2d& uv, const Origin& o)
 
 size_t UVMap::addUV(const cv::Vec2d& uv) { return addUV(uv, origin_); }
 
-cv::Vec2d UVMap::getUV(size_t id, const Origin& o)
+cv::Vec2d UVMap::getUV(size_t id, const Origin& o) const
 {
     if (id >= uvs_.size()) {
         throw std::range_error("uv id not in uv map: " + std::to_string(id));
@@ -64,27 +67,32 @@ cv::Vec2d UVMap::getUV(size_t id, const Origin& o)
     return transformed;
 }
 
-cv::Vec2d UVMap::getUV(size_t id) { return getUV(id, origin_); }
+cv::Vec2d UVMap::getUV(size_t id) const { return getUV(id, origin_); }
 
-size_t UVMap::addFace(Face f)
+size_t UVMap::addFace(std::size_t idx, const Face& f)
 {
-    faces_.push_back(f);
-    return faces_.size() - 1;
+    faces_[idx] = f;
+    return idx;
 }
 
 size_t UVMap::addFace(size_t a, size_t b, size_t c)
 {
-    faces_.emplace_back(a, b, c);
-    return faces_.size() - 1;
+    auto idx = faces_.size();
+    while (faces_.count(idx) > 0) {
+        idx++;
+    }
+    faces_[idx] = {a, b, c};
+    return idx;
 }
 
-UVMap::Face UVMap::getFace(size_t id)
-{
-    if (id >= faces_.size()) {
-        throw std::range_error("face id not in uv map");
-    }
+bool UVMap::hasFace(std::size_t idx) const { return faces_.count(idx) > 0; }
 
-    return faces_[id];
+UVMap::Face UVMap::getFace(size_t id) const { return faces_.at(id); }
+
+std::vector<cv::Vec2d> UVMap::getFaceUVs(std::size_t id) const
+{
+    auto f = faces_.at(id);
+    return {uvs_.at(f[0]), uvs_.at(f[1]), uvs_.at(f[2])};
 }
 
 cv::Vec2d GetOriginVector(const UVMap::Origin& o)

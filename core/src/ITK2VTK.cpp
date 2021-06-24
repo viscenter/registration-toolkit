@@ -14,7 +14,8 @@
 using namespace rt;
 
 ///// ITK Mesh -> VTK Polydata /////
-void rt::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
+void rt::ITK2VTK(
+    const ITKMesh::Pointer& input, vtkSmartPointer<vtkPolyData>& output)
 {
 
     // points + normals
@@ -43,7 +44,7 @@ void rt::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
          cell != input->GetCells()->End(); ++cell) {
 
         auto poly = vtkSmartPointer<vtkIdList>::New();
-        for (auto point = cell.Value()->PointIdsBegin();
+        for (auto* point = cell.Value()->PointIdsBegin();
              point != cell.Value()->PointIdsEnd(); ++point) {
             poly->InsertNextId(*point);
         }
@@ -59,8 +60,16 @@ void rt::ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output)
     }
 }
 
+vtkSmartPointer<vtkPolyData> rt::ITK2VTK(const ITKMesh::Pointer& input)
+{
+    auto output = vtkSmartPointer<vtkPolyData>::New();
+    ITK2VTK(input, output);
+    return output;
+}
+
 ///// VTK Polydata -> ITK Mesh /////
-void rt::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
+void rt::VTK2ITK(
+    const vtkSmartPointer<vtkPolyData>& input, ITKMesh::Pointer& output)
 {
 
     // points + normals
@@ -90,4 +99,11 @@ void rt::VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output)
 
         output->SetCell(cellId, cell);
     }
+}
+
+ITKMesh::Pointer rt::VTK2ITK(const vtkSmartPointer<vtkPolyData>& input)
+{
+    auto output = ITKMesh::New();
+    VTK2ITK(input, output);
+    return output;
 }

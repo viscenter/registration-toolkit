@@ -15,7 +15,11 @@ namespace rt
  * Copy vertices, vertex normals, and faces (cells) from input to output.
  *
  */
-void ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output);
+void ITK2VTK(
+    const ITKMesh::Pointer& input, vtkSmartPointer<vtkPolyData>& output);
+
+/** @copydoc ITK2VTK */
+vtkSmartPointer<vtkPolyData> ITK2VTK(const ITKMesh::Pointer& input);
 
 /**
  * @brief Convert from a VTK PolyData to an ITKMesh.
@@ -23,5 +27,9 @@ void ITK2VTK(ITKMesh::Pointer input, vtkSmartPointer<vtkPolyData> output);
  * Copy vertices, vertex normals, and faces (cells) from input to output.
  *
  */
-void VTK2ITK(vtkSmartPointer<vtkPolyData> input, ITKMesh::Pointer output);
+void VTK2ITK(
+    const vtkSmartPointer<vtkPolyData>& input, ITKMesh::Pointer& output);
+
+/** @copydoc VTK2ITK */
+ITKMesh::Pointer VTK2ITK(const vtkSmartPointer<vtkPolyData>& input);
 }  // namespace rt

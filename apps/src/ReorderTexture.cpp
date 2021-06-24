@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     auto useFirstIntersection = parsed.count("use-first-intersection") > 0;
 
     // Load the mesh
-    std::cerr << "Reading mesh: " << inputPath << std::endl;
+    std::cerr << "Reading mesh: " << inputPath << "\n";
     rt::io::OBJReader reader;
     reader.setPath(inputPath);
     auto mesh = reader.read();
@@ -74,8 +74,7 @@ int main(int argc, char* argv[])
     }
 
     // Reorder the texture
-    std::cerr << "Reordering texture :: Sample Rate: " << sampleRate
-              << std::endl;
+    std::cerr << "Reordering texture :: Sample Rate: " << sampleRate << "\n";
     rt::ReorderUnorganizedTexture r;
     r.setMesh(mesh);
     r.setUVMap(uvMap);

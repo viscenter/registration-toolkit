@@ -36,8 +36,10 @@ void rt::WriteUVMap(const fs::path& path, const UVMap& uvMap)
     }
 
     // Write the faces
-    for (const auto& f : uvMap.faces_as_vector()) {
-        ofs.write(reinterpret_cast<const char*>(f.val), 3 * sizeof(size_t));
+    for (const auto& f : uvMap.faces_as_map()) {
+        ofs.write(reinterpret_cast<const char*>(&f.first), sizeof(size_t));
+        ofs.write(
+            reinterpret_cast<const char*>(f.second.val), 3 * sizeof(size_t));
     }
 
     ofs.close();
@@ -175,9 +177,11 @@ rt::UVMap rt::ReadUVMap(const fs::path& path)
     // Read all of the faces
     for (size_t i = 0; i < h.faces; i++) {
         std::ignore = i;
+        std::size_t idx{0};
+        ifs.read(reinterpret_cast<char*>(&idx), sizeof(size_t));
         UVMap::Face f;
         ifs.read(reinterpret_cast<char*>(f.val), 3 * sizeof(size_t));
-        map.addFace(f);
+        map.addFace(idx, f);
     }
 
     return map;

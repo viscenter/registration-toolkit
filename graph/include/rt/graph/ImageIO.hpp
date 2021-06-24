@@ -8,9 +8,7 @@
 
 #include "rt/filesystem.hpp"
 
-namespace rt
-{
-namespace graph
+namespace rt::graph
 {
 
 /**
@@ -81,5 +79,4 @@ private:
         const filesystem::path& /*unused*/) override;
 };
 
-}  // namespace graph
-}  // namespace rt
+}  // namespace rt::graph

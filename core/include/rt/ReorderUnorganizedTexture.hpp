@@ -91,7 +91,7 @@ private:
     cv::Vec3d zAxis_;
 
     /** Whether we want the first or last mesh interesection point */
-    bool useFirstInterection_{false};
+    bool useFirstIntersection_{false};
 
     /** Output UV map */
     UVMap outputUV_;

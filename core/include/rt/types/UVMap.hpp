@@ -89,7 +89,7 @@ public:
     std::vector<cv::Vec2d> uvs_as_vector() const;
 
     /** @brief Get the Face to UV mappings as a vector */
-    std::vector<Face> faces_as_vector() const;
+    std::unordered_map<std::size_t, Face> faces_as_map() const;
     /**@}*/
 
     /**@{*/
@@ -128,14 +128,14 @@ public:
      *
      * Point is retrieved relative to the provided origin.
      */
-    cv::Vec2d getUV(size_t id, const Origin& o);
+    cv::Vec2d getUV(size_t id, const Origin& o) const;
 
     /**
      * @copybrief getUV()
      *
      * Point is retrieved relative to the origin returned by origin().
      */
-    cv::Vec2d getUV(size_t id);
+    cv::Vec2d getUV(size_t id) const;
     /**@}*/
 
     /**@{*/
@@ -157,10 +157,16 @@ public:
      *
      * @return The index number of the inserted Face in this UVMap
      */
-    size_t addFace(Face f);
+    size_t addFace(std::size_t idx, const Face& f);
+
+    /** @brief Check for a Face by index */
+    bool hasFace(std::size_t idx) const;
 
     /** @brief Get the UV index numbers for a Face */
-    Face getFace(size_t id);
+    Face getFace(size_t id) const;
+
+    /** @brief Get the UV coordinates associated with a Face */
+    std::vector<cv::Vec2d> getFaceUVs(std::size_t id) const;
     /**@}*/
 
     /**@{*/
@@ -179,7 +185,7 @@ private:
     std::vector<cv::Vec2d> uvs_;
 
     /** UV storage */
-    std::vector<Face> faces_;
+    std::unordered_map<std::size_t, Face> faces_;
 
     /** Origin for set and get functions */
     Origin origin_;
