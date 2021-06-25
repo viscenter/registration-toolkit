@@ -14,7 +14,7 @@ void LandmarkDetector::setMovingMask(const cv::Mat& img) { movingMask_ = img; }
 void LandmarkDetector::setMatchRatio(float r) { nnMatchRatio_ = r; }
 
 // Compute the matches
-std::vector<rt::LandmarkPair> LandmarkDetector::compute()
+auto LandmarkDetector::compute() -> std::vector<rt::LandmarkPair>
 {
     // Make sure we have the images
     if (fixedImg_.empty() || movingImg_.empty()) {
@@ -70,12 +70,12 @@ std::vector<rt::LandmarkPair> LandmarkDetector::compute()
 }
 
 // Return previously computed matches
-std::vector<rt::LandmarkPair> LandmarkDetector::getLandmarkPairs()
+auto LandmarkDetector::getLandmarkPairs() -> std::vector<rt::LandmarkPair>
 {
     return output_;
 }
 
-LandmarkContainer LandmarkDetector::getFixedLandmarks() const
+auto LandmarkDetector::getFixedLandmarks() const -> LandmarkContainer
 {
     LandmarkContainer res;
     Landmark l;
@@ -87,7 +87,7 @@ LandmarkContainer LandmarkDetector::getFixedLandmarks() const
     return res;
 }
 
-LandmarkContainer LandmarkDetector::getMovingLandmarks() const
+auto LandmarkDetector::getMovingLandmarks() const -> LandmarkContainer
 {
     LandmarkContainer res;
     Landmark l;

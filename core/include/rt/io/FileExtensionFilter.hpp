@@ -14,8 +14,8 @@ namespace rt
 using ExtensionList = std::vector<std::string>;
 
 /** Filter a path by a list of approved file extensions */
-inline bool FileExtensionFilter(
-    const filesystem::path& path, const ExtensionList& exts)
+inline auto FileExtensionFilter(
+    const filesystem::path& path, const ExtensionList& exts) -> bool
 {
     std::string regexExpression = ".*\\.(";
     size_t count = 0;

@@ -14,6 +14,7 @@ namespace rt
  * is of size s.
  *
  */
-cv::Mat ImageTransformResampler(
-    const cv::Mat& m, const cv::Size& s, const Transform::Pointer& transform);
+auto ImageTransformResampler(
+    const cv::Mat& m, const cv::Size& s, const Transform::Pointer& transform)
+    -> cv::Mat;
 }  // namespace rt

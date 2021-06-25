@@ -18,8 +18,9 @@ namespace fs = rt::filesystem;
 
 // Return a CV Mat type using TIF type (signed, unsigned, float),
 // bit-depth, and number of channels
-static int GetCVMatType(
+static auto GetCVMatType(
     const uint16_t tifType, const uint16_t depth, const uint16_t channels)
+    -> int
 {
     switch (depth) {
         case 8:
@@ -46,7 +47,7 @@ static int GetCVMatType(
 }
 
 // Read a TIFF strip
-cv::Mat io::ReadRawTIFF(const fs::path& path, int offset)
+auto io::ReadRawTIFF(const fs::path& path, int offset) -> cv::Mat
 {
     // Make sure input file exists
     if (!fs::exists(path)) {
@@ -77,14 +78,14 @@ cv::Mat io::ReadRawTIFF(const fs::path& path, int offset)
 
     // Apply offset to first strip
     if (offset != 0) {
-        uint32_t* offsets;
+        uint32_t* offsets{nullptr};
         TIFFGetField(tif, TIFFTAG_STRIPOFFSETS, &offsets);
         offsets[0] += offset;
         TIFFSetField(tif, TIFFTAG_STRIPOFFSETS, offsets);
     }
 
     // Read only the first strip
-    uint32_t* bc;
+    uint32_t* bc{nullptr};
     lt::tstrip_t strip = 0;
     TIFFGetField(tif, TIFFTAG_STRIPBYTECOUNTS, &bc);
     uint32_t stripsize = bc[strip];
@@ -92,7 +93,9 @@ cv::Mat io::ReadRawTIFF(const fs::path& path, int offset)
     TIFFReadRawStrip(tif, strip, buf, bc[strip]);
 
     // Put into the cv::Mat
-    output = cv::Mat(height, width, cvType, buf);
+    auto h = static_cast<int>(height);
+    auto w = static_cast<int>(width);
+    output = cv::Mat(h, w, cvType, buf);
 
     lt::_TIFFfree(buf);
     lt::TIFFClose(tif);
@@ -122,8 +125,8 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
     auto rowsPerStrip = height;
 
     // Sample format
-    int bitsPerSample;
-    int sampleFormat;
+    int bitsPerSample{-1};
+    int sampleFormat{-1};
     switch (img.depth()) {
         case CV_8U:
             sampleFormat = SAMPLEFORMAT_UINT;
@@ -158,7 +161,7 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
     }
 
     // Photometric Interpretation
-    int photometric;
+    int photometric{-1};
     switch (channels) {
         case 1:
         case 2:
@@ -173,7 +176,7 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
     }
 
     // Open the file
-    auto out = lt::TIFFOpen(path.c_str(), "w");
+    auto* out = lt::TIFFOpen(path.c_str(), "w");
     if (out == nullptr) {
         throw std::runtime_error("Failed to open file for writing");
     }
@@ -218,7 +221,7 @@ void io::WriteTIFF(const fs::path& path, const cv::Mat& img)
 
     // For each row
     for (unsigned row = 0; row < height; row++) {
-        std::memcpy(&buffer[0], imgCopy.ptr(row), bufferSize);
+        std::memcpy(&buffer[0], imgCopy.ptr(static_cast<int>(row)), bufferSize);
         auto result = lt::TIFFWriteScanline(out, &buffer[0], row, 0);
         if (result == -1) {
             lt::TIFFClose(out);

@@ -10,9 +10,7 @@
 #include "rt/filesystem.hpp"
 #include "rt/types/Transforms.hpp"
 
-namespace rt
-{
-namespace graph
+namespace rt::graph
 {
 
 /**
@@ -64,5 +62,4 @@ private:
         const smgl::Metadata& meta, const filesystem::path& cacheDir) override;
 };
 
-}  // namespace graph
 }  // namespace rt

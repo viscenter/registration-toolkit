@@ -2,11 +2,14 @@
 
 /** @file */
 
+#include <smgl/Node.hpp>
+
 #include "rt/graph/DeformableRegistration.hpp"
 #include "rt/graph/ImageIO.hpp"
 #include "rt/graph/LandmarkIO.hpp"
 #include "rt/graph/LandmarkRegistration.hpp"
 #include "rt/graph/MeshIO.hpp"
+#include "rt/graph/MeshOps.hpp"
 #include "rt/graph/Transforms.hpp"
 
 namespace rt
@@ -30,6 +33,7 @@ inline void RegisterAllNodeTypes()
     smgl::RegisterNode<WriteTransformNode>();
     smgl::RegisterNode<MeshReadNode>();
     smgl::RegisterNode<MeshWriteNode>();
+    smgl::RegisterNode<ReorderTextureNode>();
     smgl::RegisterNode<TransformUVMapNode>();
 }
 }  // namespace graph

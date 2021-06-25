@@ -14,17 +14,28 @@ using namespace rt::io;
 namespace fs = rt::filesystem;
 
 // Constant for validating face values
-constexpr static int NOT_PRESENT = -1;
+constexpr static std::size_t NOT_PRESENT = 0;
 constexpr static size_t VALID_FACE_SIZE = 3;
+
+// Validation enumeration to ensure proper parsing vertices
+enum class RefType {
+    Invalid,
+    Vertex,
+    VertexWithTexture,
+    VertexWithNormal,
+    VertexWithTextureAndNormal
+};
+
+static auto ClassifyVertexRef(const std::string& ref) -> RefType;
 
 void OBJReader::setPath(const fs::path& p) { path_ = p; }
 
-ITKMesh::Pointer OBJReader::getMesh() { return mesh_; }
+auto OBJReader::getMesh() -> ITKMesh::Pointer { return mesh_; }
 
-UVMap OBJReader::getUVMap() { return uvMap_; }
+auto OBJReader::getUVMap() -> UVMap { return uvMap_; }
 
 // Read the file
-ITKMesh::Pointer OBJReader::read()
+auto OBJReader::read() -> ITKMesh::Pointer
 {
     reset_();
     parse_();
@@ -33,7 +44,7 @@ ITKMesh::Pointer OBJReader::read()
 }
 
 // Get texture image
-cv::Mat OBJReader::getTextureMat()
+auto OBJReader::getTextureMat() -> cv::Mat
 {
     if (texturePath_.empty() || !fs::exists(texturePath_)) {
         throw IOException("Invalid or unset texture image path");
@@ -70,6 +81,9 @@ void OBJReader::parse_()
     while (std::getline(ifs, line)) {
         // Parse the line
         trim(line);
+        if (line.empty()) {
+            continue;
+        }
         auto strs = split(line, ' ');
         std::for_each(
             std::begin(strs), std::end(strs), [](auto& t) { trim(t); });
@@ -130,26 +144,26 @@ void OBJReader::parse_face_(const std::vector<std::string>& strs)
 {
     OBJReader::Face f;
     std::vector<std::string> sub(std::begin(strs) + 1, std::end(strs));
-    auto faceType = classify_vertref_(sub[0]);
+    auto faceType = ClassifyVertexRef(sub[0]);
 
     for (const auto& s : sub) {
         auto vinfo = split(s, '/');
         switch (faceType) {
             case RefType::Vertex:
-                f.emplace_back(std::stoi(vinfo[0]), NOT_PRESENT, NOT_PRESENT);
+                f.emplace_back(std::stoull(vinfo[0]), NOT_PRESENT, NOT_PRESENT);
                 break;
             case RefType::VertexWithTexture:
                 f.emplace_back(
-                    std::stoi(vinfo[0]), std::stoi(vinfo[1]), NOT_PRESENT);
+                    std::stoull(vinfo[0]), std::stoull(vinfo[1]), NOT_PRESENT);
                 break;
             case RefType::VertexWithNormal:
                 f.emplace_back(
-                    std::stoi(vinfo[0]), NOT_PRESENT, std::stoi(vinfo[2]));
+                    std::stoull(vinfo[0]), NOT_PRESENT, std::stoull(vinfo[2]));
                 break;
             case RefType::VertexWithTextureAndNormal:
                 f.emplace_back(
-                    std::stoi(vinfo[0]), std::stoi(vinfo[1]),
-                    std::stoi(vinfo[2]));
+                    std::stoull(vinfo[0]), std::stoull(vinfo[1]),
+                    std::stoull(vinfo[2]));
                 break;
             case RefType::Invalid:
                 throw IOException("Invalid face in obj file");
@@ -178,6 +192,9 @@ void OBJReader::parse_mtllib_(const std::vector<std::string>& strs)
     std::string line;
     while (std::getline(ifs, line)) {
         trim(line);
+        if (line.empty()) {
+            continue;
+        }
         auto mtlstrs = split(line, ' ');
         std::for_each(
             std::begin(mtlstrs), std::end(mtlstrs), [](auto& t) { trim(t); });
@@ -192,7 +209,7 @@ void OBJReader::parse_mtllib_(const std::vector<std::string>& strs)
     ifs.close();
 }
 
-OBJReader::RefType OBJReader::classify_vertref_(const std::string& ref)
+auto ClassifyVertexRef(const std::string& ref) -> RefType
 {
     const char delimiter = '/';
     auto slashCount = std::count(ref.begin(), ref.end(), delimiter);
@@ -242,7 +259,7 @@ void OBJReader::build_mesh_()
     }
 
     ITKMesh::PointIdentifier pid = 0;
-    for (auto v : vertices_) {
+    for (const auto& v : vertices_) {
         mesh_->SetPoint(pid++, v.val);
     }
 
@@ -254,7 +271,7 @@ void OBJReader::build_mesh_()
     // Note: OBJs index vert info from 1
     ITKCell::CellAutoPointer cell;
     ITKMesh::CellIdentifier cid = 0;
-    for (auto face : faces_) {
+    for (const auto& face : faces_) {
         if (face.size() != VALID_FACE_SIZE) {
             throw IOException("Parsed unsupported, non-triangular face");
         }
@@ -262,27 +279,27 @@ void OBJReader::build_mesh_()
         // Setup output objects
         cell.TakeOwnership(new ITKTriangle);
         UVMap::Face uvFace;
+        bool uvFaceGood{true};
 
-        auto idInCell = 0;
-        for (auto vinfo : face) {
-            if (vinfo[0] - 1 < 0 ||
-                vinfo[0] - 1 >= static_cast<int>(vertices_.size())) {
+        int idInCell{0};
+        for (const auto& vinfo : face) {
+            if (vinfo[0] - 1 >= vertices_.size()) {
                 throw IOException("Out-of-range vertex reference");
             }
             auto vertexID = vinfo[0] - 1;
             cell->SetPointId(idInCell, vertexID);
 
             if (vinfo[1] != NOT_PRESENT) {
-                if (vinfo[1] - 1 < 0 ||
-                    vinfo[1] - 1 >= static_cast<int>(uvs_.size())) {
+                if (vinfo[1] - 1 >= uvs_.size()) {
                     throw IOException("Out-of-range UV reference");
                 }
                 uvFace[idInCell] = vinfo[1] - 1;
+            } else {
+                uvFaceGood = false;
             }
 
             if (vinfo[2] != NOT_PRESENT) {
-                if (vinfo[2] - 1 < 0 ||
-                    vinfo[2] - 1 >= static_cast<int>(normals_.size())) {
+                if (vinfo[2] - 1 >= normals_.size()) {
                     throw IOException("Out-of-range normal reference");
                 }
                 mesh_->SetPointData(vertexID, normals_[vinfo[2] - 1].val);
@@ -290,8 +307,10 @@ void OBJReader::build_mesh_()
 
             idInCell++;
         }
+        if (uvFaceGood) {
+            uvMap_.addFace(cid, uvFace);
+        }
         mesh_->SetCell(cid++, cell);
-        uvMap_.addFace(uvFace);
     }
     uvMap_.setOrigin(UVMap::Origin::TopLeft);
 }

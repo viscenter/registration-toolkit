@@ -41,6 +41,7 @@ add_library("${namespace}core" ALIAS "rt_core")
 target_include_directories(rt_core
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${bvh_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(rt_core
@@ -67,7 +68,7 @@ target_link_libraries(rt_core
 if(TARGET ITKSmoothing)
     target_link_libraries(rt_core PRIVATE ITKSmoothing)
 endif()
-target_compile_features(rt_core PUBLIC cxx_std_14)
+target_compile_features(rt_core PUBLIC cxx_std_17)
 set_target_properties(rt_core PROPERTIES
     VERSION "${PROJECT_VERSION}"
     EXPORT_NAME "core"

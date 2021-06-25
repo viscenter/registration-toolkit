@@ -1,6 +1,6 @@
 name: Build and Test
 
-on: [push]
+on: [push, workflow_dispatch]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -32,12 +32,12 @@ jobs:
       run: |
         sudo xcode-select -s /Library/Developer/CommandLineTools/
         sudo rm /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-        sudo rm -rf /Library/Developer/CommandLineTools/SDKs/MacOSX11.0.sdk
+        sudo rm -rf /Library/Developer/CommandLineTools/SDKs/MacOSX11*.sdk
         sudo ln -sf MacOSX10.15.sdk /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
         brew bundle
 
     - name: Setup macOS 11
-      if: matrix.os == 'macos-11.0'
+      if: matrix.os == 'macos-11'
       run: |
         sudo xcode-select -s /Library/Developer/CommandLineTools/
         brew bundle

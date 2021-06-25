@@ -16,7 +16,7 @@ namespace detail
 {
 /** Convert a cv::Mat to an itk::Image with a specific pixel type */
 template <typename ITKImageType, typename CVPixelType>
-typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
+auto CVMatToITKImage(const cv::Mat& img) -> typename ITKImageType::Pointer
 {
     // Typedefs
     using ITKPixelType = typename ITKImageType::PixelType;
@@ -84,7 +84,7 @@ typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
 }  // namespace detail
 
 template <typename ITKImageType>
-cv::Mat ITKImageToCVMat(const itk::SmartPointer<ITKImageType>& img)
+auto ITKImageToCVMat(const itk::SmartPointer<ITKImageType>& img) -> cv::Mat
 {
 
     using PixelType = typename ITKImageType::PixelType;
@@ -99,8 +99,8 @@ cv::Mat ITKImageToCVMat(const itk::SmartPointer<ITKImageType>& img)
     auto region = img->GetLargestPossibleRegion();
     auto size = region.GetSize();
     auto cns = itk::NumericTraits<PixelType>::MeasurementVectorType::Dimension;
-    auto w = static_cast<uint32_t>(size[0]);
-    auto h = static_cast<uint32_t>(size[1]);
+    auto w = static_cast<int>(size[0]);
+    auto h = static_cast<int>(size[1]);
 
     // Get the pixel type depth
     int type{-1};
@@ -138,7 +138,7 @@ cv::Mat ITKImageToCVMat(const itk::SmartPointer<ITKImageType>& img)
 }
 
 template <typename ITKImageType>
-typename ITKImageType::Pointer CVMatToITKImage(const cv::Mat& img)
+auto CVMatToITKImage(const cv::Mat& img) -> typename ITKImageType::Pointer
 {
     // Out channels
     using ITKPixelType = typename ITKImageType::PixelType;

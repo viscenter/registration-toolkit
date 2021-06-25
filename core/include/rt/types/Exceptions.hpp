@@ -30,9 +30,12 @@ public:
     /**@}*/
 
     /** Return exception message */
-    const char* what() const noexcept override { return msg_.c_str(); }
+    [[nodiscard]] auto what() const noexcept -> const char* override
+    {
+        return msg_.c_str();
+    }
 
-protected:
+private:
     /** Exception message */
     std::string msg_;
 };

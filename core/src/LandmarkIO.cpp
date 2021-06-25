@@ -105,9 +105,15 @@ LandmarkReader::LandmarkReader(fs::path landmarksPath)
 
 void LandmarkReader::setLandmarksPath(const fs::path& path) { path_ = path; }
 
-rt::LandmarkContainer LandmarkReader::getFixedLandmarks() { return fixed_; }
+auto LandmarkReader::getFixedLandmarks() -> rt::LandmarkContainer
+{
+    return fixed_;
+}
 
-rt::LandmarkContainer LandmarkReader::getMovingLandmarks() { return moving_; }
+auto LandmarkReader::getMovingLandmarks() -> rt::LandmarkContainer
+{
+    return moving_;
+}
 
 void rt::WriteLandmarkContainer(
     const fs::path& path, const LandmarkContainer& lc)
@@ -138,7 +144,7 @@ void rt::WriteLandmarkContainer(
     // Close file
     file.close();
 }
-LandmarkContainer rt::ReadLandmarkContainer(const fs::path& path)
+auto rt::ReadLandmarkContainer(const fs::path& path) -> LandmarkContainer
 {
     // Open file
     std::ifstream file{path.string(), std::ios::binary};

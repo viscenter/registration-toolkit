@@ -6,8 +6,8 @@
 
 using namespace rt;
 
-AffineLandmarkRegistration::Transform::Pointer
-AffineLandmarkRegistration::compute()
+auto AffineLandmarkRegistration::compute()
+    -> AffineLandmarkRegistration::Transform::Pointer
 {
     using TransformInitializer =
         itk::LandmarkBasedTransformInitializer<Transform, Image8UC3, Image8UC3>;
@@ -26,8 +26,8 @@ AffineLandmarkRegistration::compute()
     return output_;
 }
 
-AffineLandmarkRegistration::Transform::Pointer
-AffineLandmarkRegistration::getTransform()
+auto AffineLandmarkRegistration::getTransform()
+    -> AffineLandmarkRegistration::Transform::Pointer
 {
     return output_;
 }

@@ -7,9 +7,9 @@
 namespace rt
 {
 /** @brief Convert image to specified depth using max scaling */
-cv::Mat QuantizeImage(const cv::Mat& m, int depth = CV_16U);
+auto QuantizeImage(const cv::Mat& m, int depth = CV_16U) -> cv::Mat;
 
 /** @brief Convert image to specified number of channels */
-cv::Mat ColorConvertImage(const cv::Mat& m, int channels = 1);
+auto ColorConvertImage(const cv::Mat& m, int channels = 1) -> cv::Mat;
 
 }  // namespace rt

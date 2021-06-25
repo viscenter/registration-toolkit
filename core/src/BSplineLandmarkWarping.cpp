@@ -9,7 +9,8 @@ using namespace rt;
 
 void BSplineLandmarkWarping::setFixedImage(const cv::Mat& f) { fixedImg_ = f; }
 
-BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
+auto BSplineLandmarkWarping::compute()
+    -> BSplineLandmarkWarping::Transform::Pointer
 {
     // Size checks
     if (fixedImg_.empty() || fixedLdmks_.empty() || movingLdmks_.empty()) {
@@ -38,8 +39,8 @@ BSplineLandmarkWarping::Transform::Pointer BSplineLandmarkWarping::compute()
     return output_;
 }
 
-BSplineLandmarkWarping::Transform::Pointer
-BSplineLandmarkWarping::getTransform()
+auto BSplineLandmarkWarping::getTransform()
+    -> BSplineLandmarkWarping::Transform::Pointer
 {
     return output_;
 }

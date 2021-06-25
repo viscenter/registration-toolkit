@@ -5,6 +5,7 @@ set(srcs
     src/LandmarkRegistration.cpp
     src/Transforms.cpp
     src/MeshIO.cpp
+    src/MeshOps.cpp
 )
 
 add_library(rt_graph ${srcs})
@@ -21,7 +22,7 @@ target_link_libraries(rt_graph
         smgl::smgl
         opencv_core
 )
-target_compile_features(rt_graph PUBLIC cxx_std_14)
+target_compile_features(rt_graph PUBLIC cxx_std_17)
 set_target_properties(rt_graph PROPERTIES
     VERSION "${PROJECT_VERSION}"
     EXPORT_NAME "graph"

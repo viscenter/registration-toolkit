@@ -66,9 +66,13 @@ void DeformableRegistration::setSampleFactor(double f)
     sampleFactor_ = std::min(std::max(f, 0.01), 1.0);
 }
 
-Transform::Pointer DeformableRegistration::getTransform() { return output_; }
+auto DeformableRegistration::getTransform() -> Transform::Pointer
+{
+    return output_;
+}
 
-DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
+auto DeformableRegistration::compute()
+    -> DeformableRegistration::Transform::Pointer
 {
     ///// Create grayscale images /////
     auto fixed8u = QuantizeImage(fixedImage_, CV_8U);

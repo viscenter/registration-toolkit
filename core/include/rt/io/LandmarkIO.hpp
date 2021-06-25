@@ -75,10 +75,10 @@ public:
     void read();
 
     /** @brief Get the parsed fixed landmarks */
-    LandmarkContainer getFixedLandmarks();
+    auto getFixedLandmarks() -> LandmarkContainer;
 
     /** @brief Get the parsed moving landmarks */
-    LandmarkContainer getMovingLandmarks();
+    auto getMovingLandmarks() -> LandmarkContainer;
 
 private:
     /** Path to the Landmarks file */
@@ -106,6 +106,6 @@ void WriteLandmarkContainer(
  * This loads a list of Landmarks from a LandmarksContainer file (.lc).
  * To read a Landmarks file (.ldm) of matching pairs, use LandmarkReader.
  */
-LandmarkContainer ReadLandmarkContainer(const filesystem::path& path);
+auto ReadLandmarkContainer(const filesystem::path& path) -> LandmarkContainer;
 
 }  // namespace rt

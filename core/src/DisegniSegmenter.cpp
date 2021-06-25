@@ -42,7 +42,7 @@ void DisegniSegmenter::setPreprocessSharpen(bool b) { sharpen_ = b; }
 void DisegniSegmenter::setPreprocessBlur(bool b) { blur_ = b; }
 void DisegniSegmenter::setBoundingBoxBuffer(int b) { bboxBuffer_ = b; }
 
-std::vector<cv::Mat> DisegniSegmenter::compute()
+auto DisegniSegmenter::compute() -> std::vector<cv::Mat>
 {
     auto processed = preprocess_();
     labeled_ = watershed_image_(processed);
@@ -50,7 +50,7 @@ std::vector<cv::Mat> DisegniSegmenter::compute()
     return results_;
 }
 
-cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
+auto DisegniSegmenter::getLabeledImage(bool colored) -> cv::Mat
 {
     // Return the raw labels if we don't want a colored image
     if (!colored) {
@@ -58,12 +58,12 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     }
 
     // Get the unique labels
-    std::set<int32_t> unique_labels(
+    std::set<int32_t> uniqueLabels(
         labeled_.begin<int32_t>(), labeled_.end<int32_t>());
 
     // Generate random colors for each label
     std::map<int32_t, cv::Vec3b> colors;
-    for (const auto& l : unique_labels) {
+    for (const auto& l : uniqueLabels) {
         // Border pixels are black
         if (l == -1) {
             colors[l] = cv::Vec3b{0, 0, 0};
@@ -89,12 +89,12 @@ cv::Mat DisegniSegmenter::getLabeledImage(bool colored)
     return dst;
 }
 
-std::vector<cv::Mat> DisegniSegmenter::getOutputImages() const
+auto DisegniSegmenter::getOutputImages() const -> std::vector<cv::Mat>
 {
     return results_;
 }
 
-cv::Mat DisegniSegmenter::preprocess_()
+auto DisegniSegmenter::preprocess_() -> cv::Mat
 {
     // Duplicate the input image
     auto processed = input_.clone();
@@ -112,7 +112,8 @@ cv::Mat DisegniSegmenter::preprocess_()
 
     // Sharpen using laplacian filter
     if (sharpen_) {
-        cv::Mat laplace, srcFloat;
+        cv::Mat laplace;
+        cv::Mat srcFloat;
         cv::Mat kernel = (cv::Mat_<float>(3, 3) << 1, 1, 1, 1, -8, 1, 1, 1, 1);
         cv::filter2D(processed, laplace, CV_32F, kernel);
         processed.convertTo(srcFloat, CV_32F);
@@ -128,7 +129,7 @@ cv::Mat DisegniSegmenter::preprocess_()
     return processed;
 }
 
-cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
+auto DisegniSegmenter::watershed_image_(const cv::Mat& input) -> cv::Mat
 {
     // Setup our label image
     cv::Mat labeled = cv::Mat::zeros(input.size(), CV_32S);
@@ -157,8 +158,8 @@ cv::Mat DisegniSegmenter::watershed_image_(const cv::Mat& input)
     return labeled;
 }
 
-std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
-    const cv::Mat& input, const cv::Mat& labeled)
+auto DisegniSegmenter::split_labeled_image_(
+    const cv::Mat& input, const cv::Mat& labeled) -> std::vector<cv::Mat> const
 {
     // Setup an alpha channel
     cv::Mat alpha = cv::Mat::zeros(input.size(), CV_32FC1);
@@ -218,14 +219,14 @@ std::vector<cv::Mat> DisegniSegmenter::split_labeled_image_(
     std::vector<cv::Mat> subimgs;
     for (const auto& i : labelBBs) {
         // Apply bbox buffer
-        auto min_x = std::max(i.second.tl.x - bboxBuffer_, 0);
-        auto min_y = std::max(i.second.tl.y - bboxBuffer_, 0);
-        auto max_x = std::min(i.second.br.x + bboxBuffer_, input.cols - 1);
-        auto max_y = std::min(i.second.br.y + bboxBuffer_, input.rows - 1);
+        auto minX = std::max(i.second.tl.x - bboxBuffer_, 0);
+        auto minY = std::max(i.second.tl.y - bboxBuffer_, 0);
+        auto maxX = std::min(i.second.br.x + bboxBuffer_, input.cols - 1);
+        auto maxY = std::min(i.second.br.y + bboxBuffer_, input.rows - 1);
 
-        auto height = max_y - min_y;
-        auto width = max_x - min_x;
-        cv::Rect roi(min_x, min_y, width, height);
+        auto height = maxY - minY;
+        auto width = maxX - minX;
+        cv::Rect roi(minX, minY, width, height);
         cv::Mat subimg = inputAlpha(roi).clone();
         subimgs.push_back(subimg);
     }
