@@ -66,6 +66,13 @@ target_link_libraries(rt_retexture_mesh
     Boost::program_options
 )
 
+add_executable(rt_stitch src/StitchImages.cpp)
+target_link_libraries(rt_stitch
+    rt::core
+    opencv_core
+    opencv_imgcodecs
+    Boost::program_options
+)
 
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)

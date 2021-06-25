@@ -29,6 +29,7 @@ public:
     static constexpr double DEFAULT_RELAXATION = 0.85;
     /** Default gradient magnitude tolerance */
     static constexpr double DEFAULT_GRAD_MAG_TOLERANCE = 0.0001;
+    static constexpr double DEFAULT_SAMPLE_FACTOR = 0.20;
     /** BSpline transform type */
     using Transform = itk::BSplineTransform<double, 2, 3>;
 
@@ -37,11 +38,15 @@ public:
     void setFixedImage(const cv::Mat& i);
     /** @brief Set the moving (transformed) image for registration */
     void setMovingImage(const cv::Mat& i);
+    void setFixedMask(const cv::Mat& i);
+    void setMovingMask(const cv::Mat& i);
     /** @brief Set optimizer iteration limit
      *
      * Optimizer stops after this many iterations.
      */
     void setNumberOfIterations(size_t i);
+
+    void setSampleFactor(double f);
     /**@}*/
 
     /**@{*/
@@ -59,6 +64,8 @@ private:
     cv::Mat fixedImage_;
     /** Moving input image */
     cv::Mat movingImage_;
+    cv::Mat fixedMask_;
+    cv::Mat movingMask_;
 
     /** Output BSpline transform */
     Transform::Pointer output_;
@@ -69,5 +76,6 @@ private:
     double relaxationFactor_{DEFAULT_RELAXATION};
     /** Stop condition if change in metric is less than this value */
     double gradientMagnitudeTolerance_{DEFAULT_GRAD_MAG_TOLERANCE};
+    double sampleFactor_{DEFAULT_SAMPLE_FACTOR};
 };
 }  // namespace rt

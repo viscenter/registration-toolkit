@@ -9,12 +9,14 @@ rtg::LandmarkDetectorNode::LandmarkDetectorNode()
 {
     registerInputPort("fixedImage", fixedImage);
     registerInputPort("movingImage", movingImage);
+    registerInputPort("matchRatio", matchRatio);
     registerOutputPort("fixedLandmarks", fixedLandmarks);
     registerOutputPort("movingLandmarks", movingLandmarks);
     compute = [this]() {
         std::cout << "Detecting landmarks..." << std::endl;
         detector_.setFixedImage(fixedImg_);
         detector_.setMovingImage(movingImg_);
+        detector_.setMatchRatio(matchRatio_);
         detector_.compute();
         fixedLdm_ = detector_.getFixedLandmarks();
         movingLdm_ = detector_.getMovingLandmarks();
@@ -33,6 +35,7 @@ smgl::Metadata rtg::LandmarkDetectorNode::serialize_(
         writer.write();
         m["landmarks"] = "landmarks.ldm";
     }
+    m["match-ratio"] = matchRatio_;
 
     return m;
 }
@@ -47,6 +50,9 @@ void rtg::LandmarkDetectorNode::deserialize_(
         reader.read();
         fixedLdm_ = reader.getFixedLandmarks();
         movingLdm_ = reader.getMovingLandmarks();
+    }
+    if (meta.contains("match-ratio")) {
+        matchRatio_ = meta["match-ratio"].get<float>();
     }
 }
 

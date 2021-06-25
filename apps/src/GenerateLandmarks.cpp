@@ -10,9 +10,9 @@ namespace fs = rt::filesystem;
 int main(int argc, const char* argv[])
 {
     // Check arg count
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " [fixed] [moving] [output]"
-                  << std::endl;
+    if (argc < 4) {
+        std::cerr << "Usage: " << argv[0]
+                  << " [fixed] [moving] [output] {[conf]}" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -20,6 +20,10 @@ int main(int argc, const char* argv[])
     fs::path fixedPath = argv[1];
     fs::path movingPath = argv[2];
     fs::path outputPath = argv[3];
+    float confidence{0.3F};
+    if (argc > 4) {
+        confidence = std::stof(argv[4]);
+    }
 
     // Load images
     auto fixedImg = rt::ReadImage(fixedPath);
@@ -36,6 +40,7 @@ int main(int argc, const char* argv[])
     rt::LandmarkDetector detector;
     detector.setFixedImage(fixedImg);
     detector.setMovingImage(movingImg);
+    detector.setMatchRatio(confidence);
     auto matchedPairs = detector.compute().size();
     std::cout << "Generated matches: " << matchedPairs << std::endl;
 

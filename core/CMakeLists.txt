@@ -25,6 +25,7 @@ set(srcs
     src/ImageTransformResampler.cpp
     src/BSplineLandmarkWarping.cpp
     src/DisegniSegmenter.cpp
+    src/ImageStitcher.cpp
 )
 
 configure_file(src/Version.cpp.in Version.cpp)
@@ -57,6 +58,7 @@ target_link_libraries(rt_core
         opencv_imgproc
         opencv_stitching
         ITKOptimizers
+        ITKSpatialObjects
         ${ITKIOTransformLibs}
         vtkCommonTransforms
         vtkFiltersCore

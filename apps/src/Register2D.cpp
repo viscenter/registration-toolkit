@@ -22,6 +22,8 @@ int main(int argc, char* argv[])
         ("help,h", "Show this message")
         ("moving,m", po::value<std::string>()->required(), "Moving image")
         ("fixed,f", po::value<std::string>()->required(), "Fixed image")
+        ("fixed-mask", po::value<std::string>(), "Fixed image mask")
+        ("moving-mask", po::value<std::string>(), "Moving image mask")
         ("output-file,o", po::value<std::string>()->required(),
             "Output file path for the registered moving image")
         ("output-ldm", po::value<std::string>(),
@@ -40,6 +42,7 @@ int main(int argc, char* argv[])
     ldmOptions.add_options()
         ("disable-landmark", "Disable all landmark registration steps")
         ("disable-landmark-bspline", "Disable secondary B-Spline landmark registration")
+        ("landmark-match-ratio", po::value<float>()->default_value(0.3F), "Auto-landmark matching ratio")
         ("input-landmarks,l", po::value<std::string>(),
             "Input landmarks file. If not provided, landmark features "
             "are automatically detected from the input images.");
@@ -48,7 +51,8 @@ int main(int argc, char* argv[])
     deformOptions.add_options()
         ("disable-deformable", "Disable all deformable registration steps")
         ("deformable-iterations,i", po::value<int>()->default_value(100),
-            "Number of deformable optimization iterations");
+            "Number of deformable optimization iterations")
+        ("deformable-sample-factor", po::value<double>()->default_value(0.1));
 
     po::options_description all("Usage");
     all.add(required).add(graphOptions).add(ldmOptions).add(deformOptions);
@@ -75,6 +79,14 @@ int main(int argc, char* argv[])
     fs::path fixedPath = parsed["fixed"].as<std::string>();
     fs::path movingPath = parsed["moving"].as<std::string>();
     fs::path outputPath = parsed["output-file"].as<std::string>();
+    fs::path fixedMaskPath;
+    fs::path movingMaskPath;
+    if (parsed.count("fixed-mask")) {
+        fixedMaskPath = parsed["fixed-mask"].as<std::string>();
+    }
+    if (parsed.count("moving-mask")) {
+        movingMaskPath = parsed["moving-mask"].as<std::string>();
+    }
 
     ///// Start render graph /////
     rt::graph::RegisterAllNodeTypes();
@@ -109,6 +121,7 @@ int main(int argc, char* argv[])
             auto genLdm = graph.insertNode<LandmarkDetectorNode>();
             fixed->image >> genLdm->fixedImage;
             moving->image >> genLdm->movingImage;
+            genLdm->matchRatio(parsed["landmark-match-ratio"].as<float>());
             ldmNode = genLdm;
 
             // Optionally write generated landmarks to file
@@ -158,8 +171,26 @@ int main(int argc, char* argv[])
         // Compute deformable
         auto deformable = graph.insertNode<DeformableRegistrationNode>();
         deformable->iterations(parsed["deformable-iterations"].as<int>());
+        deformable->sampleFactor(
+            parsed["deformable-sample-factor"].as<double>());
         fixed->image >> deformable->fixedImage;
         resample1->resampledImage >> deformable->movingImage;
+
+        // Load the masks
+        if (not fixedMaskPath.empty()) {
+            auto reader = graph.insertNode<ImageReadNode>();
+            reader->path(fixedMaskPath);
+            reader->image >> deformable->fixedMask;
+        }
+        if (not movingMaskPath.empty()) {
+            auto reader = graph.insertNode<ImageReadNode>();
+            reader->path(movingMaskPath);
+            auto resample = graph.insertNode<ImageResampleNode>();
+            fixed->image >> resample->fixedImage;
+            reader->image >> resample->movingImage;
+            landmarkTfms->result >> resample->transform;
+            resample->resampledImage >> deformable->movingMask;
+        }
 
         // Add transform to final composite
         deformable->transform >> compositeTfms->second;
@@ -170,6 +201,7 @@ int main(int argc, char* argv[])
     fixed->image >> resample2->fixedImage;
     moving->image >> resample2->movingImage;
     compositeTfms->result >> resample2->transform;
+    resample2->forceAlpha(parsed.count("enable-alpha") > 0);
 
     ///// Write the output image /////
     auto writer = graph.insertNode<ImageWriteNode>();
