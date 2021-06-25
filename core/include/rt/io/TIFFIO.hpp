@@ -6,9 +6,7 @@
 
 #include "rt/filesystem.hpp"
 
-namespace rt
-{
-namespace io
+namespace rt::io
 {
 
 /**
@@ -25,7 +23,7 @@ namespace io
  * @param path Path to TIFF file
  * @param offset Shift the encoded strip offset by a number of bytes
  */
-cv::Mat ReadRawTIFF(const filesystem::path& path, int offset = 0);
+auto ReadRawTIFF(const filesystem::path& path, int offset = 0) -> cv::Mat;
 
 /**
  * @brief Write a TIFF image to file
@@ -35,5 +33,4 @@ cv::Mat ReadRawTIFF(const filesystem::path& path, int offset = 0);
  * you only need TIFF support, use rt::WriteImage instead.
  */
 void WriteTIFF(const filesystem::path& path, const cv::Mat& img);
-}  // namespace io
 }  // namespace rt

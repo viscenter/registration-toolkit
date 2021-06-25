@@ -52,9 +52,13 @@ void DeformableRegistration::setNumberOfIterations(size_t i)
     iterations_ = i;
 }
 
-Transform::Pointer DeformableRegistration::getTransform() { return output_; }
+auto DeformableRegistration::getTransform() -> Transform::Pointer
+{
+    return output_;
+}
 
-DeformableRegistration::Transform::Pointer DeformableRegistration::compute()
+auto DeformableRegistration::compute()
+    -> DeformableRegistration::Transform::Pointer
 {
     ///// Create grayscale images /////
     auto fixed8u = QuantizeImage(fixedImage_, CV_8U);

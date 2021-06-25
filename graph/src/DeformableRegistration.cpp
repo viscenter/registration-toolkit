@@ -19,8 +19,8 @@ rtg::DeformableRegistrationNode::DeformableRegistrationNode()
     };
 }
 
-smgl::Metadata rtg::DeformableRegistrationNode::serialize_(
-    bool useCache, const fs::path& cacheDir)
+auto rtg::DeformableRegistrationNode::serialize_(
+    bool useCache, const fs::path& cacheDir) -> smgl::Metadata
 {
     Meta m;
     m["iterations"] = iters_;

@@ -9,10 +9,10 @@
 using namespace rt;
 
 template <typename TImageType>
-typename TImageType::Pointer InterpolateImage(
+auto InterpolateImage(
     const typename TImageType::Pointer& m,
     typename TImageType::SizeType s,
-    Transform::Pointer transform)
+    Transform::Pointer transform) -> typename TImageType::Pointer
 {
     using I = itk::NearestNeighborInterpolateImageFunction<TImageType, double>;
     using R = itk::ResampleImageFilter<TImageType, TImageType, double>;
@@ -28,8 +28,9 @@ typename TImageType::Pointer InterpolateImage(
     return resample->GetOutput();
 }
 
-cv::Mat rt::ImageTransformResampler(
+auto rt::ImageTransformResampler(
     const cv::Mat& m, const cv::Size& s, const Transform::Pointer& transform)
+    -> cv::Mat
 {
     switch (m.type()) {
         case CV_8UC1: {

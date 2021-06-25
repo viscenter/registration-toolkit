@@ -67,7 +67,7 @@ public:
     void setBoundingBoxBuffer(int b);
 
     /** @brief Compute disegni segmentation */
-    std::vector<cv::Mat> compute();
+    auto compute() -> std::vector<cv::Mat>;
 
     /**
      * @brief Get labeled image
@@ -85,10 +85,10 @@ public:
      * @param colored If `true` (default), converts the labeled image to
      * an RGB image (CV_8UC3). Otherwise, returns pixel labels (CV_32SC1).
      */
-    cv::Mat getLabeledImage(bool colored = true);
+    auto getLabeledImage(bool colored = true) -> cv::Mat;
 
     /** @brief Get segmented disegni images */
-    std::vector<cv::Mat> getOutputImages() const;
+    [[nodiscard]] auto getOutputImages() const -> std::vector<cv::Mat>;
 
 private:
     /** Source image */
@@ -114,13 +114,13 @@ private:
     int bboxBuffer_{10};
 
     /** Preprocessing */
-    cv::Mat preprocess_();
+    auto preprocess_() -> cv::Mat;
 
     /** Run watershed on image */
-    cv::Mat watershed_image_(const cv::Mat& input);
+    auto watershed_image_(const cv::Mat& input) -> cv::Mat;
 
     /** Use labeled image to convert input into several images */
-    std::vector<cv::Mat> split_labeled_image_(
-        const cv::Mat& input, const cv::Mat& labeled);
+    auto split_labeled_image_(const cv::Mat& input, const cv::Mat& labeled)
+        -> std::vector<cv::Mat> const;
 };
 }  // namespace rt

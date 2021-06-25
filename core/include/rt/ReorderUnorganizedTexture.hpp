@@ -55,13 +55,13 @@ public:
     void setUseFirstIntersection(bool b);
 
     /** @brief Generate the new texture image and UV map */
-    cv::Mat compute();
+    auto compute() -> cv::Mat;
 
     /** @brief Get the output UV map */
-    UVMap getUVMap();
+    auto getUVMap() -> UVMap;
 
     /** @brief Get the output texture image */
-    cv::Mat getTextureMat();
+    auto getTextureMat() -> cv::Mat;
 
 private:
     /** Resample the input image into the organized texture */
@@ -91,7 +91,7 @@ private:
     cv::Vec3d zAxis_;
 
     /** Whether we want the first or last mesh interesection point */
-    bool useFirstInterection_{false};
+    bool useFirstIntersection_{false};
 
     /** Output UV map */
     UVMap outputUV_;

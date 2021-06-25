@@ -22,7 +22,7 @@ void rt::WriteTransform(
     writer->Update();
 }
 
-Transform::Pointer rt::ReadTransform(const fs::path& path)
+auto rt::ReadTransform(const fs::path& path) -> Transform::Pointer
 {
     // Register transforms
     itk::TransformFactoryBase::RegisterDefaultTransforms();

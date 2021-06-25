@@ -121,14 +121,31 @@ rtg::TransformUVMapNode::TransformUVMapNode()
 
         cv::Vec2d fixedSize{fixed_.cols - 1, fixed_.rows - 1};
         cv::Vec2d movingSize{moving_.cols - 1, moving_.rows - 1};
-        for (const auto& origUV : uvIn_.uvs_as_vector()) {
-            // Transform the UV point
-            auto in = origUV.mul(fixedSize);
-            auto out = tfm_->TransformPoint(in.val);
-            cv::Vec2d newUV{out[0] / movingSize[0], out[1] / movingSize[1]};
+        for (const auto& [key, face] : uvIn_.faces_as_map()) {
+            bool valid{true};
+            UVMap::Face f;
+            int fIdx{0};
+            for (const auto& uv : uvIn_.getFaceUVs(key)) {
+                // Transform the UV point
+                auto in = uv.mul(fixedSize);
+                auto out = tfm_->TransformPoint(in.val);
+                cv::Vec2d newUV{out[0] / movingSize[0], out[1] / movingSize[1]};
 
-            // Assign to new UV map
-            uvOut_.addUV(newUV);
+                // Out-of-bounds UV
+                if (newUV[0] < 0.0 or newUV[0] > 1.0 or newUV[1] < 0 or
+                    newUV[1] > 1) {
+                    valid = false;
+                    break;
+                }
+
+                auto uvIdx = uvOut_.addUV(newUV);
+                f[fIdx++] = uvIdx;
+            }
+
+            // Only add if we have a valid face
+            if (valid) {
+                uvOut_.addFace(key, f);
+            }
         }
     };
 }

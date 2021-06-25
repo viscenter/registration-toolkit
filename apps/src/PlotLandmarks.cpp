@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Show the help message
-    if (parsed.count("help") || argc < 4) {
+    if (parsed.count("help") > 0 || argc < 4) {
         std::cerr << all << std::endl;
         return EXIT_SUCCESS;
     }
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 
     for (const auto& p : movingLandmarks) {
         cv::Point2f pt{static_cast<float>(p[0]), static_cast<float>(p[1])};
-        cv::circle(fixed, pt, 10, {0, 255, 0}, -1);
+        cv::circle(moving, pt, 10, {0, 255, 0}, -1);
     }
 
     fs::path fixedPlot = fixedPath.stem().string() + "_plot.png";

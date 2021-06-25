@@ -8,7 +8,7 @@
 
 using namespace rt;
 
-static LandmarkContainer RandomLandmarks(size_t num)
+static auto RandomLandmarks(size_t num) -> LandmarkContainer
 {
     static std::random_device rd;
     static std::mt19937 gen(rd());

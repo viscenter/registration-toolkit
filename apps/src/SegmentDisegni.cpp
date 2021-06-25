@@ -12,7 +12,7 @@
 namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
-cv::Point ParsePointString(const std::string& s);
+auto ParsePointString(const std::string& s) -> cv::Point;
 
 int main(int argc, char* argv[])
 {
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(all).run(), parsed);
 
     // Show the help message
-    if (parsed.count("help") || argc < 6) {
+    if (parsed.count("help") > 0 || argc < 6) {
         std::cerr << all << std::endl;
         return EXIT_SUCCESS;
     }
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 
     // Setup output variables
     auto outDir = fs::current_path();
-    if (parsed.count("output-dir")) {
+    if (parsed.count("output-dir") > 0) {
         outDir = parsed["output-dir"].as<std::string>();
     }
     auto padding = std::to_string(results.size()).size();
@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
-cv::Point ParsePointString(const std::string& s)
+auto ParsePointString(const std::string& s) -> cv::Point
 {
     // Parse the string into doubles
     std::regex delim(",");
