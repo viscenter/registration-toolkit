@@ -11,28 +11,28 @@ const static cv::Vec2d ORIGIN_BOTTOM_LEFT(0, 1);
 /** Bottom-right UV Origin */
 const static cv::Vec2d ORIGIN_BOTTOM_RIGHT(1, 1);
 /** Get the above vectors when given an Origin enum value */
-static cv::Vec2d GetOriginVector(const UVMap::Origin& o);
+static auto GetOriginVector(const UVMap::Origin& o) -> cv::Vec2d;
 
 UVMap::UVMap(UVMap::Origin o) : origin_{o} {}
 
-size_t UVMap::size() const { return uvs_.size(); }
+auto UVMap::size() const -> size_t { return uvs_.size(); }
 
-size_t UVMap::size_faces() const { return faces_.size(); }
+auto UVMap::size_faces() const -> size_t { return faces_.size(); }
 
-bool UVMap::empty() const { return uvs_.empty(); }
+auto UVMap::empty() const -> bool { return uvs_.empty(); }
 
-std::vector<cv::Vec2d> UVMap::uvs_as_vector() const { return uvs_; }
+auto UVMap::uvs_as_vector() const -> std::vector<cv::Vec2d> { return uvs_; }
 
-std::unordered_map<std::size_t, UVMap::Face> UVMap::faces_as_map() const
+auto UVMap::faces_as_map() const -> std::unordered_map<std::size_t, UVMap::Face>
 {
     return faces_;
 }
 
 void UVMap::setOrigin(const UVMap::Origin& o) { origin_ = o; }
 
-UVMap::Origin UVMap::origin() const { return origin_; }
+auto UVMap::origin() const -> UVMap::Origin { return origin_; }
 
-UVMap::Ratio UVMap::ratio() const { return ratio_; }
+auto UVMap::ratio() const -> UVMap::Ratio { return ratio_; }
 
 void UVMap::ratio(double a) { ratio_.aspect = a; }
 
@@ -43,7 +43,7 @@ void UVMap::ratio(double w, double h)
     ratio_.aspect = w / h;
 }
 
-size_t UVMap::addUV(const cv::Vec2d& uv, const Origin& o)
+auto UVMap::addUV(const cv::Vec2d& uv, const Origin& o) -> size_t
 {
     // transform to be relative to top-left
     cv::Vec2d transformed;
@@ -53,9 +53,9 @@ size_t UVMap::addUV(const cv::Vec2d& uv, const Origin& o)
     return uvs_.size() - 1;
 }
 
-size_t UVMap::addUV(const cv::Vec2d& uv) { return addUV(uv, origin_); }
+auto UVMap::addUV(const cv::Vec2d& uv) -> size_t { return addUV(uv, origin_); }
 
-cv::Vec2d UVMap::getUV(size_t id, const Origin& o) const
+auto UVMap::getUV(size_t id, const Origin& o) const -> cv::Vec2d
 {
     if (id >= uvs_.size()) {
         throw std::range_error("uv id not in uv map: " + std::to_string(id));
@@ -67,15 +67,15 @@ cv::Vec2d UVMap::getUV(size_t id, const Origin& o) const
     return transformed;
 }
 
-cv::Vec2d UVMap::getUV(size_t id) const { return getUV(id, origin_); }
+auto UVMap::getUV(size_t id) const -> cv::Vec2d { return getUV(id, origin_); }
 
-size_t UVMap::addFace(std::size_t idx, const Face& f)
+auto UVMap::addFace(std::size_t idx, const Face& f) -> size_t
 {
     faces_[idx] = f;
     return idx;
 }
 
-size_t UVMap::addFace(size_t a, size_t b, size_t c)
+auto UVMap::addFace(size_t a, size_t b, size_t c) -> size_t
 {
     auto idx = faces_.size();
     while (faces_.count(idx) > 0) {
@@ -85,17 +85,20 @@ size_t UVMap::addFace(size_t a, size_t b, size_t c)
     return idx;
 }
 
-bool UVMap::hasFace(std::size_t idx) const { return faces_.count(idx) > 0; }
+auto UVMap::hasFace(std::size_t idx) const -> bool
+{
+    return faces_.count(idx) > 0;
+}
 
-UVMap::Face UVMap::getFace(size_t id) const { return faces_.at(id); }
+auto UVMap::getFace(size_t id) const -> UVMap::Face { return faces_.at(id); }
 
-std::vector<cv::Vec2d> UVMap::getFaceUVs(std::size_t id) const
+auto UVMap::getFaceUVs(std::size_t id) const -> std::vector<cv::Vec2d>
 {
     auto f = faces_.at(id);
     return {uvs_.at(f[0]), uvs_.at(f[1]), uvs_.at(f[2])};
 }
 
-cv::Vec2d GetOriginVector(const UVMap::Origin& o)
+auto GetOriginVector(const UVMap::Origin& o) -> cv::Vec2d
 {
     switch (o) {
         case UVMap::Origin::TopLeft:

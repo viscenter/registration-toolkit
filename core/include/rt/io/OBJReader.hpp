@@ -10,9 +10,7 @@
 #include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
-namespace rt
-{
-namespace io
+namespace rt::io
 {
 
 /**
@@ -34,17 +32,17 @@ public:
     void setPath(const filesystem::path& p);
 
     /** @brief Read the mesh from file */
-    ITKMesh::Pointer read();
+    auto read() -> ITKMesh::Pointer;
 
     /** @brief Return the parsed mesh */
-    ITKMesh::Pointer getMesh();
+    auto getMesh() -> ITKMesh::Pointer;
 
     /**
      * @brief Return parsed UV information
      *
      * If no UV information is read, returns an empty UVMap.
      * */
-    UVMap getUVMap();
+    auto getUVMap() -> UVMap;
 
     /**
      * @brief Return texture image as cv::Mat
@@ -52,7 +50,7 @@ public:
      * If no texture image was read from MTL file or if the file does not
      * exist, throws a rt::IOException.
      */
-    cv::Mat getTextureMat();
+    auto getTextureMat() -> cv::Mat;
 
 private:
     /**
@@ -68,17 +66,6 @@ private:
 
     /** A list of at least three OBJReader::VertexRefs comprise a face */
     using Face = std::vector<VertexRefs>;
-
-    /**
-     * Validation enumeration to ensure proper parsing vertices
-     */
-    enum class RefType {
-        Invalid,
-        Vertex,
-        VertexWithTexture,
-        VertexWithNormal,
-        VertexWithTextureAndNormal
-    };
 
     /** Clear all temporary data structures */
     void reset_();
@@ -96,7 +83,6 @@ private:
     /** Handle parsed mtllib lines */
     void parse_mtllib_(const std::vector<std::string>& strs);
     /** Classify a OBJReader::VertexRefs as an OBJReader::RefType */
-    RefType classify_vertref_(const std::string& ref);
 
     /** Construct a mesh from the parsed information */
     void build_mesh_();
@@ -120,5 +106,4 @@ private:
     std::vector<OBJReader::Face> faces_;
 };
 
-}  // namespace io
 }  // namespace rt

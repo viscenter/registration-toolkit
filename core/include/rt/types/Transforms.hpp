@@ -33,5 +33,5 @@ void WriteTransform(const filesystem::path& path, const T& transform)
 }
 
 /** @brief Read Transform from a file */
-Transform::Pointer ReadTransform(const filesystem::path& path);
+auto ReadTransform(const filesystem::path& path) -> Transform::Pointer;
 }  // namespace rt

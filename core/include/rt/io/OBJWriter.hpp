@@ -12,9 +12,7 @@
 #include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
-namespace rt
-{
-namespace io
+namespace rt::io
 {
 /**
  * @class OBJWriter
@@ -64,7 +62,7 @@ public:
     void setTexture(const cv::Mat& uvImg);
 
     /** @brief Validate parameters */
-    bool validate();
+    auto validate() -> bool;
     /**@}*/
 
     /**@{*/
@@ -72,7 +70,7 @@ public:
      *
      * If UV Map is not empty, automatically writes MTL and texture image.
      */
-    int write();
+    auto write() -> int;
     /**@}*/
 
 private:
@@ -104,21 +102,20 @@ private:
     cv::Mat texture_;
 
     /** Write the OBJ file */
-    int write_obj_();
+    auto write_obj_() -> int;
     /** Write the MTL file */
-    int write_mtl_();
+    auto write_mtl_() -> int;
     /** Write the texture file */
-    int write_texture_();
+    auto write_texture_() -> int;
 
     /** Write the OBJ header */
-    int write_header_();
+    auto write_header_() -> int;
     /** Write the OBJ vertices */
-    int write_vertices_();
+    auto write_vertices_() -> int;
     /** Write the OBJ texture coordinates */
-    int write_texture_coordinates_();
+    auto write_texture_coordinates_() -> int;
     /** Write the OBJ faces */
-    int write_faces_();
+    auto write_faces_() -> int;
 };
 
-}  // namespace io
 }  // namespace rt

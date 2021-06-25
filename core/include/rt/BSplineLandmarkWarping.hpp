@@ -28,10 +28,10 @@ public:
     void setFixedImage(const cv::Mat& f);
 
     /** @brief Compute the transform */
-    Transform::Pointer compute();
+    auto compute() -> Transform::Pointer;
 
     /** @brief Return the computed transform */
-    Transform::Pointer getTransform();
+    auto getTransform() -> Transform::Pointer;
 
 private:
     /** Transform */

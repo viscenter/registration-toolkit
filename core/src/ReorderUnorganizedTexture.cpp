@@ -25,11 +25,11 @@ using Traverser = bvh::SingleRayTraverser<Bvh>;
 using namespace rt;
 
 // Generate the cartesian coordinate of barycentric coordinate uvw in tri abc
-static inline cv::Vec3d BaryToXYZ(
+static inline auto BaryToXYZ(
     const cv::Vec3d& uvw,
     const cv::Vec3d& a,
     const cv::Vec3d& b,
-    const cv::Vec3d& c)
+    const cv::Vec3d& c) -> cv::Vec3d
 {
     return uvw[0] * a + uvw[1] * b + uvw[2] * c;
 }
@@ -53,12 +53,15 @@ void ReorderUnorganizedTexture::setUseFirstIntersection(bool b)
     useFirstIntersection_ = b;
 }
 
-UVMap ReorderUnorganizedTexture::getUVMap() { return outputUV_; }
+auto ReorderUnorganizedTexture::getUVMap() -> UVMap { return outputUV_; }
 
-cv::Mat ReorderUnorganizedTexture::getTextureMat() { return outputTexture_; }
+auto ReorderUnorganizedTexture::getTextureMat() -> cv::Mat
+{
+    return outputTexture_;
+}
 
 // Compute the result
-cv::Mat ReorderUnorganizedTexture::compute()
+auto ReorderUnorganizedTexture::compute() -> cv::Mat
 {
     create_texture_();
     create_uv_();
@@ -100,8 +103,6 @@ void ReorderUnorganizedTexture::create_texture_()
     auto obbTree = vtkSmartPointer<vtkOBBTree>::New();
     obbTree->ComputeOBB(
         mesh, origin_.val, xAxis_.val, yAxis_.val, zAxis_.val, size.data());
-    obbTree->SetDataSet(mesh);
-    obbTree->BuildLocator();
 
     // Setup the output image
     // After alignment, dimensions go from [0, dimension max], therefore

@@ -18,14 +18,14 @@ static inline void to_upper(std::string& s)
 }
 
 /** @brief Convert string characters to upper case (r-value) */
-static inline std::string to_upper(std::string&& s)
+static inline auto to_upper(std::string&& s) -> std::string
 {
     to_upper(s);
     return std::move(s);
 }
 
 /** @brief Convert string characters to upper case (copy) */
-static inline std::string to_upper_copy(std::string s)
+static inline auto to_upper_copy(std::string s) -> std::string
 {
     to_upper(s);
     return s;
@@ -39,14 +39,14 @@ static inline void to_lower(std::string& s)
 }
 
 /** @brief Convert string characters to lower case (r-value) */
-static inline std::string to_lower(std::string&& s)
+static inline auto to_lower(std::string&& s) -> std::string
 {
     to_lower(s);
     return std::move(s);
 }
 
 /** @brief Convert string characters to lower case (copy) */
-static inline std::string to_lower_copy(std::string s)
+static inline auto to_lower_copy(std::string s) -> std::string
 {
     to_lower(s);
     return s;
@@ -70,7 +70,7 @@ static inline void trim_left(std::string& s)
  *
  * https://stackoverflow.com/a/217605
  */
-static inline std::string trim_left(std::string&& s)
+static inline auto trim_left(std::string&& s) -> std::string
 {
     trim_left(s);
     return std::move(s);
@@ -81,7 +81,7 @@ static inline std::string trim_left(std::string&& s)
  *
  * https://stackoverflow.com/a/217605
  */
-static inline std::string trim_left_copy(std::string s)
+static inline auto trim_left_copy(std::string s) -> std::string
 {
     trim_left(s);
     return s;
@@ -108,7 +108,7 @@ static inline void trim_right(std::string& s)
  *
  * https://stackoverflow.com/a/217605
  */
-static inline std::string trim_right(std::string&& s)
+static inline auto trim_right(std::string&& s) -> std::string
 {
     trim_right(s);
     return std::move(s);
@@ -119,7 +119,7 @@ static inline std::string trim_right(std::string&& s)
  *
  * https://stackoverflow.com/a/217605
  */
-static inline std::string trim_right_copy(std::string s)
+static inline auto trim_right_copy(std::string s) -> std::string
 {
     trim_right(s);
     return s;
@@ -141,7 +141,7 @@ static inline void trim(std::string& s)
  *
  * https://stackoverflow.com/a/217605
  */
-static inline std::string trim(std::string&& s)
+static inline auto trim(std::string&& s) -> std::string
 {
     trim(s);
     return std::move(s);
@@ -152,7 +152,7 @@ static inline std::string trim(std::string&& s)
  *
  * https://stackoverflow.com/a/217605
  */
-static inline std::string trim_copy(std::string s)
+static inline auto trim_copy(std::string s) -> std::string
 {
     trim(s);
     return s;
@@ -160,8 +160,8 @@ static inline std::string trim_copy(std::string s)
 
 /** @brief Split a string by a delimiter */
 template <typename... Ds>
-static inline std::vector<std::string> split(
-    const std::string& s, const Ds&... ds)
+static inline auto split(const std::string& s, const Ds&... ds)
+    -> std::vector<std::string>
 {
     // Build delimiters list
     std::vector<char> delims;

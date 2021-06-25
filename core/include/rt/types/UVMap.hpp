@@ -77,19 +77,20 @@ public:
 
     /**@{*/
     /** @brief Return the number of UV elements */
-    size_t size() const;
+    [[nodiscard]] auto size() const -> size_t;
 
     /** @brief Return the number of Face elements */
-    size_t size_faces() const;
+    [[nodiscard]] auto size_faces() const -> size_t;
 
     /** @brief Return whether the UVMap is empty */
-    bool empty() const;
+    [[nodiscard]] auto empty() const -> bool;
 
     /** @brief Get the UV coordinates as a vector */
-    std::vector<cv::Vec2d> uvs_as_vector() const;
+    [[nodiscard]] auto uvs_as_vector() const -> std::vector<cv::Vec2d>;
 
     /** @brief Get the Face to UV mappings as a vector */
-    std::unordered_map<std::size_t, Face> faces_as_map() const;
+    [[nodiscard]] auto faces_as_map() const
+        -> std::unordered_map<std::size_t, Face>;
     /**@}*/
 
     /**@{*/
@@ -101,7 +102,7 @@ public:
     void setOrigin(const Origin& o);
 
     /** @brief Get the current origin of the UVMap */
-    Origin origin() const;
+    [[nodiscard]] auto origin() const -> Origin;
     /**@}*/
 
     /**@{*/
@@ -112,7 +113,7 @@ public:
      *
      * @return The index of the inserted point in this UVMap
      */
-    size_t addUV(const cv::Vec2d& uv, const Origin& o);
+    auto addUV(const cv::Vec2d& uv, const Origin& o) -> size_t;
 
     /**
      * @copybrief addUV()
@@ -121,21 +122,21 @@ public:
      *
      * @return The index of the inserted point in this UVMap
      */
-    size_t addUV(const cv::Vec2d& uv);
+    auto addUV(const cv::Vec2d& uv) -> size_t;
 
     /**
      * @brief Get the UV value for a point by index number
      *
      * Point is retrieved relative to the provided origin.
      */
-    cv::Vec2d getUV(size_t id, const Origin& o) const;
+    [[nodiscard]] auto getUV(size_t id, const Origin& o) const -> cv::Vec2d;
 
     /**
      * @copybrief getUV()
      *
      * Point is retrieved relative to the origin returned by origin().
      */
-    cv::Vec2d getUV(size_t id) const;
+    [[nodiscard]] auto getUV(size_t id) const -> cv::Vec2d;
     /**@}*/
 
     /**@{*/
@@ -147,7 +148,7 @@ public:
      *
      * @return The index number of the inserted Face in this UVMap
      */
-    size_t addFace(size_t a, size_t b, size_t c);
+    auto addFace(size_t a, size_t b, size_t c) -> size_t;
 
     /**
      * @brief Add a Face UV map
@@ -157,21 +158,22 @@ public:
      *
      * @return The index number of the inserted Face in this UVMap
      */
-    size_t addFace(std::size_t idx, const Face& f);
+    auto addFace(std::size_t idx, const Face& f) -> size_t;
 
     /** @brief Check for a Face by index */
-    bool hasFace(std::size_t idx) const;
+    [[nodiscard]] auto hasFace(std::size_t idx) const -> bool;
 
     /** @brief Get the UV index numbers for a Face */
-    Face getFace(size_t id) const;
+    [[nodiscard]] auto getFace(size_t id) const -> Face;
 
     /** @brief Get the UV coordinates associated with a Face */
-    std::vector<cv::Vec2d> getFaceUVs(std::size_t id) const;
+    [[nodiscard]] auto getFaceUVs(std::size_t id) const
+        -> std::vector<cv::Vec2d>;
     /**@}*/
 
     /**@{*/
     /** @brief Get the size information (aspect ratio, width, height) */
-    Ratio ratio() const;
+    [[nodiscard]] auto ratio() const -> Ratio;
 
     /** @brief Set the aspect ratio */
     void ratio(double a);

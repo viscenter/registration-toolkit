@@ -2,7 +2,8 @@
 
 #include <opencv2/imgproc.hpp>
 
-static inline cv::Mat CreateAlphaChannel(const cv::Size& size, int depth)
+static inline auto CreateAlphaChannel(const cv::Size& size, int depth)
+    -> cv::Mat
 {
     // Create and scale the alpha channel
     cv::Mat alpha = cv::Mat::ones(size, depth);
@@ -27,7 +28,7 @@ static inline cv::Mat CreateAlphaChannel(const cv::Size& size, int depth)
     return alpha;
 }
 
-cv::Mat rt::QuantizeImage(const cv::Mat& m, int depth)
+auto rt::QuantizeImage(const cv::Mat& m, int depth) -> cv::Mat
 {
     // Make sure we have work to do
     if (m.depth() == depth) {
@@ -68,7 +69,7 @@ cv::Mat rt::QuantizeImage(const cv::Mat& m, int depth)
     return output;
 }
 
-cv::Mat rt::ColorConvertImage(const cv::Mat& m, int channels)
+auto rt::ColorConvertImage(const cv::Mat& m, int channels) -> cv::Mat
 {
     // Make sure we have work to do
     if (m.channels() == channels) {

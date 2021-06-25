@@ -17,14 +17,25 @@ namespace fs = rt::filesystem;
 constexpr static std::size_t NOT_PRESENT = 0;
 constexpr static size_t VALID_FACE_SIZE = 3;
 
+// Validation enumeration to ensure proper parsing vertices
+enum class RefType {
+    Invalid,
+    Vertex,
+    VertexWithTexture,
+    VertexWithNormal,
+    VertexWithTextureAndNormal
+};
+
+static auto ClassifyVertexRef(const std::string& ref) -> RefType;
+
 void OBJReader::setPath(const fs::path& p) { path_ = p; }
 
-ITKMesh::Pointer OBJReader::getMesh() { return mesh_; }
+auto OBJReader::getMesh() -> ITKMesh::Pointer { return mesh_; }
 
-UVMap OBJReader::getUVMap() { return uvMap_; }
+auto OBJReader::getUVMap() -> UVMap { return uvMap_; }
 
 // Read the file
-ITKMesh::Pointer OBJReader::read()
+auto OBJReader::read() -> ITKMesh::Pointer
 {
     reset_();
     parse_();
@@ -33,7 +44,7 @@ ITKMesh::Pointer OBJReader::read()
 }
 
 // Get texture image
-cv::Mat OBJReader::getTextureMat()
+auto OBJReader::getTextureMat() -> cv::Mat
 {
     if (texturePath_.empty() || !fs::exists(texturePath_)) {
         throw IOException("Invalid or unset texture image path");
@@ -133,7 +144,7 @@ void OBJReader::parse_face_(const std::vector<std::string>& strs)
 {
     OBJReader::Face f;
     std::vector<std::string> sub(std::begin(strs) + 1, std::end(strs));
-    auto faceType = classify_vertref_(sub[0]);
+    auto faceType = ClassifyVertexRef(sub[0]);
 
     for (const auto& s : sub) {
         auto vinfo = split(s, '/');
@@ -198,7 +209,7 @@ void OBJReader::parse_mtllib_(const std::vector<std::string>& strs)
     ifs.close();
 }
 
-OBJReader::RefType OBJReader::classify_vertref_(const std::string& ref)
+auto ClassifyVertexRef(const std::string& ref) -> RefType
 {
     const char delimiter = '/';
     auto slashCount = std::count(ref.begin(), ref.end(), delimiter);

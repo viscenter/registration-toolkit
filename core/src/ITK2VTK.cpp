@@ -60,7 +60,7 @@ void rt::ITK2VTK(
     }
 }
 
-vtkSmartPointer<vtkPolyData> rt::ITK2VTK(const ITKMesh::Pointer& input)
+auto rt::ITK2VTK(const ITKMesh::Pointer& input) -> vtkSmartPointer<vtkPolyData>
 {
     auto output = vtkSmartPointer<vtkPolyData>::New();
     ITK2VTK(input, output);
@@ -73,13 +73,13 @@ void rt::VTK2ITK(
 {
 
     // points + normals
-    auto pointNormals = input->GetPointData()->GetNormals();
+    auto* pointNormals = input->GetPointData()->GetNormals();
     for (vtkIdType pointId = 0; pointId < input->GetNumberOfPoints();
          ++pointId) {
-        auto point = input->GetPoint(pointId);
+        auto* point = input->GetPoint(pointId);
         output->SetPoint(pointId, point);
         if (pointNormals != nullptr) {
-            auto normal = pointNormals->GetTuple(pointId);
+            auto* normal = pointNormals->GetTuple(pointId);
             output->SetPointData(pointId, normal);
         }
     }
@@ -87,7 +87,7 @@ void rt::VTK2ITK(
     // cells
     ITKCell::CellAutoPointer cell;
     for (vtkIdType cellId = 0; cellId < input->GetNumberOfCells(); ++cellId) {
-        auto inputCell = input->GetCell(cellId);  // input cell
+        auto* inputCell = input->GetCell(cellId);  // input cell
         cell.TakeOwnership(new ITKTriangle);      // output cell
 
         for (vtkIdType pointId = 0; pointId < inputCell->GetNumberOfPoints();
@@ -101,7 +101,7 @@ void rt::VTK2ITK(
     }
 }
 
-ITKMesh::Pointer rt::VTK2ITK(const vtkSmartPointer<vtkPolyData>& input)
+auto rt::VTK2ITK(const vtkSmartPointer<vtkPolyData>& input) -> ITKMesh::Pointer
 {
     auto output = ITKMesh::New();
     VTK2ITK(input, output);

@@ -7,7 +7,7 @@
 
 using namespace rt;
 
-static UVMap RandomUVMap(size_t numUVs, size_t numFaces)
+static auto RandomUVMap(size_t numUVs, size_t numFaces) -> UVMap
 {
     static std::random_device rd;
     static std::mt19937 gen(rd());

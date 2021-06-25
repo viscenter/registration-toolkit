@@ -46,7 +46,7 @@ public:
      * Returns a list of matches, sorted by strength of match and filtered for
      * outliers.
      */
-    std::vector<LandmarkPair> compute();
+    auto compute() -> std::vector<LandmarkPair>;
 
     /**
      * @brief Get the computed matches
@@ -54,12 +54,12 @@ public:
      * Returns a list of matches, sorted by strength of match and filtered for
      * outliers.
      */
-    std::vector<LandmarkPair> getLandmarkPairs();
+    auto getLandmarkPairs() -> std::vector<LandmarkPair>;
 
     /** @brief Get the detected landmarks for the fixed image */
-    LandmarkContainer getFixedLandmarks() const;
+    [[nodiscard]] auto getFixedLandmarks() const -> LandmarkContainer;
     /** @brief Get the detected landmarks for the moving image */
-    LandmarkContainer getMovingLandmarks() const;
+    [[nodiscard]] auto getMovingLandmarks() const -> LandmarkContainer;
 
 private:
     /** Fixed image */
@@ -73,6 +73,6 @@ private:
     /** Matched pairs */
     std::vector<LandmarkPair> output_;
     /** Nearest-neighbor matching ratio */
-    float nnMatchRatio_{0.2f};
+    float nnMatchRatio_{0.2F};
 };
 }  // namespace rt

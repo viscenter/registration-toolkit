@@ -45,7 +45,7 @@ void rt::WriteUVMap(const fs::path& path, const UVMap& uvMap)
     ofs.close();
 }
 
-rt::UVMap rt::ReadUVMap(const fs::path& path)
+auto rt::ReadUVMap(const fs::path& path) -> rt::UVMap
 {
     std::ifstream ifs{path.string(), std::ios::binary};
     if (!ifs.is_open()) {

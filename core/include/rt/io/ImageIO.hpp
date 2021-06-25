@@ -18,7 +18,7 @@ namespace rt
  * cv::imread(path.string(), cv::IMREAD_UNCHANGED);
  * @endcode
  */
-cv::Mat ReadImage(const filesystem::path& path);
+auto ReadImage(const filesystem::path& path) -> cv::Mat;
 
 /**
  * @brief Write image to the specified path

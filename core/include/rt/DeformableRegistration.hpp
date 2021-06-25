@@ -46,12 +46,12 @@ public:
 
     /**@{*/
     /** @brief Run registration and return the computed transform */
-    Transform::Pointer compute();
+    auto compute() -> Transform::Pointer;
     /**@}*/
 
     /**@{*/
     /** @brief Return the computed transform */
-    Transform::Pointer getTransform();
+    auto getTransform() -> Transform::Pointer;
     /**@}*/
 
 private:

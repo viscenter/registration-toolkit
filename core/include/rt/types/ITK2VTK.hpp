@@ -19,7 +19,7 @@ void ITK2VTK(
     const ITKMesh::Pointer& input, vtkSmartPointer<vtkPolyData>& output);
 
 /** @copydoc ITK2VTK */
-vtkSmartPointer<vtkPolyData> ITK2VTK(const ITKMesh::Pointer& input);
+auto ITK2VTK(const ITKMesh::Pointer& input) -> vtkSmartPointer<vtkPolyData>;
 
 /**
  * @brief Convert from a VTK PolyData to an ITKMesh.
@@ -31,5 +31,5 @@ void VTK2ITK(
     const vtkSmartPointer<vtkPolyData>& input, ITKMesh::Pointer& output);
 
 /** @copydoc VTK2ITK */
-ITKMesh::Pointer VTK2ITK(const vtkSmartPointer<vtkPolyData>& input);
+auto VTK2ITK(const vtkSmartPointer<vtkPolyData>& input) -> ITKMesh::Pointer;
 }  // namespace rt

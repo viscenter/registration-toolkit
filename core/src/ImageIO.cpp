@@ -12,7 +12,7 @@ namespace fs = rt::filesystem;
 
 static const auto IsFormat = rt::FileExtensionFilter;
 
-cv::Mat rt::ReadImage(const fs::path& path)
+auto rt::ReadImage(const fs::path& path) -> cv::Mat
 {
     return cv::imread(path.string(), cv::IMREAD_UNCHANGED);
 }

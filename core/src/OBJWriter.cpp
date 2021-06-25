@@ -34,7 +34,7 @@ void OBJWriter::setMesh(const ITKMesh::Pointer& mesh) { mesh_ = mesh; }
 
 ///// Validation /////
 // Make sure that all required parameters have been set and are okay
-bool OBJWriter::validate()
+auto OBJWriter::validate() -> bool
 {
     // Make sure the output path has a file extension for the OBJ
     bool hasExt =
@@ -51,7 +51,7 @@ bool OBJWriter::validate()
 
 ///// Output Methods /////
 // Write everything (OBJ, MTL, and PNG) to disk
-int OBJWriter::write()
+auto OBJWriter::write() -> int
 {
     if (!validate()) {
         return EXIT_FAILURE;
@@ -70,7 +70,7 @@ int OBJWriter::write()
 }
 
 // Write the OBJ file to disk
-int OBJWriter::write_obj_()
+auto OBJWriter::write_obj_() -> int
 {
     outputMesh_.open(outputPath_.string());
     if (!outputMesh_.is_open()) {
@@ -93,7 +93,7 @@ int OBJWriter::write_obj_()
 
 // Write the MTL file to disk
 // See http://paulbourke.net/dataformats/mtl/ for more options
-int OBJWriter::write_mtl_()
+auto OBJWriter::write_mtl_() -> int
 {
     fs::path p = outputPath_;
     p.replace_extension("mtl");
@@ -120,14 +120,13 @@ int OBJWriter::write_mtl_()
 }
 
 // Write the PNG texture file to disk
-int OBJWriter::write_texture_()
+auto OBJWriter::write_texture_() -> int
 {
     if (texture_.empty()) {
         return EXIT_FAILURE;
     }
 
-    std::cerr << "Writing texture image..."
-              << "\n";
+    std::cerr << "Writing texture image...\n";
     fs::path p = outputPath_;
     p.replace_extension("tif");
     rt::WriteImage(p, texture_);
@@ -135,27 +134,25 @@ int OBJWriter::write_texture_()
 }
 
 // Write our custom header
-int OBJWriter::write_header_()
+auto OBJWriter::write_header_() -> int
 {
     if (!outputMesh_.is_open()) {
         return EXIT_FAILURE;
     }
 
-    outputMesh_ << "# RT OBJ File"
-                << "\n";
+    outputMesh_ << "# RT OBJ File\n";
     return EXIT_SUCCESS;
 }
 
 // Write the vertex information:
 // Vertex: 'v x y z'
 // Vertex normal: 'vn nx ny nz'
-int OBJWriter::write_vertices_()
+auto OBJWriter::write_vertices_() -> int
 {
     if (!outputMesh_.is_open() || mesh_->GetNumberOfPoints() == 0) {
         return EXIT_FAILURE;
     }
-    std::cerr << "Writing vertices..."
-              << "\n";
+    std::cerr << "Writing vertices...\n";
 
     outputMesh_ << "# Vertices: " << mesh_->GetNumberOfPoints() << "\n";
 
@@ -189,7 +186,7 @@ int OBJWriter::write_vertices_()
 }
 
 // Write the UV coordinates that will be attached to points: 'vt u v'
-int OBJWriter::write_texture_coordinates_()
+auto OBJWriter::write_texture_coordinates_() -> int
 {
     if (!outputMesh_.is_open() || uvMap_.empty()) {
         return EXIT_FAILURE;
@@ -218,13 +215,12 @@ int OBJWriter::write_texture_coordinates_()
 }
 
 // Write the face information: 'f v/vt/vn'
-int OBJWriter::write_faces_()
+auto OBJWriter::write_faces_() -> int
 {
     if (!outputMesh_.is_open() || mesh_->GetNumberOfCells() == 0) {
         return EXIT_FAILURE;
     }
-    std::cerr << "Writing faces..."
-              << "\n";
+    std::cerr << "Writing faces...\n";
 
     outputMesh_ << "# Faces: " << mesh_->GetNumberOfCells() << "\n";
 

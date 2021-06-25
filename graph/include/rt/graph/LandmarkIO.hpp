@@ -8,9 +8,7 @@
 #include "rt/filesystem.hpp"
 #include "rt/io/LandmarkIO.hpp"
 
-namespace rt
-{
-namespace graph
+namespace rt::graph
 {
 
 /**
@@ -47,8 +45,8 @@ private:
     /** Loaded moving landmarks */
     LandmarkContainer moving_;
     /** Graph serialize */
-    smgl::Metadata serialize_(
-        bool /*unused*/, const filesystem::path& /*unused*/) override;
+    auto serialize_(bool /*unused*/, const filesystem::path& /*unused*/)
+        -> smgl::Metadata override;
     /** Graph deserialize */
     void deserialize_(
         const smgl::Metadata& meta,
@@ -85,13 +83,12 @@ private:
     /** Moving landmarks */
     LandmarkContainer moving_;
     /** Graph serialize */
-    smgl::Metadata serialize_(
-        bool /*unused*/, const filesystem::path& /*unused*/) override;
+    auto serialize_(bool /*unused*/, const filesystem::path& /*unused*/)
+        -> smgl::Metadata override;
     /** Graph deserialize */
     void deserialize_(
         const smgl::Metadata& meta,
         const filesystem::path& /*unused*/) override;
 };
 
-}  // namespace graph
 }  // namespace rt

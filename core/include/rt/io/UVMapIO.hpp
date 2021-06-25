@@ -12,6 +12,6 @@ namespace rt
 void WriteUVMap(const rt::filesystem::path& path, const UVMap& uvMap);
 
 /** @brief Read a UVMap from a file (.uvm) */
-UVMap ReadUVMap(const rt::filesystem::path& path);
+auto ReadUVMap(const rt::filesystem::path& path) -> UVMap;
 
 }  // namespace rt
