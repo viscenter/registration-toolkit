@@ -10,6 +10,8 @@ using namespace smgl;
 
 namespace fs = rt::filesystem;
 
+smgl::GraphStyle style;
+
 struct SubgraphOutput {
     OutputPort<cv::Mat>* inputImage{nullptr};
     OutputPort<cv::Mat>* outputImage{nullptr};
@@ -33,6 +35,7 @@ static SubgraphOutput AddImageRegSubgraph(
     auto readIm = graph.insertNode<ImageReadNode>();
     readIm->path = movingPath;
     result.inputImage = &readIm->image;
+    style.pinToMin(readIm);
 
     // Detect/Load landmarks
     Node::Pointer ldmNode;
@@ -46,6 +49,7 @@ static SubgraphOutput AddImageRegSubgraph(
         loadLdm->path = ldmsPath;
         ldmNode = loadLdm;
     }
+    style.pinToSame(0, ldmNode);
 
     // Calculate affine transform
     auto affLdm = graph.insertNode<AffineLandmarkRegistrationNode>();
@@ -117,16 +121,18 @@ static void WriteRetextureMeshSubgraph(
     writer->mesh = mesh;
     writer->uvMap = uvMap;
     writer->image = texture;
+    style.pinToMax(writer);
 }
 
 int main()
 {
-    // Setup graph nodes
+    // Register node types for serialization
     RegisterAllNodeTypes();
 
     std::string project = "PHerc118-Pezzo4";
     bool useCache = true;
 
+    // Setup graph
     Graph graph;
     graph.setEnableCache(useCache);
     graph.setCacheFile("results/" + project + ".json");
@@ -142,6 +148,7 @@ int main()
     // Load mesh
     auto meshRead = graph.insertNode<MeshReadNode>();
     meshRead->path = "2017/PHerc118-Pezzo4-Artec4.obj";
+    style.pinToMin(meshRead);
 
     // Reorder texture
     auto reorder = graph.insertNode<ReorderTextureNode>();
@@ -149,11 +156,15 @@ int main()
     reorder->uvMapIn = meshRead->uvMap;
     reorder->imageIn = meshRead->image;
     reorder->sampleRate = 0.1;
+    style.pinToSame(reorder);
 
     // Reg 1998
     auto result1998 = AddImageRegSubgraph(
         graph, "1998/bodley_grclassb1_Pezzo04.tif", reorder->imageOut,
         "1998/1998-to-2017-landmarks.ldm");
+    auto write1998tfm = graph.insertNode<WriteTransformNode>();
+    write1998tfm->path = "PHerc118-1998-to-Mesh2017.tfm";
+    write1998tfm->transform = *result1998.transform;
 
     // Update the UV map to point to 1998 space
     auto transformUV1998 = graph.insertNode<TransformUVMapNode>();
@@ -166,11 +177,18 @@ int main()
     auto result2005 = AddImageRegSubgraph(
         graph, "2005/Bod05b-PHerc118c04-0950-40b.tif", *result1998.inputImage,
         "2005/2005-to-1998-landmarks.ldm");
+    auto write2005tfm = graph.insertNode<WriteTransformNode>();
+    write2005tfm->path = "PHerc118-2005-to-1998.tfm";
+    write2005tfm->transform = *result2005.transform;
 
     // Update the UV map to point to 2005 space
     auto tfm2005ToReorder = graph.insertNode<CompositeTransformNode>();
     tfm2005ToReorder->first = *result2005.transform;
     tfm2005ToReorder->second = *result1998.transform;
+    auto write2005tfm2 = graph.insertNode<WriteTransformNode>();
+    write2005tfm2->path = "PHerc118-2005-to-Mesh2017.tfm";
+    write2005tfm2->transform = tfm2005ToReorder->result;
+    style.pinToMax(write1998tfm, write2005tfm, write2005tfm2);
 
     auto transformUV2005 = graph.insertNode<TransformUVMapNode>();
     transformUV2005->uvMapIn = reorder->uvMapOut;
@@ -183,6 +201,7 @@ int main()
     readIR2017->path = "2017/PHerc118-Pezzo4-IR950.png";
     auto readRGB2017 = graph.insertNode<ImageReadNode>();
     readRGB2017->path = "2017/PHerc118-Pezzo4-RGB2020_8bpc.png";
+    style.pinToMin(readIR2017, readRGB2017);
 
     // Register disegni to 1998
     fs::path disegniDir = "Disegni/Napolitani-individual";
@@ -204,6 +223,9 @@ int main()
 
         auto r = AddImageRegSubgraph(
             graph, imgPath, *result2005.inputImage, ldmPath, true, false, true);
+        auto writeDisegnitfm = graph.insertNode<WriteTransformNode>();
+        writeDisegnitfm->path = imgPath.stem().string() + "-to-Mesh2017.tfm";
+        writeDisegnitfm->transform = *r.transform;
 
         fs::create_directories(outDir / "Disegni-overlays-2005");
         auto outFile = imgPath.filename().replace_extension("tif");
@@ -211,6 +233,7 @@ int main()
         auto writer = graph.insertNode<ImageWriteNode>();
         writer->path = outputPath;
         writer->image = *r.outputImage;
+        style.pinToMax(writeDisegnitfm, writer);
 
         cnt++;
     }
@@ -231,13 +254,12 @@ int main()
         transformUV1998->uvMapOut, readRGB2017->image);
 
     // Setup style
-    smgl::GraphStyle style;
-    style.defaultStyle().inputPorts.bgcolor = "#4C9D2F";
-    style.defaultStyle().inputPorts.color = "#4C9D2F";
+    style.defaultStyle().inputPorts.bgcolor = "#87BF73";
+    style.defaultStyle().inputPorts.color = "#87BF73";
     style.defaultStyle().label.bgcolor = "#1897D4";
     style.defaultStyle().label.color = "#1897D4";
-    style.defaultStyle().outputPorts.bgcolor = "#87BF73";
-    style.defaultStyle().outputPorts.color = "#87BF73";
+    style.defaultStyle().outputPorts.bgcolor = "#4C9D2F";
+    style.defaultStyle().outputPorts.color = "#4C9D2F";
     style.defaultStyle().font.color = "white";
 
     NodeStyle doStyle;
@@ -247,6 +269,9 @@ int main()
     style.setClassStyle<MeshReadNode>(doStyle);
     style.setClassStyle<ImageWriteNode>(doStyle);
     style.setClassStyle<MeshWriteNode>(doStyle);
+    style.setClassStyle<WriteTransformNode>(doStyle);
+
+    style.pinToMin();
 
     // Run the graph
     smgl::WriteDotFile("results/" + project + "-graph.gv", graph, style);
