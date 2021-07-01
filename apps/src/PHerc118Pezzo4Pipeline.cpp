@@ -35,7 +35,7 @@ static SubgraphOutput AddImageRegSubgraph(
     auto readIm = graph.insertNode<ImageReadNode>();
     readIm->path = movingPath;
     result.inputImage = &readIm->image;
-    style.pinToMin(readIm);
+    style.setRankSource(readIm);
 
     // Detect/Load landmarks
     Node::Pointer ldmNode;
@@ -49,7 +49,6 @@ static SubgraphOutput AddImageRegSubgraph(
         loadLdm->path = ldmsPath;
         ldmNode = loadLdm;
     }
-    style.pinToSame(0, ldmNode);
 
     // Calculate affine transform
     auto affLdm = graph.insertNode<AffineLandmarkRegistrationNode>();
@@ -121,7 +120,7 @@ static void WriteRetextureMeshSubgraph(
     writer->mesh = mesh;
     writer->uvMap = uvMap;
     writer->image = texture;
-    style.pinToMax(writer);
+    style.setRankSink(writer);
 }
 
 int main()
@@ -148,7 +147,7 @@ int main()
     // Load mesh
     auto meshRead = graph.insertNode<MeshReadNode>();
     meshRead->path = "2017/PHerc118-Pezzo4-Artec4.obj";
-    style.pinToMin(meshRead);
+    style.setRankSource(meshRead);
 
     // Reorder texture
     auto reorder = graph.insertNode<ReorderTextureNode>();
@@ -156,7 +155,6 @@ int main()
     reorder->uvMapIn = meshRead->uvMap;
     reorder->imageIn = meshRead->image;
     reorder->sampleRate = 0.1;
-    style.pinToSame(reorder);
 
     // Reg 1998
     auto result1998 = AddImageRegSubgraph(
@@ -188,7 +186,7 @@ int main()
     auto write2005tfm2 = graph.insertNode<WriteTransformNode>();
     write2005tfm2->path = "PHerc118-2005-to-Mesh2017.tfm";
     write2005tfm2->transform = tfm2005ToReorder->result;
-    style.pinToMax(write1998tfm, write2005tfm, write2005tfm2);
+    style.setRankSink(write1998tfm, write2005tfm, write2005tfm2);
 
     auto transformUV2005 = graph.insertNode<TransformUVMapNode>();
     transformUV2005->uvMapIn = reorder->uvMapOut;
@@ -201,7 +199,7 @@ int main()
     readIR2017->path = "2017/PHerc118-Pezzo4-IR950.png";
     auto readRGB2017 = graph.insertNode<ImageReadNode>();
     readRGB2017->path = "2017/PHerc118-Pezzo4-RGB2020_8bpc.png";
-    style.pinToMin(readIR2017, readRGB2017);
+    style.setRankSource(readIR2017, readRGB2017);
 
     // Register disegni to 1998
     fs::path disegniDir = "Disegni/Napolitani-individual";
@@ -233,7 +231,7 @@ int main()
         auto writer = graph.insertNode<ImageWriteNode>();
         writer->path = outputPath;
         writer->image = *r.outputImage;
-        style.pinToMax(writeDisegnitfm, writer);
+        style.setRankSink(writeDisegnitfm, writer);
 
         cnt++;
     }
@@ -270,8 +268,6 @@ int main()
     style.setClassStyle<ImageWriteNode>(doStyle);
     style.setClassStyle<MeshWriteNode>(doStyle);
     style.setClassStyle<WriteTransformNode>(doStyle);
-
-    style.pinToMin();
 
     // Run the graph
     smgl::WriteDotFile("results/" + project + "-graph.gv", graph, style);
