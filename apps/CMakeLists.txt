@@ -66,6 +66,12 @@ target_link_libraries(rt_retexture_mesh
     Boost::program_options
 )
 
+add_executable(rt_pherc118_pipeline src/PHerc118Pezzo4Pipeline.cpp)
+target_link_libraries(rt_pherc118_pipeline
+    rt::core
+    rt::graph
+    smgl::smgl
+)
 
 if(VC_FOUND)
     add_executable(rt_dewarp src/TextureDewarp.cpp)
