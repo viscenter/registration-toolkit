@@ -20,12 +20,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-          
+
     - name: Setup Ubuntu
       if: matrix.os == 'ubuntu-20.04'
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake libopencv-dev libvtk6-dev libboost-program-options-dev libinsighttoolkit4-dev
+        sudo apt-get install -y cmake libopencv-dev libvtk6-dev libvtkgdcm-dev libboost-program-options-dev libinsighttoolkit4-dev
 
     - name: Setup macOS 10.15
       if: matrix.os == 'macos-10.15'
@@ -52,8 +52,8 @@ jobs:
       # access regardless of the host operating system
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DRT_BUILD_TESTS=ON
 
@@ -66,6 +66,6 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -V -C $BUILD_TYPE
