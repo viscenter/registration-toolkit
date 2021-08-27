@@ -138,6 +138,6 @@ terminates at the end of the line:
 ```
 
 ## Publications
-- Parsons, Stephen, C. Seth Parker, and W. Brent Seales. "The St. Chad Gospels: Diachronic Manuscript Registration and Visualization". In: _Manuscript Studies: A Journal of the Schoenberg Institute for Manuscript Studies_ 2.2 (2017), pp. 483-498. DOI: [10.1353/mns.2017.0022](10.1353/mns.2017.0022)
+- Parsons, Stephen, C. Seth Parker, and W. Brent Seales. "The St. Chad Gospels: Diachronic Manuscript Registration and Visualization". In: _Manuscript Studies: A Journal of the Schoenberg Institute for Manuscript Studies_ 2.2 (2017), pp. 483-498. DOI: [10.1353/mns.2017.0022](https://doi.org/10.1353/mns.2017.0022)
 
 - Christy Y. Chapman et al. “The Digital Compilation and Restoration of Herculaneum Fragment P.Herc.118”. In: _Manuscript Studies: A Journal of the Schoenberg Institute for Manuscript Studies_ 6.1 (2021), pp. 1–32. DOI: [10.1353/mns.2021.0000](https://doi.org/10.1353/mns.2021.0000)
