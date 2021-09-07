@@ -1,3 +1,4 @@
+brew 'cmake'
 brew 'boost'
 brew 'opencv@4'
 brew 'itk'
