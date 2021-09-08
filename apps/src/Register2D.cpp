@@ -5,7 +5,7 @@
 #include <smgl/Graphviz.hpp>
 
 #include "rt/filesystem.hpp"
-#include "rt/graph/Nodes.hpp"
+#include "rt/graph.hpp"
 
 using namespace rt;
 using namespace rt::graph;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     fs::path outputPath = parsed["output-file"].as<std::string>();
 
     ///// Start render graph /////
-    rt::graph::RegisterAllNodeTypes();
+    rt::graph::RegisterNodes();
     smgl::Graph graph;
 
     ///// Setup caching /////
@@ -89,9 +89,9 @@ int main(int argc, char* argv[])
 
     ///// Setup input files /////
     auto fixed = graph.insertNode<ImageReadNode>();
-    fixed->path(fixedPath);
+    fixed->path = fixedPath;
     auto moving = graph.insertNode<ImageReadNode>();
-    moving->path(movingPath);
+    moving->path = movingPath;
     auto compositeTfms = graph.insertNode<CompositeTransformNode>();
 
     ///// Landmark Registration /////
@@ -101,86 +101,86 @@ int main(int argc, char* argv[])
         // Load landmarks from file
         if (parsed.count("input-landmarks") > 0) {
             auto readLdm = graph.insertNode<LandmarkReaderNode>();
-            readLdm->path(parsed["input-landmarks"].as<std::string>());
+            readLdm->path = parsed["input-landmarks"].as<std::string>();
             ldmNode = readLdm;
         }
         // Generate landmarks automatically
         else {
             auto genLdm = graph.insertNode<LandmarkDetectorNode>();
-            fixed->image >> genLdm->fixedImage;
-            moving->image >> genLdm->movingImage;
+            genLdm->fixedImage = fixed->image;
+            genLdm->movingImage = moving->image;
             ldmNode = genLdm;
 
             // Optionally write generated landmarks to file
             if (parsed.count("output-ldm") > 0) {
                 auto writer = graph.insertNode<LandmarkWriterNode>();
-                writer->path(parsed["output-ldm"].as<std::string>());
-                genLdm->fixedLandmarks >> writer->fixed;
-                genLdm->movingLandmarks >> writer->moving;
+                writer->path = parsed["output-ldm"].as<std::string>();
+                writer->fixed = genLdm->fixedLandmarks;
+                writer->moving = genLdm->movingLandmarks;
             }
         }
 
         // Run affine registration
         auto affine = graph.insertNode<AffineLandmarkRegistrationNode>();
-        ldmNode->getOutputPort("fixedLandmarks") >> affine->fixedLandmarks;
-        ldmNode->getOutputPort("movingLandmarks") >> affine->movingLandmarks;
+        affine->fixedLandmarks = ldmNode->getOutputPort("fixedLandmarks");
+        affine->movingLandmarks = ldmNode->getOutputPort("movingLandmarks");
 
         // Transform
-        affine->transform >> landmarkTfms->first;
+        landmarkTfms->first = affine->transform;
 
         // B-Spline landmark warping
         if (parsed.count("disable-landmark-bspline") == 0) {
             // Update the landmark positions
             auto tfmLdm = graph.insertNode<TransformLandmarksNode>();
-            affine->transform >> tfmLdm->transform;
-            ldmNode->getOutputPort("movingLandmarks") >> tfmLdm->landmarksIn;
+            tfmLdm->transform = affine->transform;
+            tfmLdm->landmarksIn = ldmNode->getOutputPort("movingLandmarks");
 
             // BSpline Warp
             auto bspline = graph.insertNode<BSplineLandmarkWarpingNode>();
-            fixed->image >> bspline->fixedImage;
-            ldmNode->getOutputPort("fixedLandmarks") >> bspline->fixedLandmarks;
-            tfmLdm->landmarksOut >> bspline->movingLandmarks;
-            bspline->transform >> landmarkTfms->second;
+            bspline->fixedImage = fixed->image;
+            bspline->fixedLandmarks = ldmNode->getOutputPort("fixedLandmarks");
+            bspline->movingLandmarks = tfmLdm->landmarksOut;
+            landmarkTfms->second = bspline->transform;
         }
 
         // Add landmark transforms to final transforms
-        landmarkTfms->result >> compositeTfms->first;
+        compositeTfms->first = landmarkTfms->result;
     }
 
     ///// Deformable Registration /////
     if (parsed.count("disable-deformable") == 0) {
         // Resample moving image for next stage
         auto resample1 = graph.insertNode<ImageResampleNode>();
-        fixed->image >> resample1->fixedImage;
-        moving->image >> resample1->movingImage;
-        landmarkTfms->result >> resample1->transform;
+        resample1->fixedImage = fixed->image;
+        resample1->movingImage = moving->image;
+        resample1->transform = landmarkTfms->result;
 
         // Compute deformable
         auto deformable = graph.insertNode<DeformableRegistrationNode>();
-        deformable->iterations(parsed["deformable-iterations"].as<int>());
-        fixed->image >> deformable->fixedImage;
-        resample1->resampledImage >> deformable->movingImage;
+        deformable->iterations = parsed["deformable-iterations"].as<int>();
+        deformable->fixedImage = fixed->image;
+        deformable->movingImage = resample1->resampledImage;
 
         // Add transform to final composite
-        deformable->transform >> compositeTfms->second;
+        compositeTfms->second = deformable->transform;
     }
 
     ///// Resample the source image /////
     auto resample2 = graph.insertNode<ImageResampleNode>();
-    fixed->image >> resample2->fixedImage;
-    moving->image >> resample2->movingImage;
-    compositeTfms->result >> resample2->transform;
+    resample2->fixedImage = fixed->image;
+    resample2->movingImage = moving->image;
+    resample2->transform = compositeTfms->result;
 
     ///// Write the output image /////
     auto writer = graph.insertNode<ImageWriteNode>();
-    writer->path(outputPath);
-    resample2->resampledImage >> writer->image;
+    writer->path = outputPath;
+    writer->image = resample2->resampledImage;
 
     ///// Write the final transformations /////
     if (parsed.count("output-tfm") > 0) {
         auto tfmWriter = graph.insertNode<WriteTransformNode>();
-        tfmWriter->path(parsed["output-tfm"].as<std::string>());
-        compositeTfms->result >> tfmWriter->transform;
+        tfmWriter->path = parsed["output-tfm"].as<std::string>();
+        tfmWriter->transform = compositeTfms->result;
     }
 
     // Compute result

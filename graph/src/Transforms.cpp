@@ -9,7 +9,7 @@
 namespace rtg = rt::graph;
 namespace fs = rt::filesystem;
 
-rtg::CompositeTransformNode::CompositeTransformNode()
+rtg::CompositeTransformNode::CompositeTransformNode() : Node{true}
 {
     registerInputPort("first", first);
     registerInputPort("second", second);
@@ -69,7 +69,7 @@ void rtg::WriteTransformNode::deserialize_(
     path_ = meta["path"].get<std::string>();
 }
 
-rtg::TransformLandmarksNode::TransformLandmarksNode()
+rtg::TransformLandmarksNode::TransformLandmarksNode() : Node{true}
 {
     registerInputPort("transform", transform);
     registerInputPort("landmarksIn", landmarksIn);
@@ -104,7 +104,7 @@ void rtg::TransformLandmarksNode::deserialize_(
     }
 }
 
-rtg::TransformUVMapNode::TransformUVMapNode()
+rtg::TransformUVMapNode::TransformUVMapNode() : Node{true}
 {
     registerInputPort("transform", transform);
     registerInputPort("uvMapIn", uvMapIn);
@@ -170,7 +170,7 @@ void rtg::TransformUVMapNode::deserialize_(
     }
 }
 
-rtg::ImageResampleNode::ImageResampleNode()
+rtg::ImageResampleNode::ImageResampleNode() : Node{true}
 {
     registerInputPort("fixedImage", fixedImage);
     registerInputPort("movingImage", movingImage);

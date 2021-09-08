@@ -5,7 +5,7 @@ namespace fs = rt::filesystem;
 
 using Meta = smgl::Metadata;
 
-rtg::DeformableRegistrationNode::DeformableRegistrationNode()
+rtg::DeformableRegistrationNode::DeformableRegistrationNode() : Node{true}
 {
     registerInputPort("fixedImage", fixedImage);
     registerInputPort("movingImage", movingImage);

@@ -5,7 +5,7 @@
 namespace rtg = rt::graph;
 namespace fs = rt::filesystem;
 
-rtg::LandmarkDetectorNode::LandmarkDetectorNode()
+rtg::LandmarkDetectorNode::LandmarkDetectorNode() : Node{true}
 {
     registerInputPort("fixedImage", fixedImage);
     registerInputPort("movingImage", movingImage);
@@ -51,6 +51,7 @@ void rtg::LandmarkDetectorNode::deserialize_(
 }
 
 rtg::AffineLandmarkRegistrationNode::AffineLandmarkRegistrationNode()
+    : Node{true}
 {
     registerInputPort("fixedLandmarks", fixedLandmarks);
     registerInputPort("movingLandmarks", movingLandmarks);
@@ -85,7 +86,7 @@ void rtg::AffineLandmarkRegistrationNode::deserialize_(
     }
 }
 
-rtg::BSplineLandmarkWarpingNode::BSplineLandmarkWarpingNode()
+rtg::BSplineLandmarkWarpingNode::BSplineLandmarkWarpingNode() : Node{true}
 {
     registerInputPort("fixedLandmarks", fixedLandmarks);
     registerInputPort("fixedImage", fixedImage);
