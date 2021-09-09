@@ -9,7 +9,7 @@ using namespace rt;
 namespace fs = rt::filesystem;
 namespace rtg = rt::graph;
 
-rtg::ReorderTextureNode::ReorderTextureNode()
+rtg::ReorderTextureNode::ReorderTextureNode() : Node{true}
 {
     registerInputPort("mesh", meshIn);
     registerInputPort("imageIn", imageIn);

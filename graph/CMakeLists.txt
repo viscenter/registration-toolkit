@@ -1,3 +1,14 @@
+set(public_hdrs
+    include/rt/graph.hpp
+    include/rt/graph/DeformableRegistration.hpp
+    include/rt/graph/ImageIO.hpp
+    include/rt/graph/LandmarkIO.hpp
+    include/rt/graph/LandmarkRegistration.hpp
+    include/rt/graph/MeshIO.hpp
+    include/rt/graph/MeshOps.hpp
+    include/rt/graph/Transforms.hpp
+)
+
 set(srcs
     src/DeformableRegistration.cpp
     src/ImageIO.cpp
@@ -6,6 +17,7 @@ set(srcs
     src/Transforms.cpp
     src/MeshIO.cpp
     src/MeshOps.cpp
+    src/graph.cpp
 )
 
 add_library(rt_graph ${srcs})
@@ -26,6 +38,7 @@ target_compile_features(rt_graph PUBLIC cxx_std_17)
 set_target_properties(rt_graph PROPERTIES
     VERSION "${PROJECT_VERSION}"
     EXPORT_NAME "graph"
+    PUBLIC_HEADER "${public_hdrs}"
 )
 
 install(
@@ -34,9 +47,6 @@ install(
     ARCHIVE DESTINATION "lib"
     LIBRARY DESTINATION "lib"
     INCLUDES DESTINATION "${include_install_dir}"
+    PUBLIC_HEADER DESTINATION "${include_install_dir}"
     RUNTIME DESTINATION "bin"
-)
-install(
-    DIRECTORY "include/rt/graph"
-    DESTINATION "${include_install_dir}"
 )
