@@ -101,6 +101,14 @@ auto main(int argc, char* argv[]) -> int
     // Determine registration type
     auto is2Dto3D = IsFormat(fixedPath, {"obj"});
 
+    // Validate paths
+    if (is2Dto3D and not IsFormat(outputPath, {"obj"})) {
+        std::cerr << "ERROR: Registering to a 3D mesh, but output file (";
+        std::cerr << outputPath.extension().string() << ") ";
+        std::cerr << "is not a supported mesh format.\n";
+        return EXIT_FAILURE;
+    }
+
     ///// Setup input files /////
     if (is2Dto3D) {
         auto fixed = graph.insertNode<MeshReadNode>();
