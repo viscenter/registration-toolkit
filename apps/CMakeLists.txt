@@ -7,14 +7,6 @@ target_link_libraries(rt_apply_transform
     Boost::program_options
 )
 
-add_executable(rt_register2d src/Register2D.cpp)
-target_link_libraries(rt_register2d
-    rt::core
-    rt::graph
-    Boost::program_options
-    smgl::smgl
-)
-
 add_executable(rt_register src/Register.cpp)
 target_link_libraries(rt_register
     rt::core
@@ -32,14 +24,6 @@ target_link_libraries(rt_reorder_texture
 add_executable(rt_raw_tiff_converter src/RawTIFFConverter.cpp)
 target_link_libraries(rt_raw_tiff_converter
     rt::core
-)
-
-add_executable(rt_register3d src/Register3D.cpp)
-target_link_libraries(rt_register3d
-    rt::core
-    rt::graph
-    Boost::program_options
-    smgl::smgl
 )
 
 add_executable(rt_generate_landmarks src/GenerateLandmarks.cpp)
@@ -86,10 +70,9 @@ endif()
 install(
     TARGETS
         rt_apply_transform
-        rt_register2d
+        rt_register
         rt_reorder_texture
         rt_raw_tiff_converter
-        rt_register3d
         rt_generate_landmarks
         rt_plot_landmarks
         rt_swap_landmarks

@@ -24,10 +24,3 @@ doxygen_add_docs(
     ${PROJECT_SOURCE_DIR}/graph/include/
     COMMENT "Generate Doxygen documentation"
 )
-
-# Install command
-install(
-    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
-    DESTINATION doc
-    COMPONENT Documentation
-)
