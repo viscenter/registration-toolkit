@@ -2,6 +2,8 @@
 
 #include <smgl/Node.hpp>
 
+#include "rt/Version.hpp"
+
 using namespace rt;
 using namespace rt::graph;
 
@@ -42,7 +44,20 @@ static auto RegisterNodesImpl() -> bool
     return registered;
 }
 
-void rt::graph::RegisterNodes()
+auto rt::graph::RegisterNodes() -> bool
 {
     static auto registered = RegisterNodesImpl();
+    return registered;
+}
+
+auto rt::graph::ProjectMetadata() -> smgl::Metadata
+{
+    // clang-format off
+    return
+    {
+        {"version", ProjectInfo::VersionString()},
+        {"git-url", ProjectInfo::RepositoryURL()},
+        {"git-hash", ProjectInfo::RepositoryHash()},
+    };
+    // clang-format on
 }

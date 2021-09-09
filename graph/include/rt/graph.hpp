@@ -2,6 +2,8 @@
 
 /** @file */
 
+#include <smgl/Metadata.hpp>
+
 #include "graph/DeformableRegistration.hpp"
 #include "graph/ImageIO.hpp"
 #include "graph/LandmarkIO.hpp"
@@ -13,5 +15,8 @@
 namespace rt::graph
 {
 /** @brief Register all rt nodes with the graph system */
-void RegisterNodes();
+auto RegisterNodes() -> bool;
+
+/** @brief Get the standard registration-toolkit project metadata */
+auto ProjectMetadata() -> smgl::Metadata;
 }  // namespace rt::graph

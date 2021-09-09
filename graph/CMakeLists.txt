@@ -6,7 +6,7 @@ set(srcs
     src/Transforms.cpp
     src/MeshIO.cpp
     src/MeshOps.cpp
-    src/Nodes.cpp
+    src/graph.cpp
 )
 
 add_library(rt_graph ${srcs})

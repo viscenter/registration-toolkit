@@ -15,6 +15,14 @@ target_link_libraries(rt_register2d
     smgl::smgl
 )
 
+add_executable(rt_register src/Register.cpp)
+target_link_libraries(rt_register
+    rt::core
+    rt::graph
+    Boost::program_options
+    smgl::smgl
+)
+
 add_executable(rt_reorder_texture src/ReorderTexture.cpp)
 target_link_libraries(rt_reorder_texture
     rt::core
