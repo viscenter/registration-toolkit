@@ -12,9 +12,7 @@
 #include "rt/filesystem.hpp"
 #include "rt/types/Transforms.hpp"
 
-namespace rt
-{
-namespace graph
+namespace rt::graph
 {
 
 /**
@@ -33,6 +31,9 @@ public:
     smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
     /** @brief Moving image port */
     smgl::InputPort<cv::Mat> movingImage{&movingImg_};
+    /** @copydoc LandmarkDetector::setMatchRatio(float() */
+    smgl::InputPort<float> matchRatio{
+        &detector_, &LandmarkDetector::setMatchRatio};
     /**@}*/
 
     /** @name Output Ports */
@@ -148,5 +149,4 @@ private:
         const smgl::Metadata& meta, const filesystem::path& cacheDir) override;
 };
 
-}  // namespace graph
 }  // namespace rt
