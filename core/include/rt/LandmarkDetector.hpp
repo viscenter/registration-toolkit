@@ -38,8 +38,10 @@ public:
     void setMovingImage(const cv::Mat& img);
     /** @brief Set the fixed image mask */
     void setMovingMask(const cv::Mat& img);
-    /** @brief Set the nearest-neighbor matching ratio */
+    /** @brief The nearest-neighbor matching ratio */
     void setMatchRatio(float r);
+    /** @copydoc setMatchRatio(float) */
+    [[nodiscard]] auto matchRatio() const -> float;
 
     /** @brief Compute key point matches between the fixed and moving images
      *

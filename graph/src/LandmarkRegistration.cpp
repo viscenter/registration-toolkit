@@ -24,7 +24,7 @@ rtg::LandmarkDetectorNode::LandmarkDetectorNode() : Node{true}
 smgl::Metadata rtg::LandmarkDetectorNode::serialize_(
     bool useCache, const fs::path& cacheDir)
 {
-    smgl::Metadata m;
+    smgl::Metadata m{{"matchRatio", detector_.matchRatio()}};
     if (useCache) {
         LandmarkWriter writer;
         writer.setPath(cacheDir / "landmarks.ldm");
@@ -40,6 +40,7 @@ smgl::Metadata rtg::LandmarkDetectorNode::serialize_(
 void rtg::LandmarkDetectorNode::deserialize_(
     const smgl::Metadata& meta, const fs::path& cacheDir)
 {
+    detector_.setMatchRatio(meta["matchRatio"].get<float>());
     if (meta.contains("landmarks")) {
         auto file = meta["landmarks"].get<std::string>();
         LandmarkReader reader;

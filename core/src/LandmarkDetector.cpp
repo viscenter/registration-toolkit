@@ -98,3 +98,5 @@ auto LandmarkDetector::getMovingLandmarks() const -> LandmarkContainer
     }
     return res;
 }
+
+auto LandmarkDetector::matchRatio() const -> float { return nnMatchRatio_; }
