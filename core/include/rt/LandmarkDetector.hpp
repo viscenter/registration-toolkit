@@ -73,6 +73,6 @@ private:
     /** Matched pairs */
     std::vector<LandmarkPair> output_;
     /** Nearest-neighbor matching ratio */
-    float nnMatchRatio_{0.2F};
+    float nnMatchRatio_{0.3F};
 };
 }  // namespace rt
