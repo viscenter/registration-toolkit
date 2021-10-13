@@ -34,6 +34,22 @@ namespace rt
 class ReorderUnorganizedTexture
 {
 public:
+    enum class SampleMode {
+        Rate,         /** Use the sample rate provided by setSampleRate() */
+        OutputWidth,  /**
+                       * Calculate the sample rate needed to produce an output
+                       * image with width defined by setSampleDim().
+                       */
+        OutputHeight, /**
+                       * Calculate the sample rate needed to produce an output
+                       * image with height defined by setSampleDim().
+                       */
+        AutoUV        /**
+                       * Calculate a sample rate from the average pixel density in the
+                       * UV mapped image.
+                       */
+    };
+
     /**
      * Default distance (in mesh units) at which to sample the XY plane into
      * image
@@ -46,11 +62,33 @@ public:
     void setUVMap(const UVMap& uv);
     /** @brief Set the input, unorganized texture image */
     void setTextureMat(const cv::Mat& img);
+
+    void setSampleMode(SampleMode m);
+
     /**
-     * @brief Set the rate (in mesh units) at which to sample XY plane into an
-     * image
+     * @brief Sampling rate mode
+     *
+     *
+     */
+    [[nodiscard]] auto sampleMode() const -> SampleMode;
+
+    /**
+     * @brief Set the rate (in mesh units) at which to sample the image plane
+     *
+     * @see sampleMode()
      */
     void setSampleRate(double s);
+
+    /**
+     * @brief Set the size of the output image in pixels
+     *
+     * Only used if setSampleMode() is set to SampleMode::OutputWidth or
+     * SampleMode::OutputHeight
+     *
+     * @see sampleMode()
+     */
+    void setSampleDim(std::size_t d);
+
     /** @brief Set whether to use the first mesh intersection point */
     void setUseFirstIntersection(bool b);
 
@@ -78,8 +116,12 @@ private:
     /** Input texture image */
     cv::Mat inputTexture_;
 
+    /** Sample mode */
+    SampleMode sampleMode_{SampleMode::Rate};
+
     /** XY plane sample rate (in mesh units) */
     double sampleRate_{DEFAULT_SAMPLE_RATE};
+    std::size_t sampleDim_{800};
 
     /** Origin position */
     cv::Vec3d origin_;

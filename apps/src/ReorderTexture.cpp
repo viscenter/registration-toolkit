@@ -74,12 +74,13 @@ int main(int argc, char* argv[])
     }
 
     // Reorder the texture
-    std::cerr << "Reordering texture :: Sample Rate: " << sampleRate << "\n";
+    std::cerr << "Reordering texture...\n";
+    using SampleMode = rt::ReorderUnorganizedTexture::SampleMode;
     rt::ReorderUnorganizedTexture r;
     r.setMesh(mesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
-    r.setSampleRate(sampleRate);
+    r.setSampleMode(SampleMode::AutoUV);
     r.setUseFirstIntersection(useFirstIntersection);
     r.compute();
 

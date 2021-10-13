@@ -34,6 +34,80 @@ static inline auto BaryToXYZ(
     return uvw[0] * a + uvw[1] * b + uvw[2] * c;
 }
 
+template <typename CellIterator>
+static inline auto GetCellVertices(
+    const ITKMesh::Pointer& mesh, CellIterator& cell)
+{
+    std::vector<cv::Vec3d> pts;
+    for (const auto& id : cell->Value()->GetPointIdsContainer()) {
+        auto p = mesh->GetPoint(id);
+        pts.template emplace_back(p[0], p[1], p[2]);
+    }
+    return pts;
+}
+
+template <
+    typename T,
+    std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+static inline auto NearZero(T val, T eps = 1e-7) -> bool
+{
+    return std::abs(val) <= eps;
+}
+
+static inline auto ComputeUVDensity(
+    const ITKMesh::Pointer& mesh,
+    const UVMap& uv,
+    double imgWidth,
+    double imgHeight) -> double
+{
+    double density{0};
+    std::size_t count{0};
+
+    auto maxXIdx = imgWidth - 1;
+    auto maxYIdx = imgHeight - 1;
+
+    // For each face
+    for (auto cell = mesh->GetCells()->Begin(); cell != mesh->GetCells()->End();
+         ++cell) {
+
+        // Get the 3D vertices
+        auto pts = GetCellVertices(mesh, cell);
+
+        // Get the UV coordinates for this face
+        auto uvs = uv.getFaceUVs(cell->Index());
+
+        // Transform UVs to image coordinates
+        std::transform(
+            uvs.begin(), uvs.end(), uvs.begin(),
+            [maxXIdx, maxYIdx](const cv::Vec2d& p) -> cv::Vec2d {
+                return {p[0] * maxXIdx, p[1] * maxYIdx};
+            });
+
+        // Update the density for each edge
+        for (std::size_t idxA = 0; idxA < 3; idxA++) {
+            // Next idx in the list
+            auto idxB = (idxA == 2) ? 0 : idxA + 1;
+
+            // Calculate 2D and 3D edge lengths
+            auto edge3D = cv::norm(pts[idxB] - pts[idxA]);
+            auto edge2D = cv::norm(uvs[idxB] - uvs[idxA]);
+
+            // Skip if one of the lengths is zero or nan
+            if (NearZero(edge3D) or std::isnan(edge3D) or NearZero(edge2D) or
+                std::isnan(edge2D)) {
+                continue;
+            }
+
+            // Update the density
+            auto edgeDensity = edge3D / edge2D;
+            count++;
+            density += (edgeDensity - density) / static_cast<double>(count);
+        }
+    }
+
+    return density;
+}
+
 void ReorderUnorganizedTexture::setMesh(const ITKMesh::Pointer& mesh)
 {
     inputMesh_ = mesh;
@@ -46,7 +120,16 @@ void ReorderUnorganizedTexture::setTextureMat(const cv::Mat& img)
     inputTexture_ = img;
 }
 
+void ReorderUnorganizedTexture::setSampleMode(SampleMode m) { sampleMode_ = m; }
+
+auto ReorderUnorganizedTexture::sampleMode() const -> SampleMode
+{
+    return sampleMode_;
+}
+
 void ReorderUnorganizedTexture::setSampleRate(double s) { sampleRate_ = s; }
+
+void ReorderUnorganizedTexture::setSampleDim(std::size_t d) { sampleDim_ = d; }
 
 void ReorderUnorganizedTexture::setUseFirstIntersection(bool b)
 {
@@ -104,11 +187,43 @@ void ReorderUnorganizedTexture::create_texture_()
     obbTree->ComputeOBB(
         mesh, origin_.val, xAxis_.val, yAxis_.val, zAxis_.val, size.data());
 
+    int cols{-1};
+    int rows{-1};
+    auto xLen = cv::norm(xAxis_);
+    auto yLen = cv::norm(yAxis_);
+
+    // Calculate the sample rate
+    double sampleRate{DEFAULT_SAMPLE_RATE};
+    switch (sampleMode_) {
+        case SampleMode::Rate:
+            sampleRate = sampleRate_;
+            cols = static_cast<int>(std::ceil(xLen / sampleRate));
+            rows = static_cast<int>(std::ceil(yLen / sampleRate));
+            break;
+        case SampleMode::OutputWidth:
+            sampleRate =
+                static_cast<double>(xLen) / static_cast<double>(sampleDim_);
+            cols = static_cast<int>(sampleDim_);
+            rows = static_cast<int>(std::ceil(yLen / sampleRate));
+            break;
+        case SampleMode::OutputHeight:
+            sampleRate =
+                static_cast<double>(yLen) / static_cast<double>(sampleDim_);
+            cols = static_cast<int>(std::ceil(xLen / sampleRate));
+            rows = static_cast<int>(sampleDim_);
+            break;
+        case SampleMode::AutoUV:
+            sampleRate = ComputeUVDensity(
+                inputMesh_, inputUV_, inputTexture_.cols, inputTexture_.rows);
+            cols = static_cast<int>(std::ceil(xLen / sampleRate));
+            rows = static_cast<int>(std::ceil(yLen / sampleRate));
+            break;
+    }
+
+    std::cerr << "Output size: " << cols << "x" << rows << " ";
+    std::cerr << "(Sample rate: " << sampleRate << ")\n";
+
     // Setup the output image
-    // After alignment, dimensions go from [0, dimension max], therefore
-    // dimension max / sample rate == # of pixels in dimension
-    int cols = static_cast<int>(std::ceil(cv::norm(xAxis_) / sampleRate_));
-    int rows = static_cast<int>(std::ceil(cv::norm(yAxis_) / sampleRate_));
     outputTexture_ = cv::Mat::zeros(rows, cols, CV_8UC3);
 
     // Normalize the length
@@ -125,8 +240,8 @@ void ReorderUnorganizedTexture::create_texture_()
     for (auto v = 0; v < rows; v++) {
         for (auto u = 0; u < cols; u++) {
             // Convert pixel position to offset in mesh's XY space
-            auto uOffset = u * sampleRate_ * normedX;
-            auto vOffset = v * sampleRate_ * normedY;
+            auto uOffset = u * sampleRate * normedX;
+            auto vOffset = v * sampleRate * normedY;
 
             // Get t
             auto a0 = origin_ + uOffset + vOffset;
