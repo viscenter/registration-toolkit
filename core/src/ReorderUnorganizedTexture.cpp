@@ -120,9 +120,22 @@ void ReorderUnorganizedTexture::setTextureMat(const cv::Mat& img)
     inputTexture_ = img;
 }
 
-void ReorderUnorganizedTexture::setSampleMode(SampleMode m) { sampleMode_ = m; }
+void ReorderUnorganizedTexture::setSamplingOrigin(SamplingOrigin o)
+{
+    sampleOrigin_ = o;
+}
 
-auto ReorderUnorganizedTexture::sampleMode() const -> SampleMode
+auto ReorderUnorganizedTexture::samplingOrigin() const -> SamplingOrigin
+{
+    return sampleOrigin_;
+}
+
+void ReorderUnorganizedTexture::setSamplingMode(SamplingMode m)
+{
+    sampleMode_ = m;
+}
+
+auto ReorderUnorganizedTexture::samplingMode() const -> SamplingMode
 {
     return sampleMode_;
 }
@@ -195,24 +208,24 @@ void ReorderUnorganizedTexture::create_texture_()
     // Calculate the sample rate
     double sampleRate{DEFAULT_SAMPLE_RATE};
     switch (sampleMode_) {
-        case SampleMode::Rate:
+        case SamplingMode::Rate:
             sampleRate = sampleRate_;
             cols = static_cast<int>(std::ceil(xLen / sampleRate));
             rows = static_cast<int>(std::ceil(yLen / sampleRate));
             break;
-        case SampleMode::OutputWidth:
+        case SamplingMode::OutputWidth:
             sampleRate =
                 static_cast<double>(xLen) / static_cast<double>(sampleDim_);
             cols = static_cast<int>(sampleDim_);
             rows = static_cast<int>(std::ceil(yLen / sampleRate));
             break;
-        case SampleMode::OutputHeight:
+        case SamplingMode::OutputHeight:
             sampleRate =
                 static_cast<double>(yLen) / static_cast<double>(sampleDim_);
             cols = static_cast<int>(std::ceil(xLen / sampleRate));
             rows = static_cast<int>(sampleDim_);
             break;
-        case SampleMode::AutoUV:
+        case SamplingMode::AutoUV:
             sampleRate = ComputeUVDensity(
                 inputMesh_, inputUV_, inputTexture_.cols, inputTexture_.rows);
             cols = static_cast<int>(std::ceil(xLen / sampleRate));
@@ -221,7 +234,7 @@ void ReorderUnorganizedTexture::create_texture_()
     }
 
     std::cerr << "Output size: " << cols << "x" << rows << " ";
-    std::cerr << "(Sample rate: " << sampleRate << ")\n";
+    std::cerr << "(Sample rate: " << sampleRate << ")" << std::endl;
 
     // Setup the output image
     outputTexture_ = cv::Mat::zeros(rows, cols, CV_8UC3);
@@ -235,6 +248,26 @@ void ReorderUnorganizedTexture::create_texture_()
         zLen = cv::norm(zAxis_);
     } else {
         zAxis_ = cv::normalize(zAxis_);
+    }
+
+    // Change the origin and axes directions w.r.t. the sampling origin
+    switch (sampleOrigin_) {
+        case SamplingOrigin::TopLeft:
+            // Already setup. Do nothing.
+            break;
+        case SamplingOrigin::TopRight:
+            origin_ += xLen * normedX;
+            normedX *= -1;
+            break;
+        case SamplingOrigin::BottomLeft:
+            origin_ += yLen * normedY;
+            normedY *= -1;
+            break;
+        case SamplingOrigin::BottomRight:
+            origin_ += xLen * normedX + yLen * normedY;
+            normedX *= -1;
+            normedY *= -1;
+            break;
     }
 
     for (auto v = 0; v < rows; v++) {

@@ -34,7 +34,9 @@ namespace rt
 class ReorderUnorganizedTexture
 {
 public:
-    enum class SampleMode {
+    enum class SamplingOrigin { TopLeft, TopRight, BottomLeft, BottomRight };
+
+    enum class SamplingMode {
         Rate,         /** Use the sample rate provided by setSampleRate() */
         OutputWidth,  /**
                        * Calculate the sample rate needed to produce an output
@@ -63,29 +65,32 @@ public:
     /** @brief Set the input, unorganized texture image */
     void setTextureMat(const cv::Mat& img);
 
-    void setSampleMode(SampleMode m);
+    /** @copydoc samplingOrigin() */
+    void setSamplingOrigin(SamplingOrigin o);
 
-    /**
-     * @brief Sampling rate mode
-     *
-     *
-     */
-    [[nodiscard]] auto sampleMode() const -> SampleMode;
+    /** @brief Sampling bounding box origin */
+    [[nodiscard]] auto samplingOrigin() const -> SamplingOrigin;
+
+    /** @copydoc samplingMode() */
+    void setSamplingMode(SamplingMode m);
+
+    /** @brief Sampling rate mode */
+    [[nodiscard]] auto samplingMode() const -> SamplingMode;
 
     /**
      * @brief Set the rate (in mesh units) at which to sample the image plane
      *
-     * @see sampleMode()
+     * @see samplingMode()
      */
     void setSampleRate(double s);
 
     /**
      * @brief Set the size of the output image in pixels
      *
-     * Only used if setSampleMode() is set to SampleMode::OutputWidth or
+     * Only used if setSamplingMode() is set to SampleMode::OutputWidth or
      * SampleMode::OutputHeight
      *
-     * @see sampleMode()
+     * @see samplingMode()
      */
     void setSampleDim(std::size_t d);
 
@@ -116,11 +121,13 @@ private:
     /** Input texture image */
     cv::Mat inputTexture_;
 
+    /** Sample origin */
+    SamplingOrigin sampleOrigin_{SamplingOrigin::TopLeft};
     /** Sample mode */
-    SampleMode sampleMode_{SampleMode::Rate};
-
+    SamplingMode sampleMode_{SamplingMode::Rate};
     /** XY plane sample rate (in mesh units) */
     double sampleRate_{DEFAULT_SAMPLE_RATE};
+    /** Length of the predefined sampling dimension */
     std::size_t sampleDim_{800};
 
     /** Origin position */

@@ -1,3 +1,6 @@
+#include <string>
+#include <unordered_map>
+
 #include <boost/program_options.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -6,11 +9,30 @@
 #include "rt/io/OBJReader.hpp"
 #include "rt/io/OBJWriter.hpp"
 #include "rt/types/ITKMesh.hpp"
+#include "rt/util/String.hpp"
 
 namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
-int main(int argc, char* argv[])
+using namespace rt;
+
+using SamplingOrigin = ReorderUnorganizedTexture::SamplingOrigin;
+std::unordered_map<std::string, SamplingOrigin> StrToOrigin{
+    {"tl", SamplingOrigin::TopLeft},
+    {"tr", SamplingOrigin::TopRight},
+    {"bl", SamplingOrigin::BottomLeft},
+    {"br", SamplingOrigin::BottomRight},
+};
+
+using SamplingMode = ReorderUnorganizedTexture::SamplingMode;
+std::unordered_map<std::string, SamplingMode> StrToMode{
+    {"rate", SamplingMode::Rate},
+    {"width", SamplingMode::OutputWidth},
+    {"height", SamplingMode::OutputHeight},
+    {"auto", SamplingMode::AutoUV},
+};
+
+auto main(int argc, char* argv[]) -> int
 {
     ///// Parse the command line options /////
     // clang-format off
@@ -21,8 +43,15 @@ int main(int argc, char* argv[])
              "Path to input OBJ with unordered texture (i.e. multicharts)")
         ("output-mesh,o", po::value<std::string>()->required(),
              "Path to output OBJ with ordered texture")
-        ("sample-rate,r", po::value<double>()->default_value(0.1),
-             "Sample rate at which mesh space is rasterized to pixels")
+        ("sampling-origin", po::value<std::string>()->default_value("tl"),
+             "Origins: tl, tr, bl, br")
+        ("sampling-mode,m", po::value<std::string>()->default_value("auto"),
+             "Modes: rate, width, height, auto")
+        ("sampling-rate,r", po::value<double>()->default_value(0.1),
+             "If --sampling-mode is 'rate', the pixel size in mesh units")
+        ("sampling-dim,d", po::value<std::size_t>()->default_value(800),
+             "If --sampling-mode is 'width' or 'height', the length of the "
+             "corresponding output dimension in pixels")
         ("use-first-intersection,f", "This program assumes that "
              "the projection origin is behind the base plane of the sampled "
              "mesh. Thus, the last mesh intersection point will lie on the "
@@ -54,12 +83,19 @@ int main(int argc, char* argv[])
 
     fs::path inputPath = parsed["input-mesh"].as<std::string>();
     fs::path outputPath = parsed["output-mesh"].as<std::string>();
-    auto sampleRate = parsed["sample-rate"].as<double>();
+
+    // Get parameters
+    auto originStr = to_lower_copy(parsed["sampling-origin"].as<std::string>());
+    auto samplingOrigin = StrToOrigin.at(originStr);
+    auto modeStr = to_lower_copy(parsed["sampling-mode"].as<std::string>());
+    auto sampleMode = StrToMode.at(modeStr);
+    auto sampleRate = parsed["sampling-rate"].as<double>();
+    auto sampleDim = parsed["sampling-dim"].as<std::size_t>();
     auto useFirstIntersection = parsed.count("use-first-intersection") > 0;
 
     // Load the mesh
     std::cerr << "Reading mesh: " << inputPath << "\n";
-    rt::io::OBJReader reader;
+    io::OBJReader reader;
     reader.setPath(inputPath);
     auto mesh = reader.read();
     auto uvMap = reader.getUVMap();
@@ -75,17 +111,19 @@ int main(int argc, char* argv[])
 
     // Reorder the texture
     std::cerr << "Reordering texture...\n";
-    using SampleMode = rt::ReorderUnorganizedTexture::SampleMode;
-    rt::ReorderUnorganizedTexture r;
+    ReorderUnorganizedTexture r;
     r.setMesh(mesh);
     r.setUVMap(uvMap);
     r.setTextureMat(texture);
-    r.setSampleMode(SampleMode::AutoUV);
+    r.setSamplingOrigin(samplingOrigin);
+    r.setSamplingMode(sampleMode);
+    r.setSampleRate(sampleRate);
+    r.setSampleDim(sampleDim);
     r.setUseFirstIntersection(useFirstIntersection);
     r.compute();
 
     // Write to file
-    rt::io::OBJWriter writer;
+    io::OBJWriter writer;
     writer.setPath(outputPath);
     writer.setMesh(mesh);
     writer.setUVMap(r.getUVMap());
