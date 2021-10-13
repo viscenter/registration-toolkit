@@ -220,7 +220,7 @@ auto main(int argc, char* argv[]) -> int
         resample2->fixedImage = *results["fixedImage"];
         resample2->movingImage = moving->image;
         resample2->transform = compositeTfms->result;
-	resample2->forceAlpha = parsed.count("enable-alpha") > 0;	
+        resample2->forceAlpha = parsed.count("enable-alpha") > 0;	
 
         ///// Write the output image /////
         auto writer = graph.insertNode<ImageWriteNode>();
