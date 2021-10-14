@@ -158,7 +158,7 @@ void OBJReader::parse_face_(const std::vector<std::string>& strs)
                 break;
             case RefType::VertexWithNormal:
                 f.emplace_back(
-                    std::stoull(vinfo[0]), NOT_PRESENT, std::stoull(vinfo[2]));
+                    std::stoull(vinfo[0]), NOT_PRESENT, std::stoull(vinfo[1]));
                 break;
             case RefType::VertexWithTextureAndNormal:
                 f.emplace_back(
