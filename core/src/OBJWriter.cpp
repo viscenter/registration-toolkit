@@ -268,7 +268,7 @@ auto OBJWriter::write_faces_() -> int
             // Write the vnIndex
             if (pointLink[2] != UNSET_VALUE) {
                 // Write a buffer slash if there wasn't a vtIndex
-                if (pointLink[1] == UNSET_VALUE) {
+                if (not hasUVFace) {
                     outputMesh_ << "/";
                 }
 

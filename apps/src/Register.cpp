@@ -47,7 +47,10 @@ auto main(int argc, char* argv[]) -> int
         ("disable-landmark-bspline", "Disable secondary B-Spline landmark registration")
         ("input-landmarks,l", po::value<std::string>(),
             "Input landmarks file. If not provided, landmark features "
-            "are automatically detected from the input images.");
+            "are automatically detected from the input images.")
+        ("landmark-match-ratio", po::value<float>()->default_value(0.3F),
+            "Matching ratio for automatically detected features. Smaller "
+            "values represent closer matches.");
 
     po::options_description deformOptions("Deformable Registration Options");
     deformOptions.add_options()
@@ -140,6 +143,7 @@ auto main(int argc, char* argv[]) -> int
             auto genLdm = graph.insertNode<LandmarkDetectorNode>();
             genLdm->fixedImage = *results["fixedImage"];
             genLdm->movingImage = moving->image;
+            genLdm->matchRatio = parsed["landmark-match-ratio"].as<float>();
             ldmNode = genLdm;
 
             // Optionally write generated landmarks to file
@@ -220,7 +224,7 @@ auto main(int argc, char* argv[]) -> int
         resample2->fixedImage = *results["fixedImage"];
         resample2->movingImage = moving->image;
         resample2->transform = compositeTfms->result;
-	resample2->forceAlpha = parsed.count("enable-alpha") > 0;	
+        resample2->forceAlpha = parsed.count("enable-alpha") > 0;	
 
         ///// Write the output image /////
         auto writer = graph.insertNode<ImageWriteNode>();

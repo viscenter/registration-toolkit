@@ -4,7 +4,6 @@
 #include <exception>
 
 #include <opencv2/features2d.hpp>
-#include <opencv2/stitching/detail/matchers.hpp>
 
 using namespace rt;
 
@@ -27,62 +26,46 @@ auto LandmarkDetector::compute() -> std::vector<rt::LandmarkPair>
 
     // Detect key points and compute their descriptors
     auto featureDetector = cv::AKAZE::create();
-    std::vector<cv::detail::ImageFeatures> features(2);
-    std::vector<cv::Mat> images{fixedImg_, movingImg_};
-    cv::detail::computeImageFeatures(featureDetector, images, features);
-
-    // Safety check
-    if (features[0].keypoints.size() < 2 or features[1].keypoints.size() < 2) {
-        // Not enough features to match
-        return output_;
-    }
+    std::vector<cv::KeyPoint> fixedKeys;
+    std::vector<cv::KeyPoint> movingKeys;
+    cv::Mat fixedDesc;
+    cv::Mat movingDesc;
+    featureDetector->detectAndCompute(
+        fixedImg_, fixedMask_, fixedKeys, fixedDesc);
+    featureDetector->detectAndCompute(
+        movingImg_, movingMask_, movingKeys, movingDesc);
 
     // Match keypoints
-    cv::detail::BestOf2NearestMatcher matcher(false, nnMatchRatio_);
-    std::vector<cv::detail::MatchesInfo> matches;
-    matcher(features, matches);
-    matcher.collectGarbage();
+    auto matcher = cv::DescriptorMatcher::create(
+        cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
+    std::vector<std::vector<cv::DMatch>> matches;
+    matcher->knnMatch(fixedDesc, movingDesc, matches, 2);
 
-    // Get only Fixed <-> Moving matches
-    cv::detail::MatchesInfo fixedToMoving;
-    cv::detail::MatchesInfo movingToFixed;
+    // Filter matches
+    std::vector<cv::DMatch> goodMatches;
     for (const auto& m : matches) {
-        if (m.src_img_idx == 0 and m.dst_img_idx == 1) {
-            fixedToMoving = m;
-        } else if (m.src_img_idx == 1 and m.dst_img_idx == 0) {
-            movingToFixed = m;
+        if (m[0].distance < nnMatchRatio_ * m[1].distance) {
+            goodMatches.push_back(m[0]);
         }
     }
 
-    // Add all Fixed -> Moving inliers
-    for (size_t idx = 0; idx < fixedToMoving.matches.size(); idx++) {
-        size_t numInliers = fixedToMoving.num_inliers;
-        if (idx < numInliers and fixedToMoving.inliers_mask[idx] == 0) {
-            continue;
-        }
-
-        const auto& m = fixedToMoving.matches[idx];
-        auto fixPt = features[0].keypoints[m.queryIdx].pt;
-        auto movPt = features[1].keypoints[m.trainIdx].pt;
-        output_.emplace_back(fixPt, movPt);
-    }
-
-    // Add Moving -> Fixed inliers not already in output
-    for (size_t idx = 0; idx < movingToFixed.matches.size(); idx++) {
-        size_t numInliers = movingToFixed.num_inliers;
-        if (idx < numInliers and movingToFixed.inliers_mask[idx] == 0) {
-            continue;
-        }
-
-        const auto& m = movingToFixed.matches[idx];
-        auto fixPt = features[0].keypoints[m.trainIdx].pt;
-        auto movPt = features[1].keypoints[m.queryIdx].pt;
-        if (std::find(
-                output_.begin(), output_.end(), LandmarkPair{fixPt, movPt}) ==
-            output_.end()) {
+    // Convert good matches to landmark pairs
+    // query = fixed, train = moving
+    for (const auto& m : goodMatches) {
+        // From fixed -> moving
+        if (m.imgIdx == 0) {
+            auto fixPt = fixedKeys[m.queryIdx].pt;
+            auto movPt = movingKeys[m.trainIdx].pt;
             output_.emplace_back(fixPt, movPt);
         }
+
+        // From moving -> fixed
+        else if (m.imgIdx != 0) {
+            std::cerr << "Warning: Unexpected image match index: ";
+            std::cerr << m.imgIdx << std::endl;
+        }
     }
+
     return output_;
 }
 
@@ -115,3 +98,5 @@ auto LandmarkDetector::getMovingLandmarks() const -> LandmarkContainer
     }
     return res;
 }
+
+auto LandmarkDetector::matchRatio() const -> float { return nnMatchRatio_; }
