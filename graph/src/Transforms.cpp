@@ -175,6 +175,7 @@ rtg::ImageResampleNode::ImageResampleNode() : Node{true}
     registerInputPort("fixedImage", fixedImage);
     registerInputPort("movingImage", movingImage);
     registerInputPort("transform", transform);
+    registerInputPort("forceAlpha", forceAlpha);
     registerOutputPort("resampledImage", resampledImage);
 
     compute = [=]() {
@@ -186,7 +187,7 @@ rtg::ImageResampleNode::ImageResampleNode() : Node{true}
             tmp = moving_;
         }
         std::cout << "Resampling image..." << std::endl;
-        resampled_ = ImageTransformResampler(moving_, fixed_.size(), tfm_);
+        resampled_ = ImageTransformResampler(tmp, fixed_.size(), tfm_);
     };
 }
 
