@@ -28,7 +28,7 @@ public:
     /** Default relaxation factor */
     static constexpr double DEFAULT_RELAXATION = 0.85;
     /** Default gradient magnitude tolerance */
-    static constexpr double DEFAULT_GRAD_MAG_TOLERANCE = 0.0001;
+    static constexpr double DEFAULT_GRAD_MAG_TOLERANCE = 0.00005;
     /** BSpline transform type */
     using Transform = itk::BSplineTransform<double, 2, 3>;
 

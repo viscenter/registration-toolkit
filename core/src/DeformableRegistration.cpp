@@ -2,7 +2,7 @@
 
 #include <itkImageRegistrationMethod.h>
 #include <itkMattesMutualInformationImageToImageMetric.h>
-#include <itkNearestNeighborInterpolateImageFunction.h>
+#include <itkLinearInterpolateImageFunction.h>
 #include <itkRegularStepGradientDescentOptimizer.h>
 
 #include "rt/ITKImageTypes.hpp"
@@ -11,7 +11,7 @@
 using namespace rt;
 
 using GrayInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
+    itk::LinearInterpolateImageFunction<Image8UC1, double>;
 using Metric =
     itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
@@ -20,7 +20,7 @@ using BSplineParameters = DeformableRegistration::Transform::ParametersType;
 
 static constexpr double DEFAULT_MAX_STEP_FACTOR = 1.0 / 500.0;
 static constexpr double DEFAULT_MIN_STEP_FACTOR = 1.0 / 500000.0;
-static constexpr unsigned DEFAULT_MESH_FILL_SIZE = 12;
+static constexpr unsigned DEFAULT_MESH_FILL_SIZE = 60;
 
 /* The metric requires two parameters to be selected: the number
 of bins used to compute the entropy and the number of spatial samples
