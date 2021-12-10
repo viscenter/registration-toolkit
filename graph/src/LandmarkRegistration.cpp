@@ -56,6 +56,7 @@ rtg::AffineLandmarkRegistrationNode::AffineLandmarkRegistrationNode()
 {
     registerInputPort("fixedLandmarks", fixedLandmarks);
     registerInputPort("movingLandmarks", movingLandmarks);
+    registerInputPort("outputMetric", outputMetric);
     registerOutputPort("transform", transform);
 
     compute = [=]() {

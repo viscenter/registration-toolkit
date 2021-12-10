@@ -6,6 +6,16 @@
 
 using namespace rt;
 
+void AffineLandmarkRegistration::setOutputMetric(bool i)
+{
+    outputMetric_ = i;
+}
+
+bool AffineLandmarkRegistration::getOutputMetric()
+{
+    return outputMetric_;
+}
+
 auto AffineLandmarkRegistration::compute()
     -> AffineLandmarkRegistration::Transform::Pointer
 {
@@ -22,6 +32,9 @@ auto AffineLandmarkRegistration::compute()
     output_->SetIdentity();
     landmarkTransformInit->SetTransform(output_);
     landmarkTransformInit->InitializeTransform();
+
+    if (outputMetric_)
+        std::cout << "Affine Metric: " << output_->Metric() << std::endl;
 
     return output_;
 }

@@ -34,7 +34,8 @@ auto main(int argc, char* argv[]) -> int
         ("output-tfm,t", po::value<std::string>(),
             "Output file path for the generated transform file")
         ("enable-alpha", "If enabled, an alpha layer will be "
-            "added to the moving image if it does not already have one.");
+            "added to the moving image if it does not already have one.")
+        ("output-metric", "Outputs the metric values from the deformable and affine");
 
     po::options_description graphOptions("Render Graph Options");
     graphOptions.add_options()
@@ -56,7 +57,11 @@ auto main(int argc, char* argv[]) -> int
     deformOptions.add_options()
         ("disable-deformable", "Disable all deformable registration steps")
         ("deformable-iterations,i", po::value<int>()->default_value(100),
-            "Number of deformable optimization iterations");
+            "Number of deformable optimization iterations")
+        ("deformable-mesh-size", po::value<unsigned>()->default_value(12),
+            "The deformable mesh fill size")
+        ("deformable-gradient", po::value<double>()->default_value(.0001),
+            "The deformable gradient magnitude tolerance");
 
     po::options_description all("Usage");
     all.add(required).add(graphOptions).add(ldmOptions).add(deformOptions);
@@ -160,6 +165,11 @@ auto main(int argc, char* argv[]) -> int
         affine->fixedLandmarks = ldmNode->getOutputPort("fixedLandmarks");
         affine->movingLandmarks = ldmNode->getOutputPort("movingLandmarks");
 
+        //output metric value if chosen by user
+        if (parsed.count("output-metric") > 0) {
+            affine->outputMetric = true;
+        }
+
         // Transform
         landmarkTfms->first = affine->transform;
 
@@ -193,8 +203,15 @@ auto main(int argc, char* argv[]) -> int
         // Compute deformable
         auto deformable = graph.insertNode<DeformableRegistrationNode>();
         deformable->iterations = parsed["deformable-iterations"].as<int>();
+        deformable->meshFillSize = parsed["deformable-mesh-size"].as<unsigned>();
+        deformable->gradientMagnitudeTolerance = parsed["deformable-gradient"].as<double>();
         deformable->fixedImage = *results["fixedImage"];
         deformable->movingImage = resample1->resampledImage;
+
+        //output metric values if chosen by user
+        if (parsed.count("output-metric") > 0) {
+            deformable->outputMetric = true;
+        }
 
         // Add transform to final composite
         compositeTfms->second = deformable->transform;
