@@ -79,6 +79,9 @@ public:
     smgl::InputPort<LandmarkContainer> fixedLandmarks{&fixed_};
     /** @brief Moving landmarks port */
     smgl::InputPort<LandmarkContainer> movingLandmarks{&moving_};
+    /** @brief output the affine metric */
+    smgl::InputPort<bool> outputMetric {
+        &reg_, &AffineLandmarkRegistration::setOutputMetric};
     /**@}*/
 
     /** @name Output Ports */

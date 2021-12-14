@@ -31,8 +31,17 @@ public:
     /** @brief Moving image port */
     smgl::InputPort<cv::Mat> movingImage{
         &reg_, &DeformableRegistration::setMovingImage};
+    /** @brief Mesh Fill Size port */
+    smgl::InputPort<unsigned> meshFillSize{
+        &reg_, &DeformableRegistration::setMeshFillSize};
+    /** @brief Gradient Magnitude Tolerance port */
+    smgl::InputPort<double> gradientMagnitudeTolerance{
+        &reg_, &DeformableRegistration::setGradientMagnitudeTolerance};
     /** @brief Deformable iterations port */
     smgl::InputPort<int> iterations{&iters_};
+    /** @brief outputs the metric values for the deformable */
+    smgl::InputPort<bool> outputMetric{
+        &reg_, &DeformableRegistration::setOutputMetric};
     /**@}*/
 
     /** @name Output Ports */
