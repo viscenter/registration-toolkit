@@ -5,8 +5,8 @@
 #include <itkBSplineTransform.h>
 #include <opencv2/core.hpp>
 
-#include <itkcommand.h>
 #include <itkRegularStepGradientDescentOptimizer.h>
+#include <itkcommand.h>
 
 namespace rt
 {
@@ -98,33 +98,31 @@ private:
 class CommandIterationUpdate : public itk::Command
 {
 public:
-  typedef CommandIterationUpdate    Self;
-  typedef itk::Command              Superclass;
-  typedef itk::SmartPointer<Self>   Pointer;
-  itkNewMacro( Self );
+    typedef CommandIterationUpdate Self;
+    typedef itk::Command Superclass;
+    typedef itk::SmartPointer<Self> Pointer;
+    itkNewMacro(Self);
 
 protected:
-  CommandIterationUpdate() {};
+    CommandIterationUpdate(){};
 
 public:
-  typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
-  typedef const OptimizerType *                    OptimizerPointer;
+    typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
+    typedef const OptimizerType* OptimizerPointer;
 
-  void Execute(itk::Object *caller, const itk::EventObject & event)
+    void Execute(itk::Object* caller, const itk::EventObject& event)
     {
-    Execute( (const itk::Object *)caller, event);
+        Execute((const itk::Object*)caller, event);
     }
 
-  void Execute(const itk::Object * object, const itk::EventObject & event)
+    void Execute(const itk::Object* object, const itk::EventObject& event)
     {
-        OptimizerPointer optimizer = dynamic_cast< OptimizerPointer >( object );
-        if( !(itk::IterationEvent().CheckEvent( &event )) )
-        {
-        return;
+        OptimizerPointer optimizer = dynamic_cast<OptimizerPointer>(object);
+        if (!(itk::IterationEvent().CheckEvent(&event))) {
+            return;
         }
 
         std::cout << optimizer->GetValue() << "   ";
         std::cout << std::endl;
-        
     }
 };

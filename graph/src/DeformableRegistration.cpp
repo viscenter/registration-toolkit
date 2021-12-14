@@ -14,7 +14,6 @@ rtg::DeformableRegistrationNode::DeformableRegistrationNode() : Node{true}
     registerInputPort("gradientMagnitudeTolerance", gradientMagnitudeTolerance);
     registerInputPort("outputMetric", outputMetric);
     registerOutputPort("transform", transform);
-    
 
     compute = [=]() {
         std::cout << "Running deformable registration..." << std::endl;
@@ -42,7 +41,8 @@ void rtg::DeformableRegistrationNode::deserialize_(
 {
     iters_ = meta["iterations"].get<int>();
     reg_.setMeshFillSize(meta["meshFillSize"].get<unsigned>());
-    reg_.setGradientMagnitudeTolerance(meta["gradientMagnitudeTolerance"].get<double>());
+    reg_.setGradientMagnitudeTolerance(
+        meta["gradientMagnitudeTolerance"].get<double>());
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();
         tfm_ = ReadTransform(cacheDir / file);

@@ -80,7 +80,7 @@ public:
     /** @brief Moving landmarks port */
     smgl::InputPort<LandmarkContainer> movingLandmarks{&moving_};
     /** @brief output the affine metric */
-    smgl::InputPort<bool> outputMetric {
+    smgl::InputPort<bool> outputMetric{
         &reg_, &AffineLandmarkRegistration::setOutputMetric};
     /**@}*/
 

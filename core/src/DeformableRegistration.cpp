@@ -21,7 +21,6 @@ using BSplineParameters = DeformableRegistration::Transform::ParametersType;
 static constexpr double DEFAULT_MAX_STEP_FACTOR = 1.0 / 500.0;
 static constexpr double DEFAULT_MIN_STEP_FACTOR = 1.0 / 500000.0;
 
-
 /* The metric requires two parameters to be selected: the number
 of bins used to compute the entropy and the number of spatial samples
 used to compute the density estimates. In typical application, 50
@@ -57,15 +56,9 @@ auto DeformableRegistration::getTransform() -> Transform::Pointer
     return output_;
 }
 
-void DeformableRegistration::setMeshFillSize(unsigned i)
-{
-    meshFillSize_ = i;
-}
+void DeformableRegistration::setMeshFillSize(unsigned i) { meshFillSize_ = i; }
 
-unsigned DeformableRegistration::getMeshFillSize()
-{
-    return meshFillSize_;
-}
+unsigned DeformableRegistration::getMeshFillSize() { return meshFillSize_; }
 
 void DeformableRegistration::setGradientMagnitudeTolerance(double i)
 {
@@ -77,15 +70,9 @@ double DeformableRegistration::getGradientMagnitudeTolerance()
     return gradientMagnitudeTolerance_;
 }
 
-void DeformableRegistration::setOutputMetric(bool i)
-{
-    outputMetric_ = i;
-}
+void DeformableRegistration::setOutputMetric(bool i) { outputMetric_ = i; }
 
-bool DeformableRegistration::getOutputMetric()
-{
-    return outputMetric_;
-}
+bool DeformableRegistration::getOutputMetric() { return outputMetric_; }
 
 auto DeformableRegistration::compute()
     -> DeformableRegistration::Transform::Pointer
@@ -155,18 +142,20 @@ auto DeformableRegistration::compute()
     optimizer->SetNumberOfIterations(iterations_);
     optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance_);
 
-    //checking to see if they want the metric output
+    // checking to see if they want the metric output
     if (outputMetric_) {
-        CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
+        CommandIterationUpdate::Pointer observer =
+            CommandIterationUpdate::New();
         optimizer->AddObserver(itk::IterationEvent(), observer);
 
         ///// Run Registration /////
         registration->Update();
 
-        std::cout << " Stop Condition: " << optimizer->GetStopConditionDescription() << std::endl;
-        std::cout << "Final Metric Value:" << optimizer->GetValue() << std::endl;
-    }
-    else {
+        std::cout << " Stop Condition: "
+                  << optimizer->GetStopConditionDescription() << std::endl;
+        std::cout << "Final Metric Value:" << optimizer->GetValue()
+                  << std::endl;
+    } else {
         ///// Run Registration /////
         registration->Update();
     }

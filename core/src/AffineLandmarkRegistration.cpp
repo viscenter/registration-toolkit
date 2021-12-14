@@ -6,15 +6,9 @@
 
 using namespace rt;
 
-void AffineLandmarkRegistration::setOutputMetric(bool i)
-{
-    outputMetric_ = i;
-}
+void AffineLandmarkRegistration::setOutputMetric(bool i) { outputMetric_ = i; }
 
-bool AffineLandmarkRegistration::getOutputMetric()
-{
-    return outputMetric_;
-}
+bool AffineLandmarkRegistration::getOutputMetric() { return outputMetric_; }
 
 auto AffineLandmarkRegistration::compute()
     -> AffineLandmarkRegistration::Transform::Pointer
