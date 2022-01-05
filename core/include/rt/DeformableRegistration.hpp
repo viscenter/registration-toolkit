@@ -5,9 +5,6 @@
 #include <itkBSplineTransform.h>
 #include <opencv2/core.hpp>
 
-#include <itkRegularStepGradientDescentOptimizer.h>
-#include <itkcommand.h>
-
 namespace rt
 {
 
@@ -32,8 +29,8 @@ public:
     static constexpr double DEFAULT_RELAXATION = 0.85;
     /** Default gradient magnitude tolerance */
     static constexpr double DEFAULT_GRAD_MAG_TOLERANCE = 0.0001;
-    static constexpr unsigned DEFAULT_MESH_FILL_SIZE = 12;
-    static constexpr bool DEFAULT_OUTPUT_METRIC = false;
+    /** Default mesh fill size */
+    static constexpr uint32_t DEFAULT_MESH_FILL_SIZE = 12;
     /** BSpline transform type */
     using Transform = itk::BSplineTransform<double, 2, 3>;
 
@@ -42,13 +39,14 @@ public:
     void setFixedImage(const cv::Mat& i);
     /** @brief Set the moving (transformed) image for registration */
     void setMovingImage(const cv::Mat& i);
-    /** @brief Set optimizer iteration limit
+    /**
+     * @brief Set optimizer iteration limit
      *
      * Optimizer stops after this many iterations.
      */
     void setNumberOfIterations(size_t i);
     /** @brief Set the Mesh Fill Size */
-    void setMeshFillSize(unsigned i);
+    void setMeshFillSize(uint32_t i);
     /** @brief Set the Gradient Magnitude Tolerance */
     void setGradientMagnitudeTolerance(double i);
     /** @brief Set the bool for outputing the metric */
@@ -57,11 +55,11 @@ public:
 
     /**@}*/
     /** @brief Get the Mesh Fill Size */
-    unsigned getMeshFillSize();
+    [[nodiscard]] auto getMeshFillSize() const -> uint32_t;
     /** @brief Get the Gradient Magnitude Tolerance */
-    double getGradientMagnitudeTolerance();
+    [[nodiscard]] auto getGradientMagnitudeTolerance() const -> double;
     /** @brief get the bool for outputting the metric */
-    bool getOutputMetric();
+    [[nodiscard]] auto getOutputMetric() const -> bool;
     /**@}*/
 
     /**@{*/
@@ -85,44 +83,13 @@ private:
 
     /** Optimizer iteration limit */
     size_t iterations_{DEFAULT_ITERATIONS};
-    unsigned meshFillSize_{DEFAULT_MESH_FILL_SIZE};
+    /** Mesh fill size */
+    uint32_t meshFillSize_{DEFAULT_MESH_FILL_SIZE};
     /** Optimizer step length is reduced by this factor each iteration */
     double relaxationFactor_{DEFAULT_RELAXATION};
     /** Stop condition if change in metric is less than this value */
     double gradientMagnitudeTolerance_{DEFAULT_GRAD_MAG_TOLERANCE};
     /** outputs the metric values */
-    bool outputMetric_{DEFAULT_OUTPUT_METRIC};
+    bool outputMetric_{false};
 };
 }  // namespace rt
-
-class CommandIterationUpdate : public itk::Command
-{
-public:
-    typedef CommandIterationUpdate Self;
-    typedef itk::Command Superclass;
-    typedef itk::SmartPointer<Self> Pointer;
-    itkNewMacro(Self);
-
-protected:
-    CommandIterationUpdate(){};
-
-public:
-    typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
-    typedef const OptimizerType* OptimizerPointer;
-
-    void Execute(itk::Object* caller, const itk::EventObject& event)
-    {
-        Execute((const itk::Object*)caller, event);
-    }
-
-    void Execute(const itk::Object* object, const itk::EventObject& event)
-    {
-        OptimizerPointer optimizer = dynamic_cast<OptimizerPointer>(object);
-        if (!(itk::IterationEvent().CheckEvent(&event))) {
-            return;
-        }
-
-        std::cout << optimizer->GetValue() << "   ";
-        std::cout << std::endl;
-    }
-};

@@ -1,8 +1,9 @@
 #include "rt/DeformableRegistration.hpp"
 
+#include <itkCommand.h>
 #include <itkImageRegistrationMethod.h>
-#include <itkMattesMutualInformationImageToImageMetric.h>
 #include <itkLinearInterpolateImageFunction.h>
+#include <itkMattesMutualInformationImageToImageMetric.h>
 #include <itkRegularStepGradientDescentOptimizer.h>
 
 #include "rt/ITKImageTypes.hpp"
@@ -36,6 +37,41 @@ static constexpr double DEFAULT_SAMPLE_FACTOR = 1.0 / 80.0;
 
 using Transform = DeformableRegistration::Transform;
 
+class ReportMetricCallback : public itk::Command
+{
+protected:
+    ReportMetricCallback() = default;
+
+public:
+    using Pointer = itk::SmartPointer<ReportMetricCallback>;
+    using Optimizer = itk::RegularStepGradientDescentOptimizer;
+
+    static auto New() -> Pointer
+    {
+        Pointer smartPtr = ::itk::ObjectFactory<ReportMetricCallback>::Create();
+        if (smartPtr == nullptr) {
+            smartPtr = new ReportMetricCallback;
+        }
+        smartPtr->UnRegister();
+        return smartPtr;
+    }
+
+    void Execute(itk::Object* caller, const itk::EventObject& event) override
+    {
+        Execute(reinterpret_cast<const itk::Object*>(caller), event);
+    }
+
+    void Execute(
+        const itk::Object* object, const itk::EventObject& event) override
+    {
+        const auto* optimizer = dynamic_cast<const Optimizer*>(object);
+        if (not itk::IterationEvent().CheckEvent(&event)) {
+            return;
+        }
+        std::cout << optimizer->GetValue() << std::endl;
+    }
+};
+
 void DeformableRegistration::setFixedImage(const cv::Mat& i)
 {
     fixedImage_ = i;
@@ -56,23 +92,29 @@ auto DeformableRegistration::getTransform() -> Transform::Pointer
     return output_;
 }
 
-void DeformableRegistration::setMeshFillSize(unsigned i) { meshFillSize_ = i; }
+void DeformableRegistration::setMeshFillSize(uint32_t i) { meshFillSize_ = i; }
 
-unsigned DeformableRegistration::getMeshFillSize() { return meshFillSize_; }
+auto DeformableRegistration::getMeshFillSize() const -> uint32_t
+{
+    return meshFillSize_;
+}
 
 void DeformableRegistration::setGradientMagnitudeTolerance(double i)
 {
     gradientMagnitudeTolerance_ = i;
 }
 
-double DeformableRegistration::getGradientMagnitudeTolerance()
+auto DeformableRegistration::getGradientMagnitudeTolerance() const -> double
 {
     return gradientMagnitudeTolerance_;
 }
 
 void DeformableRegistration::setOutputMetric(bool i) { outputMetric_ = i; }
 
-bool DeformableRegistration::getOutputMetric() { return outputMetric_; }
+auto DeformableRegistration::getOutputMetric() const -> bool
+{
+    return outputMetric_;
+}
 
 auto DeformableRegistration::compute()
     -> DeformableRegistration::Transform::Pointer
@@ -108,11 +150,15 @@ auto DeformableRegistration::compute()
     parameters.Fill(0.0);
     output_->SetParameters(parameters);
 
-    ///// Setup Registration and Metrics/////
+    ///// Setup Registration and Metrics /////
     auto metric = Metric::New();
     auto optimizer = Optimizer::New();
     auto registration = Registration::New();
     auto grayInterpolator = GrayInterpolator::New();
+    if (outputMetric_) {
+        optimizer->AddObserver(
+            itk::IterationEvent(), ReportMetricCallback::New());
+    }
 
     registration->SetFixedImage(fixed);
     registration->SetMovingImage(moving);
@@ -131,7 +177,8 @@ auto DeformableRegistration::compute()
     metric->SetNumberOfSpatialSamples(numSamples);
 
     ///// Setup Optimizer /////
-    auto regionWidth = fixed->GetLargestPossibleRegion().GetSize()[0];
+    auto regionWidth =
+        static_cast<double>(fixed->GetLargestPossibleRegion().GetSize()[0]);
     auto maxStepLength = regionWidth * DEFAULT_MAX_STEP_FACTOR;
     auto minStepLength = regionWidth * DEFAULT_MIN_STEP_FACTOR;
 
@@ -142,22 +189,14 @@ auto DeformableRegistration::compute()
     optimizer->SetNumberOfIterations(iterations_);
     optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance_);
 
-    // checking to see if they want the metric output
+    ///// Run Registration /////
+    registration->Update();
+
+    // Report final values as requested
     if (outputMetric_) {
-        CommandIterationUpdate::Pointer observer =
-            CommandIterationUpdate::New();
-        optimizer->AddObserver(itk::IterationEvent(), observer);
-
-        ///// Run Registration /////
-        registration->Update();
-
-        std::cout << " Stop Condition: "
-                  << optimizer->GetStopConditionDescription() << std::endl;
-        std::cout << "Final Metric Value:" << optimizer->GetValue()
-                  << std::endl;
-    } else {
-        ///// Run Registration /////
-        registration->Update();
+        std::cout << "Stop Condition: ";
+        std::cout << optimizer->GetStopConditionDescription() << "\n";
+        std::cout << "Final Metric Value:" << optimizer->GetValue() << "\n";
     }
 
     output_->SetParameters(registration->GetLastTransformParameters());
