@@ -49,17 +49,17 @@ public:
     void setMeshFillSize(uint32_t i);
     /** @brief Set the Gradient Magnitude Tolerance */
     void setGradientMagnitudeTolerance(double i);
-    /** @brief Set the bool for outputing the metric */
-    void setOutputMetric(bool i);
+    /** @brief Report error metrics to the console while processing */
+    void setReportMetrics(bool i);
     /**@}*/
 
-    /**@}*/
+    /**@{*/
     /** @brief Get the Mesh Fill Size */
     [[nodiscard]] auto getMeshFillSize() const -> uint32_t;
     /** @brief Get the Gradient Magnitude Tolerance */
     [[nodiscard]] auto getGradientMagnitudeTolerance() const -> double;
-    /** @brief get the bool for outputting the metric */
-    [[nodiscard]] auto getOutputMetric() const -> bool;
+    /** @copydoc setReportMetrics(bool) */
+    [[nodiscard]] auto getReportMetrics() const -> bool;
     /**@}*/
 
     /**@{*/
@@ -88,8 +88,8 @@ private:
     /** Optimizer step length is reduced by this factor each iteration */
     double relaxationFactor_{DEFAULT_RELAXATION};
     /** Stop condition if change in metric is less than this value */
-    double gradientMagnitudeTolerance_{DEFAULT_GRAD_MAG_TOLERANCE};
-    /** outputs the metric values */
-    bool outputMetric_{false};
+    double gradMagTol_{DEFAULT_GRAD_MAG_TOLERANCE};
+    /** Report error metrics during processing */
+    bool reportMetrics_{false};
 };
 }  // namespace rt

@@ -53,10 +53,14 @@ void rtg::LandmarkDetectorNode::deserialize_(
 
 rtg::AffineLandmarkRegistrationNode::AffineLandmarkRegistrationNode()
     : Node{true}
+    , fixedLandmarks{&fixed_}
+    , movingLandmarks{&moving_}
+    , reportMetrics{&reg_, &AffineLandmarkRegistration::setReportMetrics}
+    , transform{&tfm_}
 {
     registerInputPort("fixedLandmarks", fixedLandmarks);
     registerInputPort("movingLandmarks", movingLandmarks);
-    registerInputPort("outputMetric", outputMetric);
+    registerInputPort("reportMetrics", reportMetrics);
     registerOutputPort("transform", transform);
 
     compute = [=]() {
@@ -67,10 +71,11 @@ rtg::AffineLandmarkRegistrationNode::AffineLandmarkRegistrationNode()
     };
 }
 
-smgl::Metadata rtg::AffineLandmarkRegistrationNode::serialize_(
-    bool useCache, const fs::path& cacheDir)
+auto rtg::AffineLandmarkRegistrationNode::serialize_(
+    bool useCache, const fs::path& cacheDir) -> smgl::Metadata
 {
     smgl::Metadata m;
+    m["reportMetrics"] = reg_.getReportMetrics();
     if (useCache and tfm_) {
         WriteTransform(cacheDir / "affine.tfm", tfm_);
         m["transform"] = "affine.tfm";
@@ -82,6 +87,7 @@ smgl::Metadata rtg::AffineLandmarkRegistrationNode::serialize_(
 void rtg::AffineLandmarkRegistrationNode::deserialize_(
     const smgl::Metadata& meta, const fs::path& cacheDir)
 {
+    reg_.setReportMetrics(meta["reportMetrics"].get<bool>());
     if (meta.contains("transform")) {
         auto file = meta["transform"].get<std::string>();
         tfm_ = ReadTransform(cacheDir / file);

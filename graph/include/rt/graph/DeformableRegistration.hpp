@@ -25,29 +25,24 @@ public:
 
     /** @name Input Ports */
     /**@{*/
-    /** @brief Fixed image port */
-    smgl::InputPort<cv::Mat> fixedImage{
-        &reg_, &DeformableRegistration::setFixedImage};
-    /** @brief Moving image port */
-    smgl::InputPort<cv::Mat> movingImage{
-        &reg_, &DeformableRegistration::setMovingImage};
-    /** @brief Mesh Fill Size port */
-    smgl::InputPort<unsigned> meshFillSize{
-        &reg_, &DeformableRegistration::setMeshFillSize};
-    /** @brief Gradient Magnitude Tolerance port */
-    smgl::InputPort<double> gradientMagnitudeTolerance{
-        &reg_, &DeformableRegistration::setGradientMagnitudeTolerance};
-    /** @brief Deformable iterations port */
-    smgl::InputPort<int> iterations{&iters_};
-    /** @brief outputs the metric values for the deformable */
-    smgl::InputPort<bool> outputMetric{
-        &reg_, &DeformableRegistration::setOutputMetric};
+    /** @brief Fixed image */
+    smgl::InputPort<cv::Mat> fixedImage;
+    /** @brief Moving image */
+    smgl::InputPort<cv::Mat> movingImage;
+    /** @brief Mesh Fill Size */
+    smgl::InputPort<unsigned> meshFillSize;
+    /** @brief Gradient magnitude tolerance */
+    smgl::InputPort<double> gradientTolerance;
+    /** @brief Deformable iterations */
+    smgl::InputPort<int> iterations;
+    /** @copydoc DeformableRegistration::setReportMetrics(bool) */
+    smgl::InputPort<bool> reportMetrics;
     /**@}*/
 
     /** @name Output Ports */
     /**@{*/
     /** @brief Final transform port */
-    smgl::OutputPort<Transform::Pointer> transform{&tfm_};
+    smgl::OutputPort<Transform::Pointer> transform;
     /**@}*/
 
 private:
@@ -58,8 +53,8 @@ private:
     /** Final transform */
     Transform::Pointer tfm_;
     /** Graph serialize */
-    smgl::Metadata serialize_(
-        bool useCache, const filesystem::path& cacheDir) override;
+    auto serialize_(bool useCache, const filesystem::path& cacheDir)
+        -> smgl::Metadata override;
     /** Graph deserialize */
     void deserialize_(
         const smgl::Metadata& meta, const filesystem::path& cacheDir) override;

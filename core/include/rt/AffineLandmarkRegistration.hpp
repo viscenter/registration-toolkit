@@ -9,7 +9,6 @@
 namespace rt
 {
 /**
- * @class AffineLandmarkRegistration
  * @brief Generate an affine transformation that maps an ordered set of
  * landmarks onto a fixed set of landmarks
  */
@@ -19,12 +18,11 @@ public:
     /** @brief Transform type returned by this class */
     using Transform = itk::AffineTransform<double, 2>;
 
-    static constexpr bool DEFAULT_OUTPUT_METRIC = false;
+    /** @brief Report error metrics to the console while processing */
+    void setReportMetrics(bool i);
 
-    /** @brief Set the bool for outputing the metric */
-    void setOutputMetric(bool i);
-    /** @brief get the bool for outputting the metric */
-    bool getOutputMetric();
+    /** @copydoc setReportMetrics(bool) */
+    [[nodiscard]] auto getReportMetrics() -> bool;
 
     /** @brief Compute the transform */
     auto compute() -> Transform::Pointer;
@@ -35,7 +33,7 @@ public:
 private:
     /** Transform */
     Transform::Pointer output_;
-    /** outputs the metric value */
-    bool outputMetric_{DEFAULT_OUTPUT_METRIC};
+    /** Report error metrics during processing */
+    bool reportMetrics_{false};
 };
 }  // namespace rt

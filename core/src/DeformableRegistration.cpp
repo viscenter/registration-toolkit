@@ -101,19 +101,19 @@ auto DeformableRegistration::getMeshFillSize() const -> uint32_t
 
 void DeformableRegistration::setGradientMagnitudeTolerance(double i)
 {
-    gradientMagnitudeTolerance_ = i;
+    gradMagTol_ = i;
 }
 
 auto DeformableRegistration::getGradientMagnitudeTolerance() const -> double
 {
-    return gradientMagnitudeTolerance_;
+    return gradMagTol_;
 }
 
-void DeformableRegistration::setOutputMetric(bool i) { outputMetric_ = i; }
+void DeformableRegistration::setReportMetrics(bool i) { reportMetrics_ = i; }
 
-auto DeformableRegistration::getOutputMetric() const -> bool
+auto DeformableRegistration::getReportMetrics() const -> bool
 {
-    return outputMetric_;
+    return reportMetrics_;
 }
 
 auto DeformableRegistration::compute()
@@ -155,7 +155,7 @@ auto DeformableRegistration::compute()
     auto optimizer = Optimizer::New();
     auto registration = Registration::New();
     auto grayInterpolator = GrayInterpolator::New();
-    if (outputMetric_) {
+    if (reportMetrics_) {
         optimizer->AddObserver(
             itk::IterationEvent(), ReportMetricCallback::New());
     }
@@ -187,13 +187,13 @@ auto DeformableRegistration::compute()
     optimizer->SetMinimumStepLength(minStepLength);
     optimizer->SetRelaxationFactor(relaxationFactor_);
     optimizer->SetNumberOfIterations(iterations_);
-    optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance_);
+    optimizer->SetGradientMagnitudeTolerance(gradMagTol_);
 
     ///// Run Registration /////
     registration->Update();
 
     // Report final values as requested
-    if (outputMetric_) {
+    if (reportMetrics_) {
         std::cout << "Stop Condition: ";
         std::cout << optimizer->GetStopConditionDescription() << "\n";
         std::cout << "Final Metric Value:" << optimizer->GetValue() << "\n";
