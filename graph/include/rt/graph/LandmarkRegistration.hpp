@@ -31,7 +31,7 @@ public:
     smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
     /** @brief Moving image port */
     smgl::InputPort<cv::Mat> movingImage{&movingImg_};
-    /** @copydoc LandmarkDetector::setMatchRatio(float() */
+    /** @copydoc LandmarkDetector::setMatchRatio(float) */
     smgl::InputPort<float> matchRatio{
         &detector_, &LandmarkDetector::setMatchRatio};
     /**@}*/
@@ -76,15 +76,17 @@ public:
     /** @name Input Ports */
     /**@{*/
     /** @brief Fixed landmarks port */
-    smgl::InputPort<LandmarkContainer> fixedLandmarks{&fixed_};
+    smgl::InputPort<LandmarkContainer> fixedLandmarks;
     /** @brief Moving landmarks port */
-    smgl::InputPort<LandmarkContainer> movingLandmarks{&moving_};
+    smgl::InputPort<LandmarkContainer> movingLandmarks;
+    /** @copydoc AffineLandmarkRegistration::setReportMetrics(bool) */
+    smgl::InputPort<bool> reportMetrics;
     /**@}*/
 
     /** @name Output Ports */
     /**@{*/
     /** @brief Result transform port */
-    smgl::OutputPort<Transform::Pointer> transform{&tfm_};
+    smgl::OutputPort<Transform::Pointer> transform;
     /**@}*/
 
 private:
@@ -97,8 +99,8 @@ private:
     /** Computed transform */
     Transform::Pointer tfm_;
     /** Graph serialize */
-    smgl::Metadata serialize_(
-        bool useCache, const filesystem::path& cacheDir) override;
+    auto serialize_(bool useCache, const filesystem::path& cacheDir)
+        -> smgl::Metadata override;
     /** Graph deserialize */
     void deserialize_(
         const smgl::Metadata& meta, const filesystem::path& cacheDir) override;

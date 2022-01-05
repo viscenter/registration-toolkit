@@ -29,6 +29,8 @@ public:
     static constexpr double DEFAULT_RELAXATION = 0.85;
     /** Default gradient magnitude tolerance */
     static constexpr double DEFAULT_GRAD_MAG_TOLERANCE = 0.0001;
+    /** Default mesh fill size */
+    static constexpr uint32_t DEFAULT_MESH_FILL_SIZE = 12;
     /** BSpline transform type */
     using Transform = itk::BSplineTransform<double, 2, 3>;
 
@@ -37,11 +39,27 @@ public:
     void setFixedImage(const cv::Mat& i);
     /** @brief Set the moving (transformed) image for registration */
     void setMovingImage(const cv::Mat& i);
-    /** @brief Set optimizer iteration limit
+    /**
+     * @brief Set optimizer iteration limit
      *
      * Optimizer stops after this many iterations.
      */
     void setNumberOfIterations(size_t i);
+    /** @brief Set the Mesh Fill Size */
+    void setMeshFillSize(uint32_t i);
+    /** @brief Set the Gradient Magnitude Tolerance */
+    void setGradientMagnitudeTolerance(double i);
+    /** @brief Report error metrics to the console while processing */
+    void setReportMetrics(bool i);
+    /**@}*/
+
+    /**@{*/
+    /** @brief Get the Mesh Fill Size */
+    [[nodiscard]] auto getMeshFillSize() const -> uint32_t;
+    /** @brief Get the Gradient Magnitude Tolerance */
+    [[nodiscard]] auto getGradientMagnitudeTolerance() const -> double;
+    /** @copydoc setReportMetrics(bool) */
+    [[nodiscard]] auto getReportMetrics() const -> bool;
     /**@}*/
 
     /**@{*/
@@ -65,9 +83,13 @@ private:
 
     /** Optimizer iteration limit */
     size_t iterations_{DEFAULT_ITERATIONS};
+    /** Mesh fill size */
+    uint32_t meshFillSize_{DEFAULT_MESH_FILL_SIZE};
     /** Optimizer step length is reduced by this factor each iteration */
     double relaxationFactor_{DEFAULT_RELAXATION};
     /** Stop condition if change in metric is less than this value */
-    double gradientMagnitudeTolerance_{DEFAULT_GRAD_MAG_TOLERANCE};
+    double gradMagTol_{DEFAULT_GRAD_MAG_TOLERANCE};
+    /** Report error metrics during processing */
+    bool reportMetrics_{false};
 };
 }  // namespace rt

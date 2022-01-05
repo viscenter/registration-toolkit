@@ -1,8 +1,9 @@
 #include "rt/DeformableRegistration.hpp"
 
+#include <itkCommand.h>
 #include <itkImageRegistrationMethod.h>
+#include <itkLinearInterpolateImageFunction.h>
 #include <itkMattesMutualInformationImageToImageMetric.h>
-#include <itkNearestNeighborInterpolateImageFunction.h>
 #include <itkRegularStepGradientDescentOptimizer.h>
 
 #include "rt/ITKImageTypes.hpp"
@@ -11,7 +12,7 @@
 using namespace rt;
 
 using GrayInterpolator =
-    itk::NearestNeighborInterpolateImageFunction<Image8UC1, double>;
+    itk::LinearInterpolateImageFunction<Image8UC1, double>;
 using Metric =
     itk::MattesMutualInformationImageToImageMetric<Image8UC1, Image8UC1>;
 using Optimizer = itk::RegularStepGradientDescentOptimizer;
@@ -20,7 +21,6 @@ using BSplineParameters = DeformableRegistration::Transform::ParametersType;
 
 static constexpr double DEFAULT_MAX_STEP_FACTOR = 1.0 / 500.0;
 static constexpr double DEFAULT_MIN_STEP_FACTOR = 1.0 / 500000.0;
-static constexpr unsigned DEFAULT_MESH_FILL_SIZE = 12;
 
 /* The metric requires two parameters to be selected: the number
 of bins used to compute the entropy and the number of spatial samples
@@ -36,6 +36,41 @@ static constexpr size_t DEFAULT_HISTOGRAM_BINS = 50;
 static constexpr double DEFAULT_SAMPLE_FACTOR = 1.0 / 80.0;
 
 using Transform = DeformableRegistration::Transform;
+
+class ReportMetricCallback : public itk::Command
+{
+protected:
+    ReportMetricCallback() = default;
+
+public:
+    using Pointer = itk::SmartPointer<ReportMetricCallback>;
+    using Optimizer = itk::RegularStepGradientDescentOptimizer;
+
+    static auto New() -> Pointer
+    {
+        Pointer smartPtr = ::itk::ObjectFactory<ReportMetricCallback>::Create();
+        if (smartPtr == nullptr) {
+            smartPtr = new ReportMetricCallback;
+        }
+        smartPtr->UnRegister();
+        return smartPtr;
+    }
+
+    void Execute(itk::Object* caller, const itk::EventObject& event) override
+    {
+        Execute(reinterpret_cast<const itk::Object*>(caller), event);
+    }
+
+    void Execute(
+        const itk::Object* object, const itk::EventObject& event) override
+    {
+        const auto* optimizer = dynamic_cast<const Optimizer*>(object);
+        if (not itk::IterationEvent().CheckEvent(&event)) {
+            return;
+        }
+        std::cout << optimizer->GetValue() << std::endl;
+    }
+};
 
 void DeformableRegistration::setFixedImage(const cv::Mat& i)
 {
@@ -55,6 +90,30 @@ void DeformableRegistration::setNumberOfIterations(size_t i)
 auto DeformableRegistration::getTransform() -> Transform::Pointer
 {
     return output_;
+}
+
+void DeformableRegistration::setMeshFillSize(uint32_t i) { meshFillSize_ = i; }
+
+auto DeformableRegistration::getMeshFillSize() const -> uint32_t
+{
+    return meshFillSize_;
+}
+
+void DeformableRegistration::setGradientMagnitudeTolerance(double i)
+{
+    gradMagTol_ = i;
+}
+
+auto DeformableRegistration::getGradientMagnitudeTolerance() const -> double
+{
+    return gradMagTol_;
+}
+
+void DeformableRegistration::setReportMetrics(bool i) { reportMetrics_ = i; }
+
+auto DeformableRegistration::getReportMetrics() const -> bool
+{
+    return reportMetrics_;
 }
 
 auto DeformableRegistration::compute()
@@ -79,7 +138,7 @@ auto DeformableRegistration::compute()
             static_cast<double>(
                 fixed->GetLargestPossibleRegion().GetSize()[i] - 1);
     }
-    meshSize.Fill(DEFAULT_MESH_FILL_SIZE);
+    meshSize.Fill(meshFillSize_);
 
     output_->SetTransformDomainOrigin(fixedOrigin);
     output_->SetTransformDomainPhysicalDimensions(fixedPhysicalDims);
@@ -91,11 +150,15 @@ auto DeformableRegistration::compute()
     parameters.Fill(0.0);
     output_->SetParameters(parameters);
 
-    ///// Setup Registration and Metrics/////
+    ///// Setup Registration and Metrics /////
     auto metric = Metric::New();
     auto optimizer = Optimizer::New();
     auto registration = Registration::New();
     auto grayInterpolator = GrayInterpolator::New();
+    if (reportMetrics_) {
+        optimizer->AddObserver(
+            itk::IterationEvent(), ReportMetricCallback::New());
+    }
 
     registration->SetFixedImage(fixed);
     registration->SetMovingImage(moving);
@@ -114,7 +177,8 @@ auto DeformableRegistration::compute()
     metric->SetNumberOfSpatialSamples(numSamples);
 
     ///// Setup Optimizer /////
-    auto regionWidth = fixed->GetLargestPossibleRegion().GetSize()[0];
+    auto regionWidth =
+        static_cast<double>(fixed->GetLargestPossibleRegion().GetSize()[0]);
     auto maxStepLength = regionWidth * DEFAULT_MAX_STEP_FACTOR;
     auto minStepLength = regionWidth * DEFAULT_MIN_STEP_FACTOR;
 
@@ -123,10 +187,17 @@ auto DeformableRegistration::compute()
     optimizer->SetMinimumStepLength(minStepLength);
     optimizer->SetRelaxationFactor(relaxationFactor_);
     optimizer->SetNumberOfIterations(iterations_);
-    optimizer->SetGradientMagnitudeTolerance(gradientMagnitudeTolerance_);
+    optimizer->SetGradientMagnitudeTolerance(gradMagTol_);
 
     ///// Run Registration /////
     registration->Update();
+
+    // Report final values as requested
+    if (reportMetrics_) {
+        std::cout << "Stop Condition: ";
+        std::cout << optimizer->GetStopConditionDescription() << "\n";
+        std::cout << "Final Metric Value:" << optimizer->GetValue() << "\n";
+    }
 
     output_->SetParameters(registration->GetLastTransformParameters());
     return output_;
