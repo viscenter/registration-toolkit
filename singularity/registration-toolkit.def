@@ -1,0 +1,68 @@
+Bootstrap: docker
+From: ubuntu:21.04
+
+%labels
+  MAINTAINER Stephen Parsons <stephen.parsons@uky.edu>
+  OS Ubuntu 21.04
+
+%files
+  /tmp/registration-toolkit /usr/local/educelab/registration-toolkit
+
+%post
+  # Give read/write access in registration-toolkit (so it can later be edited using a persistent overlay)
+  chmod --recursive a+rw /usr/local/educelab/registration-toolkit
+  # Basic installs (noninteractive so tzdata dependency install doesn't halt build with prompt)
+  apt update
+  DEBIAN_FRONTEND=noninteractive apt install -y git nano vim build-essential
+  # Store git credentials for up to an hour (in overlay, not container) for convenience
+  git config --global credential.helper cache
+  git config --global credential.helper 'cache --timeout=3600'
+  # Install registration-toolkit dependencies
+  apt install -y \
+    cmake \
+    libopencv-dev \
+    libvtk6-dev \
+    libboost-program-options-dev \
+    libinsighttoolkit4-dev
+  # Build registration-toolkit
+  cd /usr/local/educelab/registration-toolkit
+  mkdir build && cd build
+  cmake ..
+  make -j$(nproc --all)
+  # Install registration-toolkit
+  make install
+
+%runscript
+  if [ $# -lt 1 ]; then
+      echo "Usage: ./container <command>"
+      exit 1
+  fi
+
+  exec "$@"
+
+%help
+  This container provides an environment for running registration-toolkit.
+
+  Building the container:
+    - The registration-toolkit git repository must exist at /tmp/registration-toolkit on the host machine before building the container. Cloning using https is recommended so that the repository can be manipulated after container creation using your username and password instead of needing ssh keys on the container. After this clone, you can check out a different branch or make changes if desired, but this can also be done after the container is built.
+    - Example command sequence to build fresh container:
+      `cd <path_to_registration-toolkit>/singularity`
+      `rm -rf /tmp/registration-toolkit`
+      `git clone --branch develop https://github.com/viscenter/registration-toolkit.git /tmp/registration-toolkit`
+      `sudo singularity build registration-toolkit.sif registration-toolkit.def`
+
+  Preparing for use:
+    - Then get the container ready for use, for example:
+      `scp registration-toolkit.sif *.sh lcc:~/registration-toolkit-develop`
+      `ssh lcc`
+      `cd registration-toolkit-develop`
+      `module load ccs/singularity`
+      `mkdir -p out`
+      `rm -f registration-toolkit.overlay && dd if=/dev/zero of=registration-toolkit.overlay bs=1M count=500 && mkfs.ext3 -F registration-toolkit.overlay  # Create a new overlay for the new container`
+      `singularity shell --overlay registration-toolkit.overlay registration-toolkit.sif  # If you want to get into the container and make any changes to the code, or checkout another branch`
+      `rclone copy -uv registration-toolkit.sif dri-experiments-drive:singularity-containers`  # If you want to update the shared .sif file
+      `cp registration-toolkit.sif /project/seales_uksr/containers`
+      `chmod g+w /project/seales_uksr/containers/registration-toolkit.sif`
+      `chgrp seales_uksr /project/seales_uksr/containers/registration-toolkit.sif`
+
+  This container is intended to be built once and used with multiple checkouts of registration-toolkit code, using an overlay to store the changes or checkouts. Only when the dependencies change does the container need rebuilding.
