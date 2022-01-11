@@ -48,6 +48,9 @@ tags
 __pycache__
 .ropeproject
 
-#Doxygen
+# Doxygen
 docs/latex/
 docs/html/
+
+# Singularity
+*.sif
