@@ -31,6 +31,8 @@ From: ubuntu:21.04
   make -j$(nproc --all)
   # Install registration-toolkit
   make install
+  # Remove build directory
+  cd .. && rm -rf build/
 
 %runscript
   if [ $# -lt 1 ]; then
