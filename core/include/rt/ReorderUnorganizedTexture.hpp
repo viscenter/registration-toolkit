@@ -11,7 +11,6 @@ namespace rt
 {
 
 /**
- * @class ReorderUnorganizedTexture
  * @brief Reorder an unorganized texture image into an organized texture using
  * 3D mapping information
  *
@@ -34,7 +33,16 @@ namespace rt
 class ReorderUnorganizedTexture
 {
 public:
-    enum class SamplingOrigin { TopLeft, TopRight, BottomLeft, BottomRight };
+    enum class SamplingOrigin {
+        TopLeft,    /** Set the sampling origin to the top-left corner of the
+                       largest face of the bounding box */
+        TopRight,   /** Set the sampling origin to the top-right corner of the
+                       largest face of the bounding box */
+        BottomLeft, /** Set the sampling origin to the bottom-left corner of the
+                       largest face of the bounding box */
+        BottomRight /** Set the sampling origin to the bottom-right corner of
+                       the largest face of the bounding box */
+    };
 
     enum class SamplingMode {
         Rate,         /** Use the sample rate provided by setSampleRate() */
@@ -78,14 +86,17 @@ public:
     [[nodiscard]] auto samplingMode() const -> SamplingMode;
 
     /**
-     * @brief Set the rate (in mesh units) at which to sample the image plane
+     * @brief The rate (in mesh units) at which to sample the image plane
      *
      * @see samplingMode()
      */
     void setSampleRate(double s);
 
+    /** @copydoc setSampleRate() */
+    [[nodiscard]] auto sampleRate() const -> double;
+
     /**
-     * @brief Set the size of the output image in pixels
+     * @brief The size of the output image in pixels
      *
      * Only used if setSamplingMode() is set to SampleMode::OutputWidth or
      * SampleMode::OutputHeight
@@ -94,8 +105,14 @@ public:
      */
     void setSampleDim(std::size_t d);
 
-    /** @brief Set whether to use the first mesh intersection point */
+    /** @copydoc setSampleDim() */
+    [[nodiscard]] auto sampleDim() const -> std::size_t;
+
+    /** @brief Whether to use the first mesh intersection point */
     void setUseFirstIntersection(bool b);
+
+    /** @copydoc setUseFirstIntersection() */
+    [[nodiscard]] auto useFirstIntersection() const -> bool;
 
     /** @brief Generate the new texture image and UV map */
     auto compute() -> cv::Mat;

@@ -46,7 +46,12 @@ auto main(int argc, char* argv[]) -> int
         ("sampling-origin", po::value<std::string>()->default_value("tl"),
              "Origins: tl, tr, bl, br")
         ("sampling-mode,m", po::value<std::string>()->default_value("auto"),
-             "Modes: rate, width, height, auto")
+             "Modes: rate, width, height, auto. If 'rate', specify "
+             "the sampling step size in mesh units using --sampling-rate. If "
+             "'width' or 'height', specify the length of the corresponding "
+             "dimension in pixels using --sampling-dim. If 'auto', the sample "
+             "automatically calculated from the average pixel density of the "
+             "input mesh.")
         ("sampling-rate,r", po::value<double>()->default_value(0.1),
              "If --sampling-mode is 'rate', the pixel size in mesh units")
         ("sampling-dim,d", po::value<std::size_t>()->default_value(800),

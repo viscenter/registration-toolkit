@@ -34,6 +34,7 @@ static inline auto BaryToXYZ(
     return uvw[0] * a + uvw[1] * b + uvw[2] * c;
 }
 
+// Get the vertices belong to a cell
 template <typename CellIterator>
 static inline auto GetCellVertices(
     const ITKMesh::Pointer& mesh, CellIterator& cell)
@@ -46,6 +47,7 @@ static inline auto GetCellVertices(
     return pts;
 }
 
+// Check if a value is near zero
 template <
     typename T,
     std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
@@ -54,6 +56,7 @@ static inline auto NearZero(T val, T eps = 1e-7) -> bool
     return std::abs(val) <= eps;
 }
 
+// Calculate the pixel density of the UV map
 static inline auto ComputeUVDensity(
     const ITKMesh::Pointer& mesh,
     const UVMap& uv,
@@ -142,11 +145,26 @@ auto ReorderUnorganizedTexture::samplingMode() const -> SamplingMode
 
 void ReorderUnorganizedTexture::setSampleRate(double s) { sampleRate_ = s; }
 
+auto ReorderUnorganizedTexture::sampleRate() const -> double
+{
+    return sampleRate_;
+}
+
 void ReorderUnorganizedTexture::setSampleDim(std::size_t d) { sampleDim_ = d; }
+
+auto ReorderUnorganizedTexture::sampleDim() const -> std::size_t
+{
+    return sampleDim_;
+}
 
 void ReorderUnorganizedTexture::setUseFirstIntersection(bool b)
 {
     useFirstIntersection_ = b;
+}
+
+auto ReorderUnorganizedTexture::useFirstIntersection() const -> bool
+{
+    return useFirstIntersection_;
 }
 
 auto ReorderUnorganizedTexture::getUVMap() -> UVMap { return outputUV_; }
