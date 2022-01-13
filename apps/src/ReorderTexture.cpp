@@ -2,19 +2,19 @@
 #include <unordered_map>
 
 #include <boost/program_options.hpp>
-#include <opencv2/imgproc.hpp>
+#include <smgl/Graphviz.hpp>
+#include <smgl/smgl.hpp>
 
-#include "rt/ReorderUnorganizedTexture.hpp"
+#include "rt/Version.hpp"
 #include "rt/filesystem.hpp"
-#include "rt/io/OBJReader.hpp"
-#include "rt/io/OBJWriter.hpp"
-#include "rt/types/ITKMesh.hpp"
+#include "rt/graph.hpp"
 #include "rt/util/String.hpp"
 
 namespace fs = rt::filesystem;
 namespace po = boost::program_options;
 
 using namespace rt;
+using namespace rt::graph;
 
 using SamplingOrigin = ReorderUnorganizedTexture::SamplingOrigin;
 std::unordered_map<std::string, SamplingOrigin> StrToOrigin{
@@ -64,8 +64,13 @@ auto main(int argc, char* argv[]) -> int
              "the base plane, the first mesh intersection point lies on the "
              "visible surface.");
 
+    po::options_description graphOptions("Render Graph Options");
+    graphOptions.add_options()
+    ("output-graph,g", po::value<std::string>(), "Render graph JSON file")
+    ("output-dot", po::value<std::string>(), "Render graph Dot file");
+
     po::options_description all("Usage");
-    all.add(required);
+    all.add(required).add(graphOptions);
     // clang-format on
 
     // Parse the cmd line
@@ -98,40 +103,52 @@ auto main(int argc, char* argv[]) -> int
     auto sampleDim = parsed["sampling-dim"].as<std::size_t>();
     auto useFirstIntersection = parsed.count("use-first-intersection") > 0;
 
-    // Load the mesh
-    std::cerr << "Reading mesh: " << inputPath << "\n";
-    io::OBJReader reader;
-    reader.setPath(inputPath);
-    auto mesh = reader.read();
-    auto uvMap = reader.getUVMap();
-    auto texture = reader.getTextureMat();
+    ///// Start render graph /////
+    rt::graph::RegisterNodes();
+    smgl::Graph graph;
 
-    // We don't support RGBA textures
-    auto channels = texture.channels();
-    if (channels == 4) {
-        cv::cvtColor(texture, texture, cv::COLOR_BGRA2BGR);
-    } else if (channels != 1 && channels != 3) {
-        std::cerr << "Texture has unsupported channels: " << channels << "\n";
+    // Add the project metadata
+    graph.setProjectMetadata({{ProjectInfo::Name(), ProjectMetadata()}});
+
+    ///// Setup caching /////
+    if (parsed.count("output-graph") > 0) {
+        fs::path cacheFile = parsed["output-graph"].as<std::string>();
+        graph.setEnableCache(true);
+        graph.setCacheFile(cacheFile);
     }
 
+    // Load the mesh
+    auto reader = graph.insertNode<MeshReadNode>();
+    reader->path = inputPath;
+
+    // We don't support RGBA textures
+    auto convert = graph.insertNode<ColorConvertNode>();
+    convert->imageIn = reader->image;
+    convert->channels = 3;
+
     // Reorder the texture
-    std::cerr << "Reordering texture...\n";
-    ReorderUnorganizedTexture r;
-    r.setMesh(mesh);
-    r.setUVMap(uvMap);
-    r.setTextureMat(texture);
-    r.setSamplingOrigin(samplingOrigin);
-    r.setSamplingMode(sampleMode);
-    r.setSampleRate(sampleRate);
-    r.setSampleDim(sampleDim);
-    r.setUseFirstIntersection(useFirstIntersection);
-    r.compute();
+    auto reorder = graph.insertNode<ReorderTextureNode>();
+    reorder->meshIn = reader->mesh;
+    reorder->uvMapIn = reader->uvMap;
+    reorder->imageIn = convert->imageOut;
+    reorder->samplingOrigin = samplingOrigin;
+    reorder->samplingMode = sampleMode;
+    reorder->sampleRate = sampleRate;
+    reorder->sampleDim = sampleDim;
+    reorder->useFirstIntersection = useFirstIntersection;
 
     // Write to file
-    io::OBJWriter writer;
-    writer.setPath(outputPath);
-    writer.setMesh(mesh);
-    writer.setUVMap(r.getUVMap());
-    writer.setTexture(r.getTextureMat());
-    writer.write();
+    auto writer = graph.insertNode<MeshWriteNode>();
+    writer->path = outputPath;
+    writer->mesh = reader->mesh;
+    writer->uvMap = reorder->uvMapOut;
+    writer->image = reorder->imageOut;
+
+    // Compute result
+    graph.update();
+
+    // Write Dot file
+    if (parsed.count("output-dot") > 0) {
+        smgl::WriteDotFile(parsed["output-dot"].as<std::string>(), graph);
+    }
 }

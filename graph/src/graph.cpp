@@ -15,6 +15,9 @@ static auto RegisterNodesImpl() -> bool
     // ImageIO
     registered &= smgl::RegisterNode<ImageReadNode, ImageWriteNode>();
 
+    // ImageOps
+    registered &= smgl::RegisterNode<ColorConvertNode>();
+
     // Landmark Registration
     registered &= smgl::RegisterNode<
         CompositeTransformNode,
