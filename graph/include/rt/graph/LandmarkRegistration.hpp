@@ -31,7 +31,7 @@ public:
     smgl::InputPort<cv::Mat> fixedImage{&fixedImg_};
     /** @brief Moving image port */
     smgl::InputPort<cv::Mat> movingImage{&movingImg_};
-    /** @copydoc LandmarkDetector::setMatchRatio(float() */
+    /** @copydoc LandmarkDetector::setMatchRatio(float) */
     smgl::InputPort<float> matchRatio{
         &detector_, &LandmarkDetector::setMatchRatio};
     /**@}*/

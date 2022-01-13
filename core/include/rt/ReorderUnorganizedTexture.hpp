@@ -33,6 +33,9 @@ namespace rt
 class ReorderUnorganizedTexture
 {
 public:
+    /**
+     * @brief Bounding box corner to use for the origin of the sampling plane
+     */
     enum class SamplingOrigin {
         TopLeft,    /** Set the sampling origin to the top-left corner of the
                        largest face of the bounding box */
@@ -44,6 +47,7 @@ public:
                        the largest face of the bounding box */
     };
 
+    /** @brief Sampling rate mode */
     enum class SamplingMode {
         Rate,         /** Use the sample rate provided by setSampleRate() */
         OutputWidth,  /**
