@@ -9,10 +9,10 @@ namespace fs = rt::filesystem;
 namespace rtg = rt::graph;
 
 // Enum conversions
-namespace rt::graph
+namespace rt
 {
 // clang-format off
-using SamplingOrigin = ReorderTextureNode::SamplingOrigin;
+using SamplingOrigin = rtg::ReorderTextureNode::SamplingOrigin;
 NLOHMANN_JSON_SERIALIZE_ENUM(SamplingOrigin, {
     {SamplingOrigin::TopLeft, "top-left"},
     {SamplingOrigin::TopRight, "top-right"},
@@ -20,7 +20,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(SamplingOrigin, {
     {SamplingOrigin::BottomRight, "bottom-right"}
 })
 
-using SamplingMode = ReorderTextureNode::SamplingMode;
+using SamplingMode = rtg::ReorderTextureNode::SamplingMode;
 NLOHMANN_JSON_SERIALIZE_ENUM(SamplingMode, {
     {SamplingMode::Rate, "rate"},
     {SamplingMode::OutputWidth, "width"},
@@ -28,7 +28,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(SamplingMode, {
     {SamplingMode::AutoUV, "auto"},
 })
 // clang-format on
-}  // namespace rt::graph
+}  // namespace rt
 
 rtg::ReorderTextureNode::ReorderTextureNode()
     : Node{true}
