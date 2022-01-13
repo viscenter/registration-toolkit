@@ -12,6 +12,7 @@ set(public_hdrs
 set(srcs
     src/DeformableRegistration.cpp
     src/ImageIO.cpp
+    src/ImageOps.cpp
     src/LandmarkIO.cpp
     src/LandmarkRegistration.cpp
     src/Transforms.cpp

@@ -6,6 +6,7 @@
 
 #include "graph/DeformableRegistration.hpp"
 #include "graph/ImageIO.hpp"
+#include "graph/ImageOps.hpp"
 #include "graph/LandmarkIO.hpp"
 #include "graph/LandmarkRegistration.hpp"
 #include "graph/MeshIO.hpp"

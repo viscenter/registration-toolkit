@@ -11,7 +11,6 @@ namespace rt
 {
 
 /**
- * @class ReorderUnorganizedTexture
  * @brief Reorder an unorganized texture image into an organized texture using
  * 3D mapping information
  *
@@ -35,6 +34,37 @@ class ReorderUnorganizedTexture
 {
 public:
     /**
+     * @brief Bounding box corner to use for the origin of the sampling plane
+     */
+    enum class SamplingOrigin {
+        TopLeft,    /** Set the sampling origin to the top-left corner of the
+                       largest face of the bounding box */
+        TopRight,   /** Set the sampling origin to the top-right corner of the
+                       largest face of the bounding box */
+        BottomLeft, /** Set the sampling origin to the bottom-left corner of the
+                       largest face of the bounding box */
+        BottomRight /** Set the sampling origin to the bottom-right corner of
+                       the largest face of the bounding box */
+    };
+
+    /** @brief Sampling rate mode */
+    enum class SamplingMode {
+        Rate,         /** Use the sample rate provided by setSampleRate() */
+        OutputWidth,  /**
+                       * Calculate the sample rate needed to produce an output
+                       * image with width defined by setSampleDim().
+                       */
+        OutputHeight, /**
+                       * Calculate the sample rate needed to produce an output
+                       * image with height defined by setSampleDim().
+                       */
+        AutoUV        /**
+                       * Calculate a sample rate from the average pixel density in the
+                       * UV mapped image.
+                       */
+    };
+
+    /**
      * Default distance (in mesh units) at which to sample the XY plane into
      * image
      */
@@ -46,13 +76,47 @@ public:
     void setUVMap(const UVMap& uv);
     /** @brief Set the input, unorganized texture image */
     void setTextureMat(const cv::Mat& img);
+
+    /** @copydoc samplingOrigin() */
+    void setSamplingOrigin(SamplingOrigin o);
+
+    /** @brief Sampling bounding box origin */
+    [[nodiscard]] auto samplingOrigin() const -> SamplingOrigin;
+
+    /** @copydoc samplingMode() */
+    void setSamplingMode(SamplingMode m);
+
+    /** @brief Sampling rate mode */
+    [[nodiscard]] auto samplingMode() const -> SamplingMode;
+
     /**
-     * @brief Set the rate (in mesh units) at which to sample XY plane into an
-     * image
+     * @brief The rate (in mesh units) at which to sample the image plane
+     *
+     * @see samplingMode()
      */
     void setSampleRate(double s);
-    /** @brief Set whether to use the first mesh intersection point */
+
+    /** @copydoc setSampleRate() */
+    [[nodiscard]] auto sampleRate() const -> double;
+
+    /**
+     * @brief The size of the output image in pixels
+     *
+     * Only used if setSamplingMode() is set to SampleMode::OutputWidth or
+     * SampleMode::OutputHeight
+     *
+     * @see samplingMode()
+     */
+    void setSampleDim(std::size_t d);
+
+    /** @copydoc setSampleDim() */
+    [[nodiscard]] auto sampleDim() const -> std::size_t;
+
+    /** @brief Whether to use the first mesh intersection point */
     void setUseFirstIntersection(bool b);
+
+    /** @copydoc setUseFirstIntersection() */
+    [[nodiscard]] auto useFirstIntersection() const -> bool;
 
     /** @brief Generate the new texture image and UV map */
     auto compute() -> cv::Mat;
@@ -78,8 +142,14 @@ private:
     /** Input texture image */
     cv::Mat inputTexture_;
 
+    /** Sample origin */
+    SamplingOrigin sampleOrigin_{SamplingOrigin::TopLeft};
+    /** Sample mode */
+    SamplingMode sampleMode_{SamplingMode::Rate};
     /** XY plane sample rate (in mesh units) */
     double sampleRate_{DEFAULT_SAMPLE_RATE};
+    /** Length of the predefined sampling dimension */
+    std::size_t sampleDim_{800};
 
     /** Origin position */
     cv::Vec3d origin_;
