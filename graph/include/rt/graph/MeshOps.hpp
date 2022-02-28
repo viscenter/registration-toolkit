@@ -9,9 +9,7 @@
 #include "rt/types/ITKMesh.hpp"
 #include "rt/types/UVMap.hpp"
 
-namespace rt
-{
-namespace graph
+namespace rt::graph
 {
 /**
  * @brief Reorder unorganized texture
@@ -54,6 +52,8 @@ public:
     smgl::OutputPort<cv::Mat> imageOut;
     /** @brief Output UV Map port */
     smgl::OutputPort<UVMap> uvMapOut;
+    /** @brief Output depth map port */
+    smgl::OutputPort<cv::Mat> depthMapOut;
     /**@}*/
 
 private:
@@ -71,5 +71,4 @@ private:
     void deserialize_(
         const smgl::Metadata& meta, const filesystem::path& cacheDir) override;
 };
-}  // namespace graph
 }  // namespace rt

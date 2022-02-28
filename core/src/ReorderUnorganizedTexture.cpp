@@ -174,6 +174,11 @@ auto ReorderUnorganizedTexture::getTextureMat() -> cv::Mat
     return outputTexture_;
 }
 
+auto ReorderUnorganizedTexture::getDepthMap() -> cv::Mat
+{
+    return outputDepthMap_;
+}
+
 // Compute the result
 auto ReorderUnorganizedTexture::compute() -> cv::Mat
 {
@@ -256,6 +261,7 @@ void ReorderUnorganizedTexture::create_texture_()
 
     // Setup the output image
     outputTexture_ = cv::Mat::zeros(rows, cols, CV_8UC3);
+    outputDepthMap_ = cv::Mat::zeros(rows, cols, CV_32FC1);
 
     // Normalize the length
     auto normedX = cv::normalize(xAxis_);
@@ -310,6 +316,10 @@ void ReorderUnorganizedTexture::create_texture_()
             if (not hit) {
                 continue;
             }
+
+            // Assign distance to depth map
+            outputDepthMap_.at<float>(v, u) =
+                static_cast<float>(hit->distance());
 
             // Cell info
             auto cellId = hit->primitive_index;

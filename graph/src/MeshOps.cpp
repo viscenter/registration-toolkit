@@ -42,6 +42,7 @@ rtg::ReorderTextureNode::ReorderTextureNode()
     , useFirstIntersection{&reorder_, &ReorderUnorganizedTexture::setUseFirstIntersection}
     , imageOut{&outImg_}
     , uvMapOut{&outUV_}
+    , depthMapOut{&reorder_, &ReorderUnorganizedTexture::getDepthMap}
 {
     registerInputPort("mesh", meshIn);
     registerInputPort("imageIn", imageIn);
@@ -53,6 +54,7 @@ rtg::ReorderTextureNode::ReorderTextureNode()
     registerInputPort("useFirstIntersection", useFirstIntersection);
     registerOutputPort("imageOut", imageOut);
     registerOutputPort("uvMapOut", uvMapOut);
+    registerOutputPort("depthMapOut", depthMapOut);
 
     compute = [this]() {
         std::cout << "Reordering texture image...\n";
@@ -79,6 +81,8 @@ auto rtg::ReorderTextureNode::serialize_(
         if (not outImg_.empty()) {
             WriteImage(cacheDir / "reordered_img.tif", outImg_);
             m["image"] = "reordered_img.tif";
+            WriteImage(cacheDir / "depth_map.tif", reorder_.getDepthMap());
+            m["depth-map"] = "depth_map.tif";
         }
     }
     return m;
