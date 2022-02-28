@@ -43,6 +43,7 @@ auto main(int argc, char* argv[]) -> int
              "Path to input OBJ with unordered texture (i.e. multicharts)")
         ("output-mesh,o", po::value<std::string>()->required(),
              "Path to output OBJ with ordered texture")
+        ("depth-map", po::value<std::string>(), "Path to output depth map image")
         ("sampling-origin", po::value<std::string>()->default_value("tl"),
              "Origins: tl, tr, bl, br")
         ("sampling-mode,m", po::value<std::string>()->default_value("auto"),
@@ -143,6 +144,13 @@ auto main(int argc, char* argv[]) -> int
     writer->mesh = reader->mesh;
     writer->uvMap = reorder->uvMapOut;
     writer->image = reorder->imageOut;
+
+    // Write depth map
+    if (parsed.count("depth-map") > 0) {
+        auto imgWriter = graph.insertNode<ImageWriteNode>();
+        imgWriter->path = parsed["depth-map"].as<std::string>();
+        imgWriter->image = reorder->depthMapOut;
+    }
 
     // Compute result
     graph.update();

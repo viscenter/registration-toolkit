@@ -127,6 +127,13 @@ public:
     /** @brief Get the output texture image */
     auto getTextureMat() -> cv::Mat;
 
+    /**
+     * @brief Get depth map relative to the bounding box plane
+     *
+     * Depth is a floating point image in mesh units.
+     */
+    auto getDepthMap() -> cv::Mat;
+
 private:
     /** Resample the input image into the organized texture */
     void create_texture_();
@@ -167,5 +174,7 @@ private:
     UVMap outputUV_;
     /** Output texture image */
     cv::Mat outputTexture_;
+    /** Output depth map */
+    cv::Mat outputDepthMap_;
 };
 }  // namespace rt
