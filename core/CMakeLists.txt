@@ -29,6 +29,17 @@ set(srcs
 
 configure_file(src/Version.cpp.in Version.cpp)
 
+# VTK libraries
+set(core_vtk_public CommonCore CommonDataModel)
+set(core_vtk_private CommonTransforms FiltersCore FiltersGeneral)
+if(VTK_VERSION_MAJOR VERSION_GREATER_EQUAL 9)
+  list(TRANSFORM core_vtk_public PREPEND "VTK::")
+  list(TRANSFORM core_vtk_private PREPEND "VTK::")
+else()
+  list(TRANSFORM core_vtk_public PREPEND "vtk")
+  list(TRANSFORM core_vtk_private PREPEND "vtk")
+endif()
+
 add_library(rt_core
     ${srcs}
     ${io_srcs}
@@ -49,8 +60,7 @@ target_link_libraries(rt_core
         opencv_core
         ITKCommon
         ITKTransform
-        vtkCommonCore
-        vtkCommonDataModel
+        ${core_vtk_public}
     PRIVATE
         opencv_features2d
         opencv_imgcodecs
@@ -58,9 +68,7 @@ target_link_libraries(rt_core
         opencv_stitching
         ITKOptimizers
         ${ITKIOTransformLibs}
-        vtkCommonTransforms
-        vtkFiltersCore
-        vtkFiltersGeneral
+        ${core_vtk_private}
         TIFF::TIFF
 )
 if(TARGET ITKSmoothing)
