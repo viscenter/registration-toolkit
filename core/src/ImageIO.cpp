@@ -14,7 +14,19 @@ static const auto IsFormat = rt::FileExtensionFilter;
 
 auto rt::ReadImage(const fs::path& path) -> cv::Mat
 {
-    return cv::imread(path.string(), cv::IMREAD_UNCHANGED);
+    // Attempt to read with OpenCV
+    auto img = cv::imread(path.string(), cv::IMREAD_UNCHANGED);
+
+    // If OpenCV failed and is a TIFF, try our reader
+    if (img.empty() and IsFormat(path, {"tif", "tiff"})) {
+        img = io::ReadRawTIFF(path);
+    }
+
+    if (img.empty()) {
+        std::cerr << "Warning: Loaded image is empty: " << path.string();
+        std::cerr << std::endl;
+    }
+    return img;
 }
 
 void rt::WriteImage(const fs::path& path, const cv::Mat& img)
