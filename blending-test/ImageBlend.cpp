@@ -1,15 +1,15 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <queue>
 #include <set>
 #include <algorithm>
-using namespace std;
 
 
 int INF = 100000; // Ridiculously large value to represent infinity 
-const int COLS = 50;
+const int COLS = 5760;
 
 //---------------------------------------------------------+
 //                 Auxiliary Functions                     |
@@ -71,7 +71,7 @@ int minDistanceY(int dist[][COLS], bool isVisited[][COLS], int rows, int cols){
 /* Issues for now:
     - What is X and what is Y?
 */
-void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2){
+void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage){
     int visitedCount = 0;
 
     // Parent Arrays Store the coordinates of the previous node in the path
@@ -122,8 +122,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         //-------------------------------------------------------\/-
         if(!isVisited[minsCol + 1][minsRow]){
             // Calculate squared difference between pixel in img1 and img2
-            int diffS = (img1.at<uchar>(minsCol+1,minsRow) - img2.at<uchar>(minsCol+1,minsRow));
-            diffS *= diffS;
+            int diffS = ssdImage.at<cv::Vec4b>(minsCol+1,minsRow)[0];
 
             int temp = distances[minsCol][minsRow] + diffS; //temp variable to hold the updates distance
             if (temp < distances[minsCol + 1][minsRow]){
@@ -137,8 +136,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         //Functions below are the exact same but for different directions
 
         if(!isVisited[minsCol + 1][minsRow + 1]){
-            int diffSE = (img1.at<uchar>(minsCol+1,minsRow + 1) - img2.at<uchar>(minsCol+1,minsRow + 1));
-            diffSE *= diffSE;
+            int diffSE = ssdImage.at<cv::Vec4b>(minsCol+1,minsRow+1)[0];
+
             int temp = distances[minsCol][minsRow] + diffSE;
             if (temp < distances[minsCol + 1][minsRow + 1]){
                 distances[minsCol + 1][minsRow + 1] = temp;
@@ -149,8 +148,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         }
 
         if(!isVisited[minsCol + 1][minsRow - 1]){
-            int diffSW = (img1.at<uchar>(minsCol + 1,minsRow - 1) - img2.at<uchar>(minsCol + 1,minsRow - 1));
-            diffSW *= diffSW;
+            int diffSW = ssdImage.at<cv::Vec4b>(minsCol+1,minsRow-1)[0];
+
             int temp = distances[minsCol][minsRow] + diffSW;
             if (temp < distances[minsCol + 1][minsRow - 1]){
                 distances[minsCol + 1][minsRow - 1] = temp;
@@ -161,8 +160,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         }
 
         if(!isVisited[minsCol][minsRow + 1]){
-            int diffE = (img1.at<uchar>(minsCol,minsRow + 1) - img2.at<uchar>(minsCol,minsRow + 1));
-            diffE *= diffE;
+            int diffE = ssdImage.at<cv::Vec4b>(minsCol,minsRow+1)[0];
+
             int temp = distances[minsCol][minsRow] + diffE;
             if (temp < distances[minsCol][minsRow + 1]){
                 distances[minsCol][minsRow + 1] = temp;
@@ -173,8 +172,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         }
 
         if(!isVisited[minsCol][minsRow - 1]){
-            int diffW = (img1.at<uchar>(minsCol,minsRow - 1) - img2.at<uchar>(minsCol,minsRow - 1));
-            diffW *= diffW;
+            int diffW = ssdImage.at<cv::Vec4b>(minsCol,minsRow-1)[0];
+
             int temp = distances[minsCol][minsRow] + diffW;
             if (temp < distances[minsCol][minsRow - 1]){
                 distances[minsCol][minsRow - 1] = temp;
@@ -213,7 +212,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
             output.at<uchar>(newRow,i) = img2.at<uchar>(newRow,i);
         } */
 
-        output.at<uchar>(xx,yy) = 255; //set path in output image to be white
+        
+        output.at<cv::Vec4b>(xx,yy) = (255, 255, 255); //set path in output image to be white
 
         xx = parentX[xx][yy];
         yy = parentY[xx][yy];
@@ -222,34 +222,78 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
 }
 
 
+cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
+    int squaredDif;
+    int first;
+    int second;
+    unsigned char value;
+    cv::Vec3b black = img1.at<cv::Vec3b>(0,0);
+
+    for(int i=0; i<rows; i++) {
+        for(int j=0; j<(cols/2); j++) { //runs for half the image to not waste time
+
+            //averaging the BGR(RGB) values for grayscale = (B+G+R)/3
+            //first = (img1.at<Vec3b>(i,j)[0]+img1.at<Vec3b>(i,j)[1]+img1.at<Vec3b>(i,j)[2])/3;
+            //second = (img2.at<Vec3b>(i,j)[0]+img2.at<Vec3b>(i,j)[1]+img2.at<Vec3b>(i,j)[2])/3;
+            
+
+            //weighted BGR to grayscale = 0.114B + 0.587G + 0.299R
+            first = (img1.at<cv::Vec3b>(i,j)[0]*0.114)+(img1.at<cv::Vec3b>(i,j)[1]*0.587)+(img1.at<cv::Vec3b>(i,j)[2]*0.299);
+            second = (img2.at<cv::Vec3b>(i,j)[0]*0.114)+(img2.at<cv::Vec3b>(i,j)[1]*0.587)+(img2.at<cv::Vec3b>(i,j)[2]*0.299);
+
+            //finding squared difference 
+            squaredDif = pow((first - second), 2);
+            if(squaredDif > 255 || squaredDif < 0) {
+                value = squaredDif % 256;
+            }
+            else { value = squaredDif; }
+            
+            //show only the overlapping secitons (0 = alpha, 255 = opaque)
+            if(!((img1.at<cv::Vec3b>(i,j) != black) && (img2.at<cv::Vec3b>(i,j) != black))) {
+                ssdImage.at<cv::Vec4b>(i,j)[3] = 0;
+            }
+            else ssdImage.at<cv::Vec4b>(i,j)[3] = 255; //visable
+        }
+    }
+    return ssdImage;
+}
 
 int main()
 {
-    std::string image_path1 = "../image1.png";
-    cv::Mat img1 = cv::imread(image_path1, cv::IMREAD_GRAYSCALE);
+
+    std::string image_path1 = "../../../61_16b.tif";
+    cv::Mat img1 = cv::imread(image_path1);
     if(img1.empty())
     {
         std::cout << "Could not read the image: " << image_path1 << std::endl;
         return 1;
     }
 
-    std::string image_path2 = "../image2.png";
-    cv::Mat img2 = imread(image_path2, cv::IMREAD_GRAYSCALE);
+    std::string image_path2 = "../../../62_16b_mk.tif";
+    cv::Mat img2 = cv::imread(image_path2);
     if(img2.empty())
     {
         std::cout << "Could not read the image: " << image_path2 << std::endl;
         return 1;
     }
 
-    cv::Mat img3(img2.rows, img2.cols, CV_8UC1, cv::Scalar(0,0, 0));
+    cv::Mat ssdImage = img1.clone();
+    cvtColor(ssdImage, ssdImage, cv::COLOR_BGR2BGRA); //adding in alpha channel
+    ssdImage.setTo(cv::Scalar(255,255,255,0)); //setting everything to white
+    //computing difference image
+    ssdImage = SSD(img1.rows, img1.cols, img1, img2, ssdImage);
 
-    minErrorBoundaryCutVertical(0, img2.cols/2, img3, img2, img1);
+    cv::Mat outputImage = ssdImage.clone();
+    int startCol = 1475;
+    int startRow = 163;
+    minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
 
     // second argument: image to be shown(Mat object)
-    imshow("output", img3);
+    imshow("output", outputImage);
     cv::waitKey(0);
 
-    imwrite("./output.png", img3);
+    imwrite("../../output.png", outputImage);
+   
    
     return 0;
 }
