@@ -39,7 +39,7 @@ int minDistanceX(int dist[][COLS], bool isVisited[][COLS], int rows, int cols){
     for (int i = 0; i < rows; i++){
         for (int j = 0; j < cols; j++){
             if(isVisited[i][j] == false && dist[i][j] < min){
-                min = dist[i][j]; minX = i;
+                min = dist[i][j]; minX = j;
                 //std::cout << "dist x: " << min << " at i: " << i << std::endl;
             }
         }
@@ -55,7 +55,7 @@ int minDistanceY(int dist[][COLS], bool isVisited[][COLS], int rows, int cols){
     for (int i = 0; i < rows; i++){
         for (int j = 0; j < cols; j++){
             if(isVisited[i][j] == false && dist[i][j] < min){
-                min = dist[i][j]; minY = j;
+                min = dist[i][j]; minY = i;
                 //std::cout << "dist y " << min << std::endl;
             }
         }
@@ -106,8 +106,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     parentY[row][col] = -1;
     //visitedCount++;
     
-    int minsRow = img1.rows;
-    int minsCol = 0;
+    int minsCol = img1.rows;
+    int minsRow = 0;
 
     // This loop is just to test the output
     for (int i = 0; i < img1.rows; i++){
@@ -117,98 +117,88 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     }
 
     // While we havent visited all nodes AND we arent beyond the second to last row do this:
-    while((visitedCount < (img1.rows * img1.cols)) && (minsCol <= img1.rows - 2)){
-        
+    while((visitedCount < (img1.rows * img1.cols)) /*&& (minsRow <= img1.rows - 2)*/){        
         //Get the row and col coord of the minimum distance UNVISITED pixel
-        minsRow = minDistanceY(distances, isVisited, img1.rows, img1.cols);
         minsCol = minDistanceX(distances, isVisited, img1.rows, img1.cols);
+        minsRow = minDistanceY(distances, isVisited, img1.rows, img1.cols);
 
-        //std::cout << "( " << minsX << ", " << minsY << " )" << std::endl;
 
         //Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
         // is smaller than the current minimum distance set to it, we update the minimum distance. 
         //-------------------------------------------------------\/-
-        if(!isVisited[minsCol + 1][minsRow]){
+        if(!isVisited[minsRow + 1][minsCol]){
             // Calculate squared difference between pixel in img1 and img2
-            int diffS = ssdImage.at<cv::Vec4b>(minsCol+1,minsRow)[0];
+            int diffS = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol)[0];
 
-            int temp = distances[minsCol][minsRow] + diffS; //temp variable to hold the updates distance
-            if (temp < distances[minsCol + 1][minsRow]){
-                distances[minsCol + 1][minsRow] = temp; //update if distance is smaller
+            int temp = distances[minsRow][minsCol] + diffS; //temp variable to hold the updates distance
+            if (temp < distances[minsRow + 1][minsCol]){
+                distances[minsRow + 1][minsCol] = temp; //update if distance is smaller
                 //-PARENT INFO
-                parentX[minsCol + 1][minsRow] = minsCol;
-                parentY[minsCol + 1][minsRow] = minsRow;
+                parentX[minsRow + 1][minsCol] = minsRow;
+                parentY[minsRow + 1][minsCol] = minsCol;
             }
         }
         
         //Functions below are the exact same but for different directions
 
-        if(!isVisited[minsCol + 1][minsRow + 1]){
-            int diffSE = ssdImage.at<cv::Vec4b>(minsCol+1,minsRow+1)[0];
+        if(!isVisited[minsRow + 1][minsCol + 1]){
+            int diffSE = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol+1)[0];
 
-            int temp = distances[minsCol][minsRow] + diffSE;
-            if (temp < distances[minsCol + 1][minsRow + 1]){
-                distances[minsCol + 1][minsRow + 1] = temp;
+            int temp = distances[minsRow][minsCol] + diffSE;
+            if (temp < distances[minsRow + 1][minsCol + 1]){
+                distances[minsRow + 1][minsCol + 1] = temp;
                 //-PARENT INFO
-                parentX[minsCol + 1][minsRow + 1] = minsCol;
-                parentY[minsCol + 1][minsRow + 1] = minsRow;
+                parentX[minsRow + 1][minsCol + 1] = minsRow;
+                parentY[minsRow + 1][minsCol + 1] = minsCol;
             }
         }
 
-        if(!isVisited[minsCol + 1][minsRow - 1]){
-            int diffSW = ssdImage.at<cv::Vec4b>(minsCol+1,minsRow-1)[0];
+        if(!isVisited[minsRow + 1][minsCol - 1]){
+            int diffSW = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol-1)[0];
 
-            int temp = distances[minsCol][minsRow] + diffSW;
-            if (temp < distances[minsCol + 1][minsRow - 1]){
-                distances[minsCol + 1][minsRow - 1] = temp;
+            int temp = distances[minsRow][minsCol] + diffSW;
+            if (temp < distances[minsRow + 1][minsCol - 1]){
+                distances[minsRow + 1][minsCol - 1] = temp;
                 //-PARENT INFO
-                parentX[minsCol + 1][minsRow - 1] = minsCol;
-                parentY[minsCol + 1][minsRow - 1] = minsRow;
+                parentX[minsRow + 1][minsCol - 1] = minsRow;
+                parentY[minsRow + 1][minsCol - 1] = minsCol;
             }
         }
 
-        if(!isVisited[minsCol][minsRow + 1]){
-            int diffE = ssdImage.at<cv::Vec4b>(minsCol,minsRow+1)[0];
+        if(!isVisited[minsRow][minsCol + 1]){
+            int diffE = ssdImage.at<cv::Vec4b>(minsRow,minsCol+1)[0];
 
-            int temp = distances[minsCol][minsRow] + diffE;
-            if (temp < distances[minsCol][minsRow + 1]){
-                distances[minsCol][minsRow + 1] = temp;
+            int temp = distances[minsRow][minsCol] + diffE;
+            if (temp < distances[minsRow][minsCol + 1]){
+                distances[minsRow][minsCol + 1] = temp;
                 //-PARENT INFO
-                parentX[minsCol][minsRow + 1] = minsCol;
-                parentY[minsCol][minsRow + 1] = minsRow;
+                parentX[minsRow][minsCol + 1] = minsRow;
+                parentY[minsRow][minsCol + 1] = minsCol;
             }
         }
 
-        if(!isVisited[minsCol][minsRow - 1]){
-            int diffW = ssdImage.at<cv::Vec4b>(minsCol,minsRow-1)[0];
+        if(!isVisited[minsRow][minsCol - 1]){
+            int diffW = ssdImage.at<cv::Vec4b>(minsRow,minsCol-1)[0];
 
-            int temp = distances[minsCol][minsRow] + diffW;
-            if (temp < distances[minsCol][minsRow - 1]){
-                distances[minsCol][minsRow - 1] = temp;
+            int temp = distances[minsRow][minsCol] + diffW;
+            if (temp < distances[minsRow][minsCol - 1]){
+                distances[minsRow][minsCol - 1] = temp;
                 //-PARENT INFO
-                parentX[minsCol][minsRow - 1] = minsCol;
-                parentY[minsCol][minsRow - 1] = minsRow;
+                parentX[minsRow][minsCol - 1] = minsRow;
+                parentY[minsRow][minsCol - 1] = minsCol;
             }
         }
         //------------------------------------------------/\-
 
-        isVisited[minsCol][minsRow] = true; //mark current pixel as visited
+        isVisited[minsRow][minsCol] = true; //mark current pixel as visited
         visitedCount++;
     } 
 
     // XX and YY are values to test, for some reason they "work" (not always), IDK WHY x = 25 and y = 40
-    int xx = endCol;
-    int yy = endRow;
-
-    /*//testing parent arrays
-    for(int i = 0; i < img1.rows; i++){
-        std::cout << xx << " " << yy << std::endl;
-        xx = parentX[xx][yy];
-        yy = parentY[xx][yy];
-    } */
-
-
-    while(xx != -1){
+    int pathCol = endCol;
+    int pathRow = endRow;
+    
+    while((pathCol != -1) && (pathRow != -1)){
         /* Once it works this adds the two image halves
 
 
@@ -219,12 +209,14 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         for(int j = newCol; j < (img2.cols); j++){
             output.at<uchar>(newRow,i) = img2.at<uchar>(newRow,i);
         } */
-
         
-        output.at<cv::Vec4b>(xx,yy) = (0, 0, 0, 255); //set path in output image to be white
+        
+        output.at<cv::Vec4b>(pathRow, pathCol)[1] = 255; //set path in output image to be white
+        int temp = pathRow;
 
-        xx = parentX[xx][yy];
-        yy = parentY[xx][yy];
+        pathRow = parentX[pathRow][pathCol];
+        pathCol = parentY[temp][pathCol];
+        
     } 
     
 }
@@ -238,7 +230,7 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
     cv::Vec3b black = img1.at<cv::Vec3b>(0,0);
 
     for(int i=0; i<rows; i++) {
-        for(int j=0; j<(cols/2); j++) { //runs for half the image to not waste time
+        for(int j=0; j<(cols); j++) { //runs for half the image to not waste time
 
             //averaging the BGR(RGB) values for grayscale = (B+G+R)/3
             //first = (img1.at<Vec3b>(i,j)[0]+img1.at<Vec3b>(i,j)[1]+img1.at<Vec3b>(i,j)[2])/3;
@@ -255,12 +247,18 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
                 value = squaredDif % 256;
             }
             else { value = squaredDif; }
-            
+
+            for(int k = 0; k < 3; k++){
+                ssdImage.at<cv::Vec4b>(i,j)[k] = value;
+            }
+
             //show only the overlapping secitons (0 = alpha, 255 = opaque)
             if(!((img1.at<cv::Vec3b>(i,j) != black) && (img2.at<cv::Vec3b>(i,j) != black))) {
                 ssdImage.at<cv::Vec4b>(i,j)[3] = 0;
-            }
+            } 
             else ssdImage.at<cv::Vec4b>(i,j)[3] = 255; //visable
+
+            std::cout << " sqrd dif " << squaredDif << std::endl;  
         }
     }
     return ssdImage;
@@ -287,17 +285,17 @@ int main()
 
     cv::Mat ssdImage = img1.clone();
     cvtColor(ssdImage, ssdImage, cv::COLOR_BGR2BGRA); //adding in alpha channel
-    ssdImage.setTo(cv::Scalar(255,255,255,0)); //setting everything to white
+    ssdImage.setTo(cv::Scalar(255,255,255,255)); //setting everything to white
     //computing difference image
     ssdImage = SSD(img1.rows, img1.cols, img1, img2, ssdImage);
 
     cv::Mat outputImage = ssdImage.clone();
-    //outputImage.setTo(cv::Scalar(0,0,0,255)); //Set everything to black (for now) because it is easier to throw in photoshop and do the "lighten" filter with the difference image
+    outputImage.setTo(cv::Scalar(0,0,0,255)); //Set everything to black (for now) because it is easier to throw in photoshop and do the "lighten" filter with the difference image
     minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
 
     // second argument: image to be shown(Mat object)
-    imshow("output", outputImage);
-    cv::waitKey(0);
+    //imshow("output", ssdImage);
+    //cv::waitKey(0);
 
     imwrite("../../../output.png", outputImage);
    
