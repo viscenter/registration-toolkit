@@ -9,7 +9,13 @@
 
 
 int INF = 100000; // Ridiculously large value to represent infinity 
-const int COLS = 5760;
+
+//WITH EACH DIFFERENT IMAGE CHANGE THESE PARAMETERS
+const int COLS = 5;
+int startCol = 2;
+int startRow = 0;
+int endCol = 2;
+int endRow = 4;
 
 //---------------------------------------------------------+
 //                 Auxiliary Functions                     |
@@ -18,8 +24,9 @@ const int COLS = 5760;
    the smallest difference value
 
    Issues for now:
-   - Doing the X and Y coordinates separately/; I think there is 
-     probably a more effective way, but I first wanted to get it working
+   - Doing the X and Y coordinates separately; I think there is 
+     probably a more effective way in which they work together, but 
+     I first wanted to get it working.
    - Requires specifying the 2D Array's size. We can change that in
      the future by using a 1D array, using vectors or other data 
      structures instead, or by improving something else. For now I left
@@ -69,7 +76,7 @@ int minDistanceY(int dist[][COLS], bool isVisited[][COLS], int rows, int cols){
 /*
 // This function finds the path and draws it
 /* Issues for now:
-    - What is X and what is Y?
+    - It does work....
 */
 void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage){
     int visitedCount = 0;
@@ -89,6 +96,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         for (int j = 0; j < img1.cols; j++){
             distances[i][j] = INF;
             isVisited[i][j] = false;
+            std::cout << i << j << std::endl;
         }
     }
 
@@ -104,7 +112,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     // This loop is just to test the output
     for (int i = 0; i < img1.rows; i++){
         for (int j = 0; j < img1.cols; j++){
-            //std::cout << "dist " << distances[i][j]  << std::endl; 
+            std::cout << "dist " << distances[i][j]  << std::endl; 
         }
     }
 
@@ -188,11 +196,11 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         visitedCount++;
     } 
 
-    // XX and YY are values to test, for some reason they "work" (not always), IDK WHY x = 25 and y - 40
-    int xx = 25;
-    int yy = 40;
+    // XX and YY are values to test, for some reason they "work" (not always), IDK WHY x = 25 and y = 40
+    int xx = endCol;
+    int yy = endRow;
 
-    /* testing parent arrays
+    /*//testing parent arrays
     for(int i = 0; i < img1.rows; i++){
         std::cout << xx << " " << yy << std::endl;
         xx = parentX[xx][yy];
@@ -200,7 +208,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     } */
 
 
-    for(int i = img1.rows; i >= 0; i--){
+    while(xx != -1){
         /* Once it works this adds the two image halves
 
 
@@ -213,7 +221,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         } */
 
         
-        output.at<cv::Vec4b>(xx,yy) = (255, 255, 255); //set path in output image to be white
+        output.at<cv::Vec4b>(xx,yy) = (0, 0, 0, 255); //set path in output image to be white
 
         xx = parentX[xx][yy];
         yy = parentY[xx][yy];
@@ -261,7 +269,7 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
 int main()
 {
 
-    std::string image_path1 = "../../../61_16b.tif";
+    std::string image_path1 = "../../../Test_Image_1.tif";
     cv::Mat img1 = cv::imread(image_path1);
     if(img1.empty())
     {
@@ -269,7 +277,7 @@ int main()
         return 1;
     }
 
-    std::string image_path2 = "../../../62_16b_mk.tif";
+    std::string image_path2 = "../../../Test_Image_2.tif";
     cv::Mat img2 = cv::imread(image_path2);
     if(img2.empty())
     {
@@ -284,15 +292,14 @@ int main()
     ssdImage = SSD(img1.rows, img1.cols, img1, img2, ssdImage);
 
     cv::Mat outputImage = ssdImage.clone();
-    int startCol = 1475;
-    int startRow = 163;
+    //outputImage.setTo(cv::Scalar(0,0,0,255)); //Set everything to black (for now) because it is easier to throw in photoshop and do the "lighten" filter with the difference image
     minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
 
     // second argument: image to be shown(Mat object)
     imshow("output", outputImage);
     cv::waitKey(0);
 
-    imwrite("../../output.png", outputImage);
+    imwrite("../../../output.png", outputImage);
    
    
     return 0;
