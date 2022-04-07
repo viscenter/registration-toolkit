@@ -21,11 +21,11 @@ int endCol = 1475;
 int endRow = 200;
 */
 
-const int COLS = 5;
-int startCol = 2;
+const int COLS = 500;
+int startCol = 250;
 int startRow = 0;
-int endCol = 2;
-int endRow = 4;
+int endCol = 250;
+int endRow = 499;
 
 
 //---------------------------------------------------------+
@@ -96,9 +96,11 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     // Would be better if implemented as a single array that contains both X and Y
     int parentX[img1.rows][COLS];
     int parentY[img1.rows][COLS];
-
     int distances[img1.rows][COLS]; //stores the distances of each pixel in the grid to the starting point
     bool isVisited[img1.rows][COLS];
+    
+
+    std::cout << "After parent arrays "<< std::endl;
 
 
     //Initialize the arrays
@@ -106,11 +108,12 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     // All pixels are set to unvisited
     for (int i = 0; i < img1.rows; i++){
         for (int j = 0; j < img1.cols; j++){
+            std::cout << "Cols " << j << std::endl;
             distances[i][j] = INF;
             isVisited[i][j] = false;
-            //std::cout << i << j << std::endl;
         }
     }
+
 
     //Set starting point
     distances[row][col] = 0;
@@ -132,8 +135,14 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     // While we havent visited all nodes AND we arent beyond the second to last row do this:
     while((visitedCount < countSSD )/*(img1.rows * img1.cols)) && (minsRow <= img1.rows - 2)*/){        
         //Get the row and col coord of the minimum distance UNVISITED pixel
+        std::cout << "Count " << visitedCount << std::endl;
+
         minsCol = minDistanceX(distances, isVisited, img1.rows, img1.cols);
         minsRow = minDistanceY(distances, isVisited, img1.rows, img1.cols);
+
+
+        //std::cout << "Min value's col " << minsCol << std::endl;
+        //std::cout << "Min value's row " << minsRow << std::endl;
 
 
         //Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
@@ -283,7 +292,7 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
 int main()
 {
 
-    std::string image_path1 = "../../../LeftStep.tif";
+    std::string image_path1 = "../../../500test1.tif";
     cv::Mat img1 = cv::imread(image_path1);
     if(img1.empty())
     {
@@ -291,7 +300,7 @@ int main()
         return 1;
     }
 
-    std::string image_path2 = "../../../RightStep.tif";
+    std::string image_path2 = "../../../500test2.tif";
     cv::Mat img2 = cv::imread(image_path2);
     if(img2.empty())
     {
@@ -299,14 +308,23 @@ int main()
         return 1;
     }
 
+    std::cout << "After image load "<< std::endl;
+
+
+
     cv::Mat ssdImage = img1.clone();
     cvtColor(ssdImage, ssdImage, cv::COLOR_BGR2BGRA); //adding in alpha channel
     ssdImage.setTo(cv::Scalar(255,255,255,255)); //setting everything to white
     //computing difference image
     ssdImage = SSD(img1.rows, img1.cols, img1, img2, ssdImage);
 
+    std::cout << "After ssd "<< std::endl;
+
     cv::Mat outputImage = ssdImage.clone();
+
+    std::cout << "After clone "<< std::endl;
     outputImage.setTo(cv::Scalar(0,0,0,255)); //Set everything to black (for now) because it is easier to throw in photoshop and do the "lighten" filter with the difference image
+    std::cout << "After set to "<< std::endl;
     minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
 
     // second argument: image to be shown(Mat object)
