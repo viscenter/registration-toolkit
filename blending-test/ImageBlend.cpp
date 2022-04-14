@@ -2,30 +2,23 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/types.hpp>
 #include <iostream>
+#include <map>
 #include <queue>
 #include <set>
 #include <algorithm>
 
 
-int INF = 100000; // Ridiculously large value to represent infinity 
+float INF = std::numeric_limits<float>::infinity();
 
 int countSSD = 0;
 
-//WITH EACH DIFFERENT IMAGE CHANGE THESE PARAMETERS
-/*
-const int COLS = 5760;
-int startCol = 1475;
-int startRow = 163;
-int endCol = 1475;
-int endRow = 200;
-*/
+struct coord {
+    int x;
+    int y;
+};
 
-const int COLS = 500;
-int startCol = 250;
-int startRow = 0;
-int endCol = 250;
-int endRow = 499;
 
 
 //---------------------------------------------------------+
@@ -33,74 +26,60 @@ int endRow = 499;
 //---------------------------------------------------------+
 /* Finds the X and Y coordinates for the unvisited pixel with
    the smallest difference value
-
-   Issues for now:
-   - Doing the X and Y coordinates separately; I think there is 
-     probably a more effective way in which they work together, but 
-     I first wanted to get it working.
-   - Requires specifying the 2D Array's size. We can change that in
-     the future by using a 1D array, using vectors or other data 
-     structures instead, or by improving something else. For now I left
-     like this.
 */
-int minDistanceX(int dist[][COLS], bool isVisited[][COLS], int rows, int cols){
-    int min = INF;
-    int minX = -1;
 
-    for (int i = 0; i < rows; i++){
-        for (int j = 0; j < cols; j++){
-            if(isVisited[i][j] == false && dist[i][j] < min){
-                min = dist[i][j]; minX = j;
-                //std::cout << "dist x: " << min << " at i: " << i << std::endl;
-            }
-        }
+// imgContains not being used for now
+bool imgContains(cv::Mat img, int y, int x){
+    if(y >= img.rows || y < 0){
+        return false;
     }
-
-    return minX;
+    else if(x >= img.cols || y < 0){
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
-int minDistanceY(int dist[][COLS], bool isVisited[][COLS], int rows, int cols){
-    int min = INF;
-    int minY = -1;
+coord minDistanceMap(std::map<std::pair<int,int>, float> neighbors){
+    float min = INF;
+    coord p;
+    p.x = -1;
+    p.y = -1;
 
-    for (int i = 0; i < rows; i++){
-        for (int j = 0; j < cols; j++){
-            if(isVisited[i][j] == false && dist[i][j] < min){
-                min = dist[i][j]; minY = i;
-                //std::cout << "dist y " << min << std::endl;
-            }
+    for (auto const& [key, val] : neighbors){
+
+        if(val < min){
+            min = val;
+            p.x = key.second;
+            p.y = key.first;
         }
     }
 
-    return minY;
+    return p;
 }
 
 
 //---------------------------------------------------------+
-//                     Main Function                       |
+//                Main Function - Vertical                 |
 //---------------------------------------------------------+
 /* Arguments:
     - row col --> Start point coordinates
     - output
     - img1
     - img2
-/*
-// This function finds the path and draws it
-/* Issues for now:
-    - It does work....
 */
+// This function finds the path and draws it
 void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage){
     int visitedCount = 0;
 
     // Parent Arrays Store the coordinates of the previous node in the path
-    // Would be better if implemented as a single array that contains both X and Y
-    int parentX[img1.rows][COLS];
-    int parentY[img1.rows][COLS];
-    int distances[img1.rows][COLS]; //stores the distances of each pixel in the grid to the starting point
-    bool isVisited[img1.rows][COLS];
-    
+    cv::Mat parentY(img1.rows, img1.cols, CV_32SC1); //store in (y,x)
+    cv::Mat parentX(img1.rows, img1.cols, CV_32SC1);
+    cv::Mat distances (img1.rows, img1.cols, CV_32SC1);
+    cv::Mat isVisited=cv::Mat::zeros(img1.rows, img1.cols, CV_8U); //any value = true, 0 = false
 
-    std::cout << "After parent arrays "<< std::endl;
+    std::map<std::pair<int,int>, float> neighbors;
 
 
     //Initialize the arrays
@@ -108,118 +87,134 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     // All pixels are set to unvisited
     for (int i = 0; i < img1.rows; i++){
         for (int j = 0; j < img1.cols; j++){
-            std::cout << "Cols " << j << std::endl;
-            distances[i][j] = INF;
-            isVisited[i][j] = false;
+            distances.at<int>(i, j) = INF;
         }
     }
 
 
     //Set starting point
-    distances[row][col] = 0;
-    parentX[row][col] = -1;
-    parentY[row][col] = -1;
-    //visitedCount++;
+    distances.at<int>(row, col) = 0;
+    parentY.at<int>(row, col) = -1; //y value
+    parentX.at<int>(row, col) = -1; //x value
+    neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(row,col), 0));
     
     int minsCol = img1.rows;
     int minsRow = 0;
 
-    // This loop is just to test the output
-    for (int i = 0; i < img1.rows; i++){
-        for (int j = 0; j < img1.cols; j++){
-            //std::cout << "dist " << distances[i][j]  << std::endl; 
-        }
-    }
+    coord min;
 
 
     // While we havent visited all nodes AND we arent beyond the second to last row do this:
     while((visitedCount < countSSD )/*(img1.rows * img1.cols)) && (minsRow <= img1.rows - 2)*/){        
         //Get the row and col coord of the minimum distance UNVISITED pixel
-        std::cout << "Count " << visitedCount << std::endl;
-
-        minsCol = minDistanceX(distances, isVisited, img1.rows, img1.cols);
-        minsRow = minDistanceY(distances, isVisited, img1.rows, img1.cols);
-
-
-        //std::cout << "Min value's col " << minsCol << std::endl;
-        //std::cout << "Min value's row " << minsRow << std::endl;
-
+        min = minDistanceMap(neighbors);
+        minsCol = min.x;
+        minsRow = min.y;
 
         //Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
         // is smaller than the current minimum distance set to it, we update the minimum distance. 
         //-------------------------------------------------------\/-
         //SOUTH
-        if(!isVisited[minsRow + 1][minsCol]){
+        if(!isVisited.at<uchar>(minsRow + 1,minsCol)){
             // Calculate squared difference between pixel in img1 and img2
             int diffS = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol)[0];
 
-            int temp = distances[minsRow][minsCol] + diffS; //temp variable to hold the updates distance
-            if (temp < distances[minsRow + 1][minsCol] && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol)[3] != 0){ //and it is not outside the overlapping area (which is all alpha)
-                distances[minsRow + 1][minsCol] = temp; //update if distance is smaller
+            int temp = distances.at<int>(minsRow,minsCol) + diffS; //temp variable to hold the updates distance
+            if (temp < distances.at<int>(minsRow + 1,minsCol) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol)[3] != 0){ //and it is not outside the overlapping area (which is all alpha)
+                distances.at<int>(minsRow + 1,minsCol) = temp; //update if distance is smaller
                 //-PARENT INFO
-                parentX[minsRow + 1][minsCol] = minsRow;
-                parentY[minsRow + 1][minsCol] = minsCol;
+                parentY.at<int>(minsRow + 1,minsCol) = minsRow;
+                parentX.at<int>(minsRow + 1, minsCol) = minsCol;
+
+
+                coord c;
+                c.x = minsCol;
+                c.y = minsRow + 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
             }
         }
         
         //Functions below are the exact same but for different directions
         //SOUTH EAST
-        if(!isVisited[minsRow + 1][minsCol + 1]){
+        if(!isVisited.at<uchar>(minsRow + 1,minsCol + 1)){
             int diffSE = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol+1)[0];
 
-            int temp = distances[minsRow][minsCol] + diffSE;
-            if (temp < distances[minsRow + 1][minsCol + 1] && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol+1)[3] != 0){
-                distances[minsRow + 1][minsCol + 1] = temp;
+            int temp = distances.at<int>(minsRow,minsCol) + diffSE;
+            if (temp < distances.at<int>(minsRow + 1,minsCol + 1) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol+1)[3] != 0){
+                distances.at<int>(minsRow + 1,minsCol + 1) = temp;
                 //-PARENT INFO
-                parentX[minsRow + 1][minsCol + 1] = minsRow;
-                parentY[minsRow + 1][minsCol + 1] = minsCol;
+                parentY.at<int>(minsRow + 1,minsCol + 1) = minsRow;
+                parentX.at<int>(minsRow + 1,minsCol + 1) = minsCol;
+
+                coord c;
+                c.x = minsCol + 1;
+                c.y = minsRow + 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
             }
         }
         //SOUTH WEST
-        if(!isVisited[minsRow + 1][minsCol - 1]){
+        if(!isVisited.at<uchar>(minsRow + 1,minsCol - 1)){
             int diffSW = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol-1)[0];
 
-            int temp = distances[minsRow][minsCol] + diffSW;
-            if (temp < distances[minsRow + 1][minsCol - 1] && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol-1)[3] != 0){
-                distances[minsRow + 1][minsCol - 1] = temp;
+            int temp = distances.at<int>(minsRow,minsCol) + diffSW;
+            if (temp < distances.at<int>(minsRow + 1,minsCol - 1) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol-1)[3] != 0){
+                distances.at<int>(minsRow + 1,minsCol - 1) = temp;
                 //-PARENT INFO
-                parentX[minsRow + 1][minsCol - 1] = minsRow;
-                parentY[minsRow + 1][minsCol - 1] = minsCol;
+                parentY.at<int>(minsRow + 1,minsCol - 1) = minsRow;
+                parentX.at<int>(minsRow + 1,minsCol - 1) = minsCol;
+
+                coord c;
+                c.x = minsCol - 1;
+                c.y = minsRow + 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
             }
         }
         //EAST
-        if(!isVisited[minsRow][minsCol + 1]){
+        if(!isVisited.at<uchar>(minsRow,minsCol + 1)){
             int diffE = ssdImage.at<cv::Vec4b>(minsRow,minsCol+1)[0];
 
-            int temp = distances[minsRow][minsCol] + diffE;
-            if (temp < distances[minsRow][minsCol + 1] && ssdImage.at<cv::Vec4b>(minsRow, minsCol+1)[3] != 0){
-                distances[minsRow][minsCol + 1] = temp;
+            int temp = distances.at<int>(minsRow,minsCol) + diffE;
+            if (temp < distances.at<int>(minsRow,minsCol + 1) && ssdImage.at<cv::Vec4b>(minsRow, minsCol+1)[3] != 0){
+                distances.at<int>(minsRow,minsCol + 1) = temp;
                 //-PARENT INFO
-                parentX[minsRow][minsCol + 1] = minsRow;
-                parentY[minsRow][minsCol + 1] = minsCol;
+                parentY.at<int>(minsRow,minsCol + 1) = minsRow;
+                parentX.at<int>(minsRow,minsCol + 1) = minsCol;
+
+                coord c;
+                c.x = minsCol + 1;
+                c.y = minsRow;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
             }
         }
         //WEST
-        if(!isVisited[minsRow][minsCol - 1]){
+        if(!isVisited.at<uchar>(minsRow,minsCol - 1)){
             int diffW = ssdImage.at<cv::Vec4b>(minsRow,minsCol-1)[0];
 
-            int temp = distances[minsRow][minsCol] + diffW;
-            if (temp < distances[minsRow][minsCol - 1] && ssdImage.at<cv::Vec4b>(minsRow, minsCol-1)[3] != 0){
-                distances[minsRow][minsCol - 1] = temp;
+            int temp = distances.at<int>(minsRow,minsCol) + diffW;
+            if (temp < distances.at<int>(minsRow,minsCol - 1) && ssdImage.at<cv::Vec4b>(minsRow, minsCol-1)[3] != 0){
+                distances.at<int>(minsRow,minsCol - 1) = temp;
                 //-PARENT INFO
-                parentX[minsRow][minsCol - 1] = minsRow;
-                parentY[minsRow][minsCol - 1] = minsCol;
+                parentY.at<int>(minsRow,minsCol - 1) = minsRow;
+                parentX.at<int>(minsRow,minsCol - 1) = minsCol;
+
+                coord c;
+                c.x = minsCol + 1;
+                c.y = minsRow;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
             }
         }
         //------------------------------------------------/\-
 
-        isVisited[minsRow][minsCol] = true; //mark current pixel as visited
+        isVisited.at<uchar>(minsRow,minsCol) = 1; //mark current pixel as visited
+        neighbors.erase(std::pair<int, int>(minsRow, minsCol));
         visitedCount++;
     } 
 
-    // XX and YY are values to test, for some reason they "work" (not always), IDK WHY x = 25 and y = 40
-    int pathCol = endCol;
-    int pathRow = endRow;
+   
+    int pathCol = img1.cols/2;
+    int pathRow = img1.rows - 1;
+
+    std::cout << parentY.at<int>(25,25) << " - " << parentX.at<int>(25,25)<< std::endl;
     
     while((pathCol != -1) && (pathRow != -1)){
         /* Once it works this adds the two image halves
@@ -237,8 +232,200 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         output.at<cv::Vec4b>(pathRow, pathCol)[1] = 255; //set path in output image to be white
         int temp = pathRow;
 
-        pathRow = parentX[pathRow][pathCol];
-        pathCol = parentY[temp][pathCol];
+        pathRow = parentY.at<int>(pathRow,pathCol);
+        pathCol = parentX.at<int>(temp,pathCol);
+    } 
+    
+}
+
+//---------------------------------------------------------+
+//              Main Function - Horizontal                 |
+//---------------------------------------------------------+
+/* Arguments:
+    - row col --> Start point coordinates
+    - output
+    - img1
+    - img2
+*/
+
+void minErrorBoundaryCutHorizontal(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage, int endRow, int endCol){
+    int visitedCount = 0;
+
+    // Parent Arrays Store the coordinates of the previous node in the path
+    // Would be better if implemented as a single array that contains both X and Y
+    int colRange = endCol - col;
+
+    cv::Mat parentY(img1.rows, colRange, CV_32SC1); //store in (y,x)
+    cv::Mat parentX(img1.rows, colRange, CV_32SC1);
+    cv::Mat distances (img1.rows, colRange, CV_32SC1);
+    cv::Mat isVisited=cv::Mat::zeros(img1.rows, colRange, CV_8U); //any value = true, 0 = false
+
+    std::map<std::pair<int,int>, float> neighbors;
+    
+
+    std::cout << countSSD << std::endl;
+
+
+    //Initialize the arrays
+    // All distances are set to infinity
+    // All pixels are set to unvisited
+    for (int i = 0; i < img1.rows; i++){
+        for (int j = 0; j < img1.cols; j++){
+            distances.at<int>(i, j) = INF;
+        }
+    }
+
+
+    //Set starting point
+    distances.at<int>(row, col) = 0;
+    parentY.at<int>(row, col) = -1; //y value
+    parentX.at<int>(row, col) = -1; //x value
+    neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(row,col), 0));
+    
+    int minsCol = img1.rows;
+    int minsRow = 0;
+
+    coord min;
+
+
+    // While we havent visited all nodes AND we arent beyond the second to last row do this:
+    while((visitedCount < countSSD )/*(img1.rows * img1.cols)) && (minsRow <= img1.rows - 2)*/){        
+        //Get the row and col coord of the minimum distance UNVISITED pixel
+        min = minDistanceMap(neighbors);
+        minsCol = min.x;
+        minsRow = min.y;
+        //Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
+        // is smaller than the current minimum distance set to it, we update the minimum distance. 
+        //-------------------------------------------------------\/-
+        
+        //Functions below are the exact same but for different directions
+        //SOUTH
+        if(!isVisited.at<uchar>(minsRow + 1,minsCol)){
+            // Calculate squared difference between pixel in img1 and img2
+            int diffS = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol)[0];
+
+            int temp = distances.at<int>(minsRow,minsCol) + diffS; //temp variable to hold the updates distance
+            if (temp < distances.at<int>(minsRow + 1,minsCol) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol)[3] != 0){ //and it is not outside the overlapping area (which is all alpha)
+                distances.at<int>(minsRow + 1,minsCol) = temp; //update if distance is smaller
+                //-PARENT INFO
+                parentY.at<int>(minsRow + 1,minsCol) = minsRow;
+                parentX.at<int>(minsRow + 1, minsCol) = minsCol;
+
+
+                coord c;
+                c.x = minsCol;
+                c.y = minsRow + 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
+            }
+        }
+
+        //SOUTH EAST
+        if(!isVisited.at<uchar>(minsRow + 1,minsCol + 1)){
+            int diffSE = ssdImage.at<cv::Vec4b>(minsRow+1,minsCol+1)[0];
+
+            int temp = distances.at<int>(minsRow,minsCol) + diffSE;
+            if (temp < distances.at<int>(minsRow + 1,minsCol + 1) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol+1)[3] != 0){
+                distances.at<int>(minsRow + 1,minsCol + 1) = temp;
+                //-PARENT INFO
+                parentY.at<int>(minsRow + 1,minsCol + 1) = minsRow;
+                parentX.at<int>(minsRow + 1,minsCol + 1) = minsCol;
+
+                coord c;
+                c.x = minsCol + 1;
+                c.y = minsRow + 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
+            }
+        }
+        
+        //EAST
+        if(!isVisited.at<uchar>(minsRow,minsCol + 1)){
+            int diffE = ssdImage.at<cv::Vec4b>(minsRow,minsCol+1)[0];
+
+            int temp = distances.at<int>(minsRow,minsCol) + diffE;
+            if (temp < distances.at<int>(minsRow,minsCol + 1) && ssdImage.at<cv::Vec4b>(minsRow, minsCol+1)[3] != 0){
+                distances.at<int>(minsRow,minsCol + 1) = temp;
+                //-PARENT INFO
+                parentY.at<int>(minsRow,minsCol + 1) = minsRow;
+                parentX.at<int>(minsRow,minsCol + 1) = minsCol;
+
+                coord c;
+                c.x = minsCol + 1;
+                c.y = minsRow;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
+            }
+        }
+
+        //NORTH
+        if(!isVisited.at<uchar>(minsRow - 1,minsCol)){
+            int diffN = ssdImage.at<cv::Vec4b>(minsRow - 1,minsCol)[0];
+
+            int temp = distances.at<int>(minsRow,minsCol) + diffN; //temp variable to hold the updates distance
+            if (temp < distances.at<int>(minsRow - 1,minsCol) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol)[3] != 0){ //and it is not outside the overlapping area (which is all alpha)
+                distances.at<int>(minsRow - 1,minsCol) = temp; //update if distance is smaller
+                //-PARENT INFO
+                parentY.at<int>(minsRow - 1,minsCol) = minsRow;
+                parentX.at<int>(minsRow - 1, minsCol) = minsCol;
+
+
+                coord c;
+                c.x = minsCol;
+                c.y = minsRow - 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
+            }
+        }
+
+        //NORTH EAST
+        if(!isVisited.at<uchar>(minsRow - 1,minsCol + 1)){
+            int diffNE = ssdImage.at<cv::Vec4b>(minsRow - 1,minsCol+ 1)[0];
+
+            int temp = distances.at<int>(minsRow,minsCol) + diffNE; //temp variable to hold the updates distance
+            if (temp < distances.at<int>(minsRow - 1,minsCol+ 1) && ssdImage.at<cv::Vec4b>(minsRow+1, minsCol)[3] != 0){ //and it is not outside the overlapping area (which is all alpha)
+                distances.at<int>(minsRow - 1,minsCol+ 1) = temp; //update if distance is smaller
+                //-PARENT INFO
+                parentY.at<int>(minsRow - 1,minsCol+ 1) = minsRow;
+                parentX.at<int>(minsRow - 1, minsCol+ 1) = minsCol;
+
+
+                coord c;
+                c.x = minsCol;
+                c.y = minsRow - 1;
+                neighbors.insert(std::pair<std::pair<int,int>, float>(std::pair<int,int>(c.y,c.x), temp));
+            }
+        }
+
+        
+       
+        //------------------------------------------------/\-
+
+        isVisited.at<uchar>(minsRow,minsCol) = 1; //mark current pixel as visited
+        neighbors.erase(std::pair<int, int>(minsRow, minsCol));
+        visitedCount++;
+    } 
+
+   
+    int pathCol = endCol;
+    int pathRow = endRow;
+
+    std::cout << parentY.at<int>(25,25) << " - " << parentX.at<int>(25,25)<< std::endl;
+    
+    while((pathCol != -1) && (pathRow != -1)){
+        /* Once it works this adds the two image halves
+
+
+        for(int j = 0; j < parentX[i][j]; j++){
+            output.at<uchar>(i,i) = img1.at<uchar>(i,i);
+        }
+
+        for(int j = newCol; j < (img2.cols); j++){
+            output.at<uchar>(newRow,i) = img2.at<uchar>(newRow,i);
+        } */
+        
+        
+        output.at<cv::Vec4b>(pathRow, pathCol)[1] = 255; //set path in output image to be white
+        int temp = pathRow;
+
+        pathRow = parentY.at<int>(pathRow,pathCol);
+        pathCol = parentX.at<int>(temp,pathCol);
         
     } 
     
@@ -276,6 +463,7 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
             }
 
             //show only the overlapping secitons (0 = alpha, 255 = opaque)
+            //Not ideal - come back to it 
             if(!((img1.at<cv::Vec3b>(i,j) != black) && (img2.at<cv::Vec3b>(i,j) != black))) {
                 ssdImage.at<cv::Vec4b>(i,j)[3] = 0;
             } 
@@ -292,7 +480,7 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
 int main()
 {
 
-    std::string image_path1 = "../../../500test1.tif";
+    std::string image_path1 = "../../../500Test1.tif";
     cv::Mat img1 = cv::imread(image_path1);
     if(img1.empty())
     {
@@ -300,7 +488,7 @@ int main()
         return 1;
     }
 
-    std::string image_path2 = "../../../500test2.tif";
+    std::string image_path2 = "../../../500Test2.tif";
     cv::Mat img2 = cv::imread(image_path2);
     if(img2.empty())
     {
@@ -319,19 +507,26 @@ int main()
     ssdImage = SSD(img1.rows, img1.cols, img1, img2, ssdImage);
 
     std::cout << "After ssd "<< std::endl;
+    imwrite("../../../ssd.png", ssdImage);
+
 
     cv::Mat outputImage = ssdImage.clone();
 
     std::cout << "After clone "<< std::endl;
     outputImage.setTo(cv::Scalar(0,0,0,255)); //Set everything to black (for now) because it is easier to throw in photoshop and do the "lighten" filter with the difference image
     std::cout << "After set to "<< std::endl;
+    int startRow = 0;
+    int startCol = img1.cols/2;
+    
     minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
+    //minErrorBoundaryCutHorizontal(startRow, startCol, outputImage, img2, img1, ssdImage, 250, 250);
 
     // second argument: image to be shown(Mat object)
     //imshow("output", ssdImage);
     //cv::waitKey(0);
 
     imwrite("../../../output.png", outputImage);
+    
    
    
     return 0;
