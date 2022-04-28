@@ -7,6 +7,8 @@
 #include <set>
 #include <algorithm>
 
+#include "../core/include/rt/io/ImageIO.hpp"
+#include "../core/include/rt/util/ImageConversion.hpp"
 
 int INF = 100000; // Ridiculously large value to represent infinity 
 
@@ -108,7 +110,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         for (int j = 0; j < img1.cols; j++){
             distances[i][j] = INF;
             isVisited[i][j] = false;
-            //std::cout << i << j << std::endl;
+            std::cout << i << j << std::endl;
         }
     }
 
@@ -124,7 +126,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     // This loop is just to test the output
     for (int i = 0; i < img1.rows; i++){
         for (int j = 0; j < img1.cols; j++){
-            //std::cout << "dist " << distances[i][j]  << std::endl; 
+            std::cout << "dist " << distances[i][j]  << std::endl; 
         }
     }
 
@@ -208,6 +210,8 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         visitedCount++;
     } 
 
+    std::cout << "CHECk after while loop" << std::endl;
+
     // XX and YY are values to test, for some reason they "work" (not always), IDK WHY x = 25 and y = 40
     int pathCol = endCol;
     int pathRow = endRow;
@@ -224,6 +228,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
             output.at<uchar>(newRow,i) = img2.at<uchar>(newRow,i);
         } */
         
+        std::cout << "CHECk" << std::endl;
         
         output.at<cv::Vec4b>(pathRow, pathCol)[1] = 255; //set path in output image to be white
         int temp = pathRow;
@@ -232,89 +237,95 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         pathCol = parentY[temp][pathCol];
         
     } 
+
+     std::cout << "CHECk after 2nd while loop" << std::endl;
     
 }
 
 
-cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
-    int squaredDif;
-    int first;
-    int second;
-    unsigned char value;
-    cv::Vec3b black = img1.at<cv::Vec3b>(0,0);
+cv::Mat SSD(int rows, int cols, cv::Mat img1Gray, cv::Mat img2Gray, cv::Mat ssdImage) {
+    float squaredDif;
+
+    //temp value to compare in function
+    cv::Vec3b black = {0,0,0};
 
     for(int i=0; i<rows; i++) {
-        for(int j=0; j<(cols); j++) { //runs for half the image to not waste time
-
-            //averaging the BGR(RGB) values for grayscale = (B+G+R)/3
-            //first = (img1.at<Vec3b>(i,j)[0]+img1.at<Vec3b>(i,j)[1]+img1.at<Vec3b>(i,j)[2])/3;
-            //second = (img2.at<Vec3b>(i,j)[0]+img2.at<Vec3b>(i,j)[1]+img2.at<Vec3b>(i,j)[2])/3;
-            
-
-            //weighted BGR to grayscale = 0.114B + 0.587G + 0.299R
-            first = (img1.at<cv::Vec3b>(i,j)[0]*0.114)+(img1.at<cv::Vec3b>(i,j)[1]*0.587)+(img1.at<cv::Vec3b>(i,j)[2]*0.299);
-            second = (img2.at<cv::Vec3b>(i,j)[0]*0.114)+(img2.at<cv::Vec3b>(i,j)[1]*0.587)+(img2.at<cv::Vec3b>(i,j)[2]*0.299);
-
+        for(int j=0; j<cols; j++) { 
             //finding squared difference 
-            squaredDif = pow((first - second), 2);
-            if(squaredDif > 255 || squaredDif < 0) {
-                value = squaredDif % 256;
-            }
-            else { value = squaredDif; }
+            //uchar = 8 bit image (0-255)
+            //ushort = 16 bit image (0-65535)
+            //float = 32 bit image (-1.18e-38 - 3.40e-38)
+            squaredDif = (img1Gray.at<float>(i,j) - img2Gray.at<float>(i,j)) * (img1Gray.at<float>(i,j) - img2Gray.at<float>(i,j));
 
+
+            //setting pixel value in the 4 channel ssdImage
             for(int k = 0; k < 3; k++){
-                ssdImage.at<cv::Vec4b>(i,j)[k] = value;
+                ssdImage.at<cv::Vec4f>(i,j)[k] = squaredDif; //normalized;//value;
             }
 
-            //show only the overlapping secitons (0 = alpha, 255 = opaque)
-            if(!((img1.at<cv::Vec3b>(i,j) != black) && (img2.at<cv::Vec3b>(i,j) != black))) {
-                ssdImage.at<cv::Vec4b>(i,j)[3] = 0;
-            } 
-            else {
-                countSSD++;
-                ssdImage.at<cv::Vec4b>(i,j)[3] = 255; //visable
-            }
-            //std::cout << " sqrd dif " << squaredDif << std::endl;  
+            //code to show only the overlapping secitons (0 = alpha, 255 = opaque)
+            //0 = black
+            //This finds the spot where both images have color (assuming the images do not have an alpha channel so the floating space is just balck)
+            //and sets everything that is not whithin that space to be alpha 
+            // if(!((img1.at<cv::Vec3b>(i,j) != black) && (img2.at<cv::Vec3b>(i,j) != black))) {
+            //     ssdImage.at<cv::Vec4b>(i,j)[3] = 0;
+            // } 
+            // else {
+            //     ssdImage.at<cv::Vec4b>(i,j)[3] = 255; //visable
+            // }
         }
     }
+    //Image needs to be viewed in Fiji to get a good idea of what it looks like
+    rt::WriteImage("../../../outputSSD.tif", ssdImage);
     return ssdImage;
 }
 
-int main()
+int main(int argc, char*argv[])
 {
+    /*
+    Things needed to add for the main code:
+    - user command line input structure
+    - convert given images to 32 bit float upon reading them in using the quantize function
+    */
 
-    std::string image_path1 = "../../../LeftStep.tif";
-    cv::Mat img1 = cv::imread(image_path1);
+    //takes in the images provided on the command line
+    std::string image_path1 = argv[1];
+    cv::Mat img1 = rt::ReadImage(image_path1);
     if(img1.empty())
     {
         std::cout << "Could not read the image: " << image_path1 << std::endl;
         return 1;
     }
 
-    std::string image_path2 = "../../../RightStep.tif";
-    cv::Mat img2 = cv::imread(image_path2);
+    std::string image_path2 = argv[2];
+    cv::Mat img2 = rt::ReadImage(image_path2);
     if(img2.empty())
     {
         std::cout << "Could not read the image: " << image_path2 << std::endl;
         return 1;
     }
 
-    cv::Mat ssdImage = img1.clone();
-    cvtColor(ssdImage, ssdImage, cv::COLOR_BGR2BGRA); //adding in alpha channel
-    ssdImage.setTo(cv::Scalar(255,255,255,255)); //setting everything to white
-    //computing difference image
-    ssdImage = SSD(img1.rows, img1.cols, img1, img2, ssdImage);
+    //saving gray scale 32 bit float versions of the image
+    cv::Mat img1Gray;
+    img1Gray = rt::QuantizeImage(img1, CV_32F);
+    img1Gray = rt::ColorConvertImage(img1Gray, 1); 
+    cv::Mat img2Gray;
+    img2Gray = rt::QuantizeImage(img2, CV_32F);
+    img2Gray = rt::ColorConvertImage(img2Gray, 1); 
 
-    cv::Mat outputImage = ssdImage.clone();
-    outputImage.setTo(cv::Scalar(0,0,0,255)); //Set everything to black (for now) because it is easier to throw in photoshop and do the "lighten" filter with the difference image
+    //making ssdImage with the demensions of the given images, and set mat to be an opaque white
+    cv::Mat ssdImage(img1.rows, img1.cols, CV_32FC4, cv::Scalar(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()));
+    rt::WriteImage("../../../outputSSD_noChange.tif", ssdImage);
+    
+    //computing difference image
+    ssdImage = SSD(img1.rows, img1.cols, img1Gray, img2Gray, ssdImage);
+    
+    //create the output image 
+    cv::Mat outputImage(img1.rows, img1.cols, CV_32FC4, cv::Scalar(0, 0, 0, std::numeric_limits<float>::infinity())); //Set everything to black opaque image
     minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
 
-    // second argument: image to be shown(Mat object)
-    //imshow("output", ssdImage);
-    //cv::waitKey(0);
-
-    imwrite("../../../output.png", outputImage);
-   
+    //write out the output image
+    imwrite("../../../output.tif", outputImage);
    
     return 0;
 }
