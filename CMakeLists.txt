@@ -26,6 +26,7 @@ include(Warnings)
 ## Libraries ##
 add_subdirectory(core)
 add_subdirectory(graph)
+add_subdirectory(blending-test)
 
 ## Core Apps ##
 option(RT_BUILD_APPS "Compile core programs" on)
