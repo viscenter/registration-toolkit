@@ -11,21 +11,22 @@
 
 
 float INF = std::numeric_limits<float>::infinity();
-
-int countSSD = 0;
-
+int countSSD = 0; 
 struct coord {
     int x;
     int y;
 };
 
 
-
 //---------------------------------------------------------+
 //                 Auxiliary Functions                     |
 //---------------------------------------------------------+
-/* Finds the X and Y coordinates for the unvisited pixel with
-   the smallest difference value
+/* 
+    minDistanceMap:
+        Inputs: a map "neighbors", where the key is a pair y, x of coordinates
+        and the value is the min distance from source to this node.
+
+        The function finds the neighbor with the minimum distance 
 */
 
 // imgContains not being used for now
@@ -61,30 +62,40 @@ coord minDistanceMap(std::map<std::pair<int,int>, float> neighbors){
 
 
 //---------------------------------------------------------+
-//                Main Function - Vertical                 |
+//                Path Function - Vertical                 |
 //---------------------------------------------------------+
 /* Arguments:
     - row col --> Start point coordinates
-    - output
+    - output --> image where we draw the output in
     - img1
     - img2
+    - SSD image
+    - endRow, endCol --> end point coordinates
+
+    This functions finds the path and draws it to the output image
+
 */
 // This function finds the path and draws it
-void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage){
+void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage, int endRow, int endCol){
     int visitedCount = 0;
 
-    // Parent Arrays Store the coordinates of the previous node in the path
-    cv::Mat parentY(img1.rows, img1.cols, CV_32SC1); //store in (y,x)
-    cv::Mat parentX(img1.rows, img1.cols, CV_32SC1);
-    cv::Mat distances (img1.rows, img1.cols, CV_32SC1);
+    // For the next fou5 Mats, the infomration they store refers to the pixels in this position
+    // e.g. pixel (3, 4) of the distances Mat stores the distance of pixel (3, 4) in the image
+
+    // Parent Mats Store the coordinates of the previous node in the path
+    cv::Mat parentY(img1.rows, img1.cols, CV_32FC1); //store in (y,x)
+    cv::Mat parentX(img1.rows, img1.cols, CV_32FC1);
+
+    // Distance stores the minimum distance from starting point to this pixel.
+    cv::Mat distances (img1.rows, img1.cols, CV_32FC1);
+
     cv::Mat isVisited=cv::Mat::zeros(img1.rows, img1.cols, CV_8U); //any value = true, 0 = false
 
+    // This map maps the coordinates tp their distances, this will store only unvisited neighbors
     std::map<std::pair<int,int>, float> neighbors;
 
 
-    //Initialize the arrays
-    // All distances are set to infinity
-    // All pixels are set to unvisited
+    // Initialize all distances to Infinity
     for (int i = 0; i < img1.rows; i++){
         for (int j = 0; j < img1.cols; j++){
             distances.at<int>(i, j) = INF;
@@ -104,14 +115,14 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
     coord min;
 
 
-    // While we havent visited all nodes AND we arent beyond the second to last row do this:
+    // While we havent visited all nodes 
     while((visitedCount < countSSD )/*(img1.rows * img1.cols)) && (minsRow <= img1.rows - 2)*/){        
         //Get the row and col coord of the minimum distance UNVISITED pixel
         min = minDistanceMap(neighbors);
         minsCol = min.x;
         minsRow = min.y;
 
-        //Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
+        // Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
         // is smaller than the current minimum distance set to it, we update the minimum distance. 
         //-------------------------------------------------------\/-
         //SOUTH
@@ -126,7 +137,7 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
                 parentY.at<int>(minsRow + 1,minsCol) = minsRow;
                 parentX.at<int>(minsRow + 1, minsCol) = minsCol;
 
-
+                // Adds node to map of unvisited neighbors
                 coord c;
                 c.x = minsCol;
                 c.y = minsRow + 1;
@@ -206,28 +217,35 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
         //------------------------------------------------/\-
 
         isVisited.at<uchar>(minsRow,minsCol) = 1; //mark current pixel as visited
-        neighbors.erase(std::pair<int, int>(minsRow, minsCol));
+        neighbors.erase(std::pair<int, int>(minsRow, minsCol)); //remove from neighbors now that it has been visited
         visitedCount++;
     } 
 
    
-    int pathCol = img1.cols/2;
-    int pathRow = img1.rows - 1;
-
-    std::cout << parentY.at<int>(25,25) << " - " << parentX.at<int>(25,25)<< std::endl;
     
+    int pathCol = endCol;
+    int pathRow = endRow;
+    
+
+    // Now that we have the path, we start from the endpoint and follow each parent node until we reach the starting point (whose parents are -1 and -1)
+    // At each pixel, we paint it in the image to record the path
     while((pathCol != -1) && (pathRow != -1)){
-        /* Once it works this adds the two image halves
+
+        /*
+        // This portion is meant to fill the left half with img1 and the right half with img2
+        // However it does not work perfectly, likely because of image type/accessing 
 
 
-        for(int j = 0; j < parentX[i][j]; j++){
-            output.at<uchar>(i,i) = img1.at<uchar>(i,i);
+        for(int i = 0; i < pathCol; i++){
+            output.at<cv::Vec4f>(pathRow, i) = img1.at<cv::Vec4f>(i, pathCol);
         }
 
-        for(int j = newCol; j < (img2.cols); j++){
-            output.at<uchar>(newRow,i) = img2.at<uchar>(newRow,i);
+
+        for(int i = pathCol; i < (img2.cols); i++){
+            output.at<cv::Vec4f>(pathRow, i) = img2.at<cv::Vec4f>(i, pathCol);
         } */
-        
+
+
         
         output.at<cv::Vec4b>(pathRow, pathCol)[1] = 255; //set path in output image to be white
         int temp = pathRow;
@@ -239,13 +257,17 @@ void minErrorBoundaryCutVertical(int row, int col, cv::Mat output, cv::Mat img1,
 }
 
 //---------------------------------------------------------+
-//              Main Function - Horizontal                 |
+//              Path Function - Horizontal                 |
 //---------------------------------------------------------+
 /* Arguments:
     - row col --> Start point coordinates
     - output
     - img1
     - img2
+    - SSD image
+    - endRow and endCol --> end point coordinates
+
+    Works in the same way as the Vertical one but selecting S, E, SE, N, NE neighbors instead 
 */
 
 void minErrorBoundaryCutHorizontal(int row, int col, cv::Mat output, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage, int endRow, int endCol){
@@ -253,12 +275,12 @@ void minErrorBoundaryCutHorizontal(int row, int col, cv::Mat output, cv::Mat img
 
     // Parent Arrays Store the coordinates of the previous node in the path
     // Would be better if implemented as a single array that contains both X and Y
-    int colRange = endCol - col;
+    //int colRange = endCol - col;
 
-    cv::Mat parentY(img1.rows, colRange, CV_32SC1); //store in (y,x)
-    cv::Mat parentX(img1.rows, colRange, CV_32SC1);
-    cv::Mat distances (img1.rows, colRange, CV_32SC1);
-    cv::Mat isVisited=cv::Mat::zeros(img1.rows, colRange, CV_8U); //any value = true, 0 = false
+    cv::Mat parentY(img1.rows, img1.cols, CV_32SC1); //store in (y,x)
+    cv::Mat parentX(img1.rows, img1.cols, CV_32SC1);
+    cv::Mat distances (img1.rows, img1.cols, CV_32SC1);
+    cv::Mat isVisited=cv::Mat::zeros(img1.rows, img1.cols, CV_8U); //any value = true, 0 = false
 
     std::map<std::pair<int,int>, float> neighbors;
     
@@ -294,7 +316,7 @@ void minErrorBoundaryCutHorizontal(int row, int col, cv::Mat output, cv::Mat img
         min = minDistanceMap(neighbors);
         minsCol = min.x;
         minsRow = min.y;
-        //Visit all 5 neighbors (S, E, W, SW, SE). If their distance + the connection between the current pixel
+        //Visit all 5 neighbors (S, E, SE, N, NE). If their distance + the connection between the current pixel
         // is smaller than the current minimum distance set to it, we update the minimum distance. 
         //-------------------------------------------------------\/-
         
@@ -406,18 +428,19 @@ void minErrorBoundaryCutHorizontal(int row, int col, cv::Mat output, cv::Mat img
     int pathCol = endCol;
     int pathRow = endRow;
 
-    std::cout << parentY.at<int>(25,25) << " - " << parentX.at<int>(25,25)<< std::endl;
+    //std::cout << parentY.at<int>(25,25) << " - " << parentX.at<int>(25,25)<< std::endl;
     
     while((pathCol != -1) && (pathRow != -1)){
-        /* Once it works this adds the two image halves
+        //Once it works this adds the two image halves
 
 
-        for(int j = 0; j < parentX[i][j]; j++){
-            output.at<uchar>(i,i) = img1.at<uchar>(i,i);
+        /*
+        for(int i = 0; i < pathRow; i++){
+            output.at<cv::Vec4f>(pathRow,i) = img1.at<cv::Vec4f>(pathRow,i);
         }
 
-        for(int j = newCol; j < (img2.cols); j++){
-            output.at<uchar>(newRow,i) = img2.at<uchar>(newRow,i);
+        for(int i = pathRow; i < (img2.cols); i++){
+            output.at<cv::Vec4f>(pathRow,i) = img2.at<cv::Vec4f>(pathRow,i);
         } */
         
         
@@ -480,7 +503,7 @@ cv::Mat SSD(int rows, int cols, cv::Mat img1, cv::Mat img2, cv::Mat ssdImage) {
 int main()
 {
 
-    std::string image_path1 = "../../../500Test1.tif";
+    std::string image_path1 = "../../../phercTest1.png";
     cv::Mat img1 = cv::imread(image_path1);
     if(img1.empty())
     {
@@ -488,7 +511,7 @@ int main()
         return 1;
     }
 
-    std::string image_path2 = "../../../500Test2.tif";
+    std::string image_path2 = "../../../phercTest2.png";
     cv::Mat img2 = cv::imread(image_path2);
     if(img2.empty())
     {
@@ -518,8 +541,8 @@ int main()
     int startRow = 0;
     int startCol = img1.cols/2;
     
-    minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage);
-    //minErrorBoundaryCutHorizontal(startRow, startCol, outputImage, img2, img1, ssdImage, 250, 250);
+    minErrorBoundaryCutVertical(startRow, startCol, outputImage, img2, img1, ssdImage, img1.rows - 1, img1.cols/2);
+    //minErrorBoundaryCutHorizontal(img1.rows/2, 0, outputImage, img2, img1, ssdImage, img1.rows/2, img1.cols);
 
     // second argument: image to be shown(Mat object)
     //imshow("output", ssdImage);
