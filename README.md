@@ -1,3 +1,7 @@
+# Note: This repository has been archived!
+Development on this project has moved to a new repository at https://gitlab.com/educelab/registration-toolkit. This repository has been archived and no longer accepts pull requests or issues.
+
+
 # registration-toolkit
 
 [![Build and Test](https://github.com/viscenter/registration-toolkit/workflows/Build%20and%20Test/badge.svg?branch=develop)](https://github.com/viscenter/registration-toolkit/actions)
